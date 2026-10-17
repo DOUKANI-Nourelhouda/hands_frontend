@@ -1,0 +1,1969 @@
+import 'package:flutter/material.dart';
+import 'package:hands/main/media_viewer_page.dart';
+import 'package:hands/services/post_service.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:hands/main/createpost.dart';
+
+class PostWidget extends StatefulWidget {
+  final Map<String, dynamic> post;
+  final PostService postService;
+  final String currentUserId;
+
+  const PostWidget({
+    super.key,
+    required this.post,
+    required this.postService,
+    required this.currentUserId,
+  });
+
+  @override
+  State<PostWidget> createState() => _PostWidgetState();
+}
+
+class _PostWidgetState extends State<PostWidget> {
+  static const Color accent = Color(0xfffcc001);
+
+  Map<String, dynamic> get post => widget.post;
+
+  bool _isLiked = false;
+  bool _isLiking = false;
+  int _likeCount = 0;
+  int _commentCount = 0;
+
+  String get _postId => (post['_id'] ?? post['id'] ?? '').toString();
+
+  String _idOf(dynamic value) {
+    if (value is Map) {
+      return (value['_id'] ?? value['id'] ?? '').toString();
+    }
+    return value?.toString() ?? '';
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    final likes = post['likes'] is List ? post['likes'] as List : [];
+
+    final comments = post['comments'] is List ? post['comments'] as List : [];
+
+    _likeCount = likes.length;
+    _commentCount = comments.length;
+
+    _isLiked = likes.any((like) => _idOf(like) == widget.currentUserId);
+  }
+
+  Future<void> _toggleLike() async {
+    if (_isLiking || _postId.isEmpty) return;
+
+    final wasLiked = _isLiked;
+    setState(() => _isLiking = true);
+
+    try {
+      final result = wasLiked
+          ? await widget.postService.unlikePost(_postId)
+          : await widget.postService.likePost(_postId);
+
+      if (!mounted) return;
+
+      setState(() {
+        _isLiked = result['likedByMe'] as bool? ?? !wasLiked;
+        _likeCount =
+            result['likesCount'] as int? ?? (_likeCount + (wasLiked ? -1 : 1));
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Could not update like: $e')));
+    } finally {
+      if (mounted) setState(() => _isLiking = false);
+    }
+  }
+
+  Future<void> _openComments() async {
+    if (_postId.isEmpty) return;
+
+    List<Map<String, dynamic>> loadedComments;
+
+    try {
+      loadedComments = await widget.postService.getComments(_postId);
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Could not load comments: $e')));
+      return;
+    }
+
+    if (!mounted) return;
+
+    final controller = TextEditingController();
+    var comments = loadedComments;
+    var sending = false;
+
+    try {
+      await showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.white,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+        ),
+        builder: (sheetContext) {
+          return StatefulBuilder(
+            builder: (context, setSheetState) {
+              return Padding(
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).viewInsets.bottom,
+                ),
+                child: SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.7,
+                  child: Column(
+                    children: [
+                      // HEADER
+                      const Padding(
+                        padding: EdgeInsets.fromLTRB(16, 20, 16, 16),
+                        child: Text(
+                          'Comments',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF202124),
+                          ),
+                        ),
+                      ),
+
+                      const Divider(height: 1, color: Color(0xFFEEEEEE)),
+
+                      // WHITE COMMENTS LIST BACKGROUND
+                      Expanded(
+                        child: Container(
+                          color: Colors.white,
+                          child: comments.isEmpty
+                              ? const Center(
+                                  child: Text(
+                                    'No comments yet. Be the first !',
+                                    style: TextStyle(
+                                      color: Colors.grey,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                )
+                              : ListView.builder(
+                                  padding: const EdgeInsets.all(16),
+                                  itemCount: comments.length,
+                                  itemBuilder: (context, index) {
+                                    final comment = comments[index];
+
+                                    final userData = comment['user'];
+
+                                    final replies =
+                                        (comment['replies'] as List? ?? [])
+                                            .whereType<Map>()
+                                            .map(
+                                              (reply) =>
+                                                  Map<String, dynamic>.from(
+                                                    reply,
+                                                  ),
+                                            )
+                                            .toList();
+
+                                    final user = userData is Map
+                                        ? Map<String, dynamic>.from(userData)
+                                        : <String, dynamic>{};
+
+                                    final commentId = _idOf(
+                                      comment['_id'] ?? comment['id'],
+                                    );
+
+                                    final commentUserId = _idOf(
+                                      user['_id'] ?? user['id'],
+                                    );
+
+                                    final isMyComment =
+                                        commentUserId == widget.currentUserId;
+
+                                    final profilePicture =
+                                        (user['profilePicture'] ?? '')
+                                            .toString()
+                                            .trim();
+
+                                    final username =
+                                        user['username']?.toString() ??
+                                        'Student';
+
+                                    return Container(
+                                      margin: const EdgeInsets.only(bottom: 12),
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        // GRAY BACKGROUND FOR EACH COMMENT
+                                        color: const Color(0xFFF2F2F2),
+                                        borderRadius: BorderRadius.circular(14),
+                                      ),
+
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              // CIRCULAR PROFILE PICTURE
+                                              ClipOval(
+                                                child: SizedBox(
+                                                  width: 44,
+                                                  height: 44,
+                                                  child:
+                                                      profilePicture.isNotEmpty
+                                                      ? Image.network(
+                                                          profilePicture,
+                                                          fit: BoxFit.cover,
+                                                          errorBuilder:
+                                                              (
+                                                                context,
+                                                                error,
+                                                                stackTrace,
+                                                              ) {
+                                                                return Container(
+                                                                  color: const Color(
+                                                                    0xFFFFF0BD,
+                                                                  ),
+                                                                  alignment:
+                                                                      Alignment
+                                                                          .center,
+                                                                  child: const Icon(
+                                                                    Icons
+                                                                        .person,
+                                                                    color: Color(
+                                                                      0xFF8A6800,
+                                                                    ),
+                                                                    size: 25,
+                                                                  ),
+                                                                );
+                                                              },
+                                                        )
+                                                      : Container(
+                                                          color: const Color(
+                                                            0xFFFFF0BD,
+                                                          ),
+                                                          alignment:
+                                                              Alignment.center,
+                                                          child: const Icon(
+                                                            Icons.person,
+                                                            color: Color(
+                                                              0xFF8A6800,
+                                                            ),
+                                                            size: 25,
+                                                          ),
+                                                        ),
+                                                ),
+                                              ),
+
+                                              const SizedBox(width: 12),
+
+                                              // USERNAME AND COMMENT
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      username,
+                                                      maxLines: 1,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                      style: const TextStyle(
+                                                        fontSize: 14,
+                                                        fontWeight:
+                                                            FontWeight.w700,
+                                                        color: Color(
+                                                          0xFF202124,
+                                                        ),
+                                                      ),
+                                                    ),
+
+                                                    const SizedBox(height: 6),
+
+                                                    Text(
+                                                      comment['content']
+                                                              ?.toString() ??
+                                                          '',
+                                                      style: const TextStyle(
+                                                        fontSize: 14,
+                                                        height: 1.4,
+                                                        color: Color(
+                                                          0xFF444444,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+
+                                              // DELETE ICON AT TOP-RIGHT
+                                              // THREE-DOT COMMENT MENU
+                                              PopupMenuButton<String>(
+                                                tooltip: 'Comment options',
+                                                icon: const Icon(
+                                                  Icons.more_horiz,
+                                                  size: 23,
+                                                  color: Color(0xFF777777),
+                                                ),
+                                                color: Colors.white,
+                                                elevation: 8,
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                ),
+                                                onSelected: (action) async {
+                                                  if (action == 'edit') {
+                                                    final editedText =
+                                                        await showDialog<
+                                                          String
+                                                        >(
+                                                          context: context,
+                                                          builder: (_) => CommentTextDialog(
+                                                            title:
+                                                                'Edit comment',
+                                                            initialText:
+                                                                comment['content']
+                                                                    ?.toString() ??
+                                                                '',
+                                                            hintText:
+                                                                'Edit your comment...',
+                                                            actionLabel: 'Save',
+                                                          ),
+                                                        );
+
+                                                    if (!context.mounted)
+                                                      return;
+                                                    if (editedText == null ||
+                                                        editedText
+                                                            .trim()
+                                                            .isEmpty ||
+                                                        editedText.trim() ==
+                                                            (comment['content']
+                                                                        ?.toString() ??
+                                                                    '')
+                                                                .trim()) {
+                                                      return;
+                                                    }
+
+                                                    try {
+                                                      final result =
+                                                          await widget
+                                                              .postService
+                                                              .editComment(
+                                                                postId: _postId,
+                                                                commentId:
+                                                                    commentId,
+                                                                text: editedText
+                                                                    .trim(),
+                                                              );
+
+                                                      if (!context.mounted)
+                                                        return;
+
+                                                      final updated =
+                                                          result['comment'];
+
+                                                      if (updated is Map) {
+                                                        setSheetState(() {
+                                                          final updatedComment =
+                                                              Map<
+                                                                String,
+                                                                dynamic
+                                                              >.from(updated);
+
+                                                          // Keep replies if the edit response doesn't include them.
+                                                          if (!updatedComment
+                                                              .containsKey(
+                                                                'replies',
+                                                              )) {
+                                                            updatedComment['replies'] =
+                                                                comments[index]['replies'] ??
+                                                                [];
+                                                          }
+
+                                                          comments[index] =
+                                                              updatedComment;
+                                                        });
+                                                      }
+                                                    } catch (e) {
+                                                      if (!context.mounted)
+                                                        return;
+                                                      ScaffoldMessenger.of(
+                                                        context,
+                                                      ).showSnackBar(
+                                                        SnackBar(
+                                                          content: Text(
+                                                            'Could not edit comment: $e',
+                                                          ),
+                                                        ),
+                                                      );
+                                                    }
+                                                  } else if (action ==
+                                                      'reply') {
+                                                    final replyText =
+                                                        await showDialog<
+                                                          String
+                                                        >(
+                                                          context: context,
+                                                          builder: (_) =>
+                                                              CommentTextDialog(
+                                                                title:
+                                                                    'Reply to $username',
+                                                                hintText:
+                                                                    'Write a reply...',
+                                                                actionLabel:
+                                                                    'Reply',
+                                                              ),
+                                                        );
+
+                                                    if (!context.mounted)
+                                                      return;
+                                                    if (replyText == null ||
+                                                        replyText
+                                                            .trim()
+                                                            .isEmpty)
+                                                      return;
+
+                                                    try {
+                                                      final result =
+                                                          await widget
+                                                              .postService
+                                                              .replyToComment(
+                                                                postId: _postId,
+                                                                commentId:
+                                                                    commentId,
+                                                                text: replyText
+                                                                    .trim(),
+                                                              );
+
+                                                      final refreshedComments =
+                                                          await widget
+                                                              .postService
+                                                              .getComments(
+                                                                _postId,
+                                                              );
+
+                                                      if (!context.mounted)
+                                                        return;
+
+                                                      setSheetState(() {
+                                                        comments =
+                                                            refreshedComments;
+                                                      });
+
+                                                      ScaffoldMessenger.of(
+                                                        context,
+                                                      ).showSnackBar(
+                                                        SnackBar(
+                                                          content: Text(
+                                                            result['message']
+                                                                    ?.toString() ??
+                                                                'Reply added successfully',
+                                                          ),
+                                                        ),
+                                                      );
+                                                    } catch (e) {
+                                                      if (!context.mounted)
+                                                        return;
+                                                      ScaffoldMessenger.of(
+                                                        context,
+                                                      ).showSnackBar(
+                                                        SnackBar(
+                                                          content: Text(
+                                                            'Could not reply: $e',
+                                                          ),
+                                                        ),
+                                                      );
+                                                    }
+                                                  } else if (action ==
+                                                      'delete') {
+                                                    final confirmed = await showDialog<bool>(
+                                                      context: context,
+                                                      builder: (dialogContext) => AlertDialog(
+                                                        backgroundColor:
+                                                            Colors.white,
+                                                        title: const Text(
+                                                          'Delete comment?',
+                                                        ),
+                                                        content: const Text(
+                                                          'This action cannot be undone.',
+                                                        ),
+                                                        actions: [
+                                                          TextButton(
+                                                            onPressed: () =>
+                                                                Navigator.pop(
+                                                                  dialogContext,
+                                                                  false,
+                                                                ),
+                                                            child: const Text(
+                                                              'Cancel',
+                                                            ),
+                                                          ),
+                                                          TextButton(
+                                                            onPressed: () =>
+                                                                Navigator.pop(
+                                                                  dialogContext,
+                                                                  true,
+                                                                ),
+                                                            child: const Text(
+                                                              'Delete',
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    );
+
+                                                    if (confirmed != true ||
+                                                        !context.mounted)
+                                                      return;
+
+                                                    try {
+                                                      await widget.postService
+                                                          .deleteComment(
+                                                            postId: _postId,
+                                                            commentId:
+                                                                commentId,
+                                                          );
+
+                                                      if (!context.mounted)
+                                                        return;
+
+                                                      setSheetState(() {
+                                                        comments.removeAt(
+                                                          index,
+                                                        );
+                                                      });
+
+                                                      if (mounted) {
+                                                        setState(() {
+                                                          _commentCount =
+                                                              comments.length;
+                                                        });
+                                                      }
+                                                    } catch (e) {
+                                                      if (!context.mounted)
+                                                        return;
+                                                      ScaffoldMessenger.of(
+                                                        context,
+                                                      ).showSnackBar(
+                                                        SnackBar(
+                                                          content: Text(
+                                                            'Could not delete comment: $e',
+                                                          ),
+                                                        ),
+                                                      );
+                                                    }
+                                                  }
+                                                },
+                                                itemBuilder: (context) => [
+                                                  if (isMyComment) ...[
+                                                    PopupMenuItem<String>(
+                                                      value: 'edit',
+                                                      child: Row(
+                                                        children: [
+                                                          SvgPicture.asset(
+                                                            'assets/icons/edit.svg',
+                                                            width: 19,
+                                                            height: 19,
+                                                          ),
+                                                          SizedBox(width: 10),
+                                                          Text('Edit'),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                    PopupMenuItem<String>(
+                                                      value: 'reply',
+                                                      child: Row(
+                                                        children: [
+                                                          SvgPicture.asset(
+                                                            'assets/icons/reply.svg',
+                                                            width: 19,
+                                                            height: 19,
+                                                          ),
+                                                          SizedBox(width: 10),
+                                                          Text('Reply'),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ],
+                                                  PopupMenuItem<String>(
+                                                    value: 'delete',
+                                                    child: Row(
+                                                      children: [
+                                                        SvgPicture.asset(
+                                                          'assets/icons/delete.svg',
+                                                          width: 19,
+                                                          height: 19,
+                                                        ),
+                                                        SizedBox(width: 10),
+                                                        Text('Delete  '),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+
+                                          if (replies.isNotEmpty)
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                left: 16,
+                                                top: 12,
+                                              ),
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  // REPLIES HEADER
+                                                  Row(
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    children: [
+                                                      SvgPicture.asset(
+                                                        'assets/icons/reply.svg',
+                                                        width: 17,
+                                                        height: 17,
+                                                      ),
+                                                      const SizedBox(width: 6),
+                                                      const Text(
+                                                        'Replies',
+                                                        style: TextStyle(
+                                                          fontSize: 12,
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                          color: Color(
+                                                            0xFF777777,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  const SizedBox(height: 8),
+
+                                                  ...replies.map((reply) {
+                                                    final replyUserData =
+                                                        reply['user'];
+
+                                                    final replyUser =
+                                                        replyUserData is Map
+                                                        ? Map<
+                                                            String,
+                                                            dynamic
+                                                          >.from(replyUserData)
+                                                        : <String, dynamic>{};
+
+                                                    final replyId = _idOf(
+                                                      reply['_id'] ??
+                                                          reply['id'],
+                                                    );
+
+                                                    final replyUserId = _idOf(
+                                                      replyUser['_id'] ??
+                                                          replyUser['id'],
+                                                    );
+
+                                                    final isMyReply =
+                                                        replyUserId ==
+                                                        widget.currentUserId;
+
+                                                    final replyUsername =
+                                                        replyUser['username']
+                                                            ?.toString() ??
+                                                        'Student';
+
+                                                    final replyPicture =
+                                                        (replyUser['profilePicture'] ??
+                                                                '')
+                                                            .toString()
+                                                            .trim();
+
+                                                    return Container(
+                                                      width: double.infinity,
+                                                      margin:
+                                                          const EdgeInsets.only(
+                                                            bottom: 8,
+                                                          ),
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                            10,
+                                                          ),
+                                                      decoration: BoxDecoration(
+                                                        color: Colors.white,
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              12,
+                                                            ),
+                                                      ),
+                                                      child: Row(
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start,
+                                                        children: [
+                                                          // REPLY PROFILE PICTURE
+                                                          ClipOval(
+                                                            child: SizedBox(
+                                                              width: 36,
+                                                              height: 36,
+                                                              child:
+                                                                  replyPicture
+                                                                      .isNotEmpty
+                                                                  ? Image.network(
+                                                                      replyPicture,
+                                                                      fit: BoxFit
+                                                                          .cover,
+                                                                      errorBuilder: (_, __, ___) => Container(
+                                                                        color: const Color(
+                                                                          0xFFFFF0BD,
+                                                                        ),
+                                                                        child: const Icon(
+                                                                          Icons
+                                                                              .person,
+                                                                          color: Color(
+                                                                            0xFF8A6800,
+                                                                          ),
+                                                                          size:
+                                                                              21,
+                                                                        ),
+                                                                      ),
+                                                                    )
+                                                                  : Container(
+                                                                      color: const Color(
+                                                                        0xFFFFF0BD,
+                                                                      ),
+                                                                      child: const Icon(
+                                                                        Icons
+                                                                            .person,
+                                                                        color: Color(
+                                                                          0xFF8A6800,
+                                                                        ),
+                                                                        size:
+                                                                            21,
+                                                                      ),
+                                                                    ),
+                                                            ),
+                                                          ),
+
+                                                          const SizedBox(
+                                                            width: 10,
+                                                          ),
+
+                                                          // REPLY USERNAME AND TEXT
+                                                          Expanded(
+                                                            child: Column(
+                                                              crossAxisAlignment:
+                                                                  CrossAxisAlignment
+                                                                      .start,
+                                                              children: [
+                                                                Text(
+                                                                  replyUsername,
+                                                                  maxLines: 1,
+                                                                  overflow:
+                                                                      TextOverflow
+                                                                          .ellipsis,
+                                                                  style: const TextStyle(
+                                                                    fontSize:
+                                                                        12,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w700,
+                                                                    color: Color(
+                                                                      0xFF202124,
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                                const SizedBox(
+                                                                  height: 5,
+                                                                ),
+                                                                Text(
+                                                                  reply['content']
+                                                                          ?.toString() ??
+                                                                      '',
+                                                                  style: const TextStyle(
+                                                                    fontSize:
+                                                                        13,
+                                                                    height: 1.4,
+                                                                    color: Color(
+                                                                      0xFF444444,
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ),
+
+                                                          // REPLY OPTIONS
+                                                          if (isMyReply)
+                                                            PopupMenuButton<
+                                                              String
+                                                            >(
+                                                              tooltip:
+                                                                  'Reply options',
+                                                              padding:
+                                                                  EdgeInsets
+                                                                      .zero,
+                                                              shape: RoundedRectangleBorder(
+                                                                borderRadius:
+                                                                    BorderRadius.circular(
+                                                                      12,
+                                                                    ),
+                                                              ),
+                                                              constraints:
+                                                                  const BoxConstraints(
+                                                                    minWidth:
+                                                                        40,
+                                                                    minHeight:
+                                                                        40,
+                                                                  ),
+                                                              icon: const Icon(
+                                                                Icons
+                                                                    .more_horiz,
+                                                                size: 21,
+                                                                color: Color(
+                                                                  0xFF777777,
+                                                                ),
+                                                              ),
+                                                              color:
+                                                                  Colors.white,
+                                                              onSelected: (action) async {
+                                                                if (action ==
+                                                                    'edit') {
+                                                                  final editedText = await showDialog<String>(
+                                                                    context:
+                                                                        context,
+                                                                    builder: (_) => CommentTextDialog(
+                                                                      title:
+                                                                          'Edit reply',
+                                                                      initialText:
+                                                                          reply['content']
+                                                                              ?.toString() ??
+                                                                          '',
+                                                                      hintText:
+                                                                          'Edit your reply...',
+                                                                      actionLabel:
+                                                                          'Save',
+                                                                    ),
+                                                                  );
+
+                                                                  if (!context
+                                                                          .mounted ||
+                                                                      editedText ==
+                                                                          null ||
+                                                                      editedText
+                                                                          .trim()
+                                                                          .isEmpty) {
+                                                                    return;
+                                                                  }
+
+                                                                  try {
+                                                                    await widget.postService.editReply(
+                                                                      postId:
+                                                                          _postId,
+                                                                      commentId:
+                                                                          commentId,
+                                                                      replyId:
+                                                                          replyId,
+                                                                      text: editedText
+                                                                          .trim(),
+                                                                    );
+
+                                                                    final refreshed = await widget
+                                                                        .postService
+                                                                        .getComments(
+                                                                          _postId,
+                                                                        );
+
+                                                                    if (!context
+                                                                        .mounted)
+                                                                      return;
+
+                                                                    setSheetState(() {
+                                                                      comments =
+                                                                          refreshed;
+                                                                    });
+                                                                  } catch (e) {
+                                                                    if (!context
+                                                                        .mounted)
+                                                                      return;
+
+                                                                    ScaffoldMessenger.of(
+                                                                      context,
+                                                                    ).showSnackBar(
+                                                                      SnackBar(
+                                                                        content:
+                                                                            Text(
+                                                                              'Could not edit reply: $e',
+                                                                            ),
+                                                                      ),
+                                                                    );
+                                                                  }
+                                                                } else if (action ==
+                                                                    'delete') {
+                                                                  final confirmed = await showDialog<bool>(
+                                                                    context:
+                                                                        context,
+                                                                    builder:
+                                                                        (
+                                                                          dialogContext,
+                                                                        ) => AlertDialog(
+                                                                          backgroundColor:
+                                                                              Colors.white,
+                                                                          title: const Text(
+                                                                            'Delete reply?',
+                                                                          ),
+                                                                          content: const Text(
+                                                                            'This action cannot be undone.',
+                                                                          ),
+                                                                          actions: [
+                                                                            TextButton(
+                                                                              onPressed: () => Navigator.pop(
+                                                                                dialogContext,
+                                                                                false,
+                                                                              ),
+                                                                              child: const Text(
+                                                                                'Cancel',
+                                                                              ),
+                                                                            ),
+                                                                            TextButton(
+                                                                              onPressed: () => Navigator.pop(
+                                                                                dialogContext,
+                                                                                true,
+                                                                              ),
+                                                                              child: const Text(
+                                                                                'Delete   ',
+                                                                              ),
+                                                                            ),
+                                                                          ],
+                                                                        ),
+                                                                  );
+
+                                                                  if (confirmed !=
+                                                                          true ||
+                                                                      !context
+                                                                          .mounted) {
+                                                                    return;
+                                                                  }
+
+                                                                  try {
+                                                                    await widget.postService.deleteReply(
+                                                                      postId:
+                                                                          _postId,
+                                                                      commentId:
+                                                                          commentId,
+                                                                      replyId:
+                                                                          replyId,
+                                                                    );
+
+                                                                    final refreshed = await widget
+                                                                        .postService
+                                                                        .getComments(
+                                                                          _postId,
+                                                                        );
+
+                                                                    if (!context
+                                                                        .mounted)
+                                                                      return;
+
+                                                                    setSheetState(() {
+                                                                      comments =
+                                                                          refreshed;
+                                                                    });
+                                                                  } catch (e) {
+                                                                    if (!context
+                                                                        .mounted)
+                                                                      return;
+
+                                                                    ScaffoldMessenger.of(
+                                                                      context,
+                                                                    ).showSnackBar(
+                                                                      SnackBar(
+                                                                        content:
+                                                                            Text(
+                                                                              'Could not delete reply: $e',
+                                                                            ),
+                                                                      ),
+                                                                    );
+                                                                  }
+                                                                }
+                                                              },
+                                                              itemBuilder: (_) => [
+                                                                PopupMenuItem<
+                                                                  String
+                                                                >(
+                                                                  value: 'edit',
+                                                                  child: Row(
+                                                                    children: [
+                                                                      SvgPicture.asset(
+                                                                        'assets/icons/edit.svg',
+                                                                        width:
+                                                                            19,
+                                                                        height:
+                                                                            19,
+                                                                      ),
+                                                                      SizedBox(
+                                                                        width:
+                                                                            10,
+                                                                      ),
+                                                                      Text(
+                                                                        'Edit   ',
+                                                                      ),
+                                                                    ],
+                                                                  ),
+                                                                ),
+                                                                PopupMenuItem<
+                                                                  String
+                                                                >(
+                                                                  value:
+                                                                      'delete',
+                                                                  child: Row(
+                                                                    children: [
+                                                                      SvgPicture.asset(
+                                                                        'assets/icons/delete.svg',
+                                                                        width:
+                                                                            19,
+                                                                        height:
+                                                                            19,
+                                                                      ),
+                                                                      SizedBox(
+                                                                        width:
+                                                                            10,
+                                                                      ),
+                                                                      Text(
+                                                                        'Delete',
+                                                                      ),
+                                                                    ],
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                        ],
+                                                      ),
+                                                    );
+                                                  }),
+                                                ],
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                ),
+                        ),
+                      ),
+
+                      const Divider(height: 1, color: Color(0xFFEEEEEE)),
+
+                      // WRITE COMMENT FIELD
+                      Padding(
+                        padding: EdgeInsets.fromLTRB(
+                          12,
+                          10,
+                          12,
+                          16 + MediaQuery.of(context).padding.bottom,
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: controller,
+                                textCapitalization:
+                                    TextCapitalization.sentences,
+                                minLines: 1,
+                                maxLines: 4,
+                                decoration: InputDecoration(
+                                  hintText: 'Write a comment...',
+                                  hintStyle: const TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 14,
+                                  ),
+                                  filled: true,
+                                  fillColor: const Color(0xFFF2F2F2),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(24),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(24),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(24),
+                                    borderSide: const BorderSide(
+                                      color: Color(0xFFFCC001),
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 11,
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(width: 8),
+
+                            // SEND BUTTON
+                            IconButton(
+                              onPressed: sending
+                                  ? null
+                                  : () async {
+                                      final text = controller.text.trim();
+
+                                      if (text.isEmpty) return;
+
+                                      setSheetState(() {
+                                        sending = true;
+                                      });
+
+                                      try {
+                                        final result = await widget.postService
+                                            .addComment(
+                                              postId: _postId,
+                                              text: text,
+                                            );
+
+                                        final newComment = result['comment'];
+
+                                        if (newComment is Map &&
+                                            context.mounted) {
+                                          setSheetState(() {
+                                            comments.insert(
+                                              0,
+                                              Map<String, dynamic>.from(
+                                                newComment,
+                                              ),
+                                            );
+                                          });
+
+                                          controller.clear();
+
+                                          if (mounted) {
+                                            setState(() {
+                                              _commentCount =
+                                                  result['commentsCount']
+                                                      as int? ??
+                                                  comments.length;
+                                            });
+                                          }
+                                        }
+                                      } catch (e) {
+                                        if (!context.mounted) return;
+
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'Could not add comment: $e',
+                                            ),
+                                          ),
+                                        );
+                                      } finally {
+                                        if (context.mounted) {
+                                          setSheetState(() {
+                                            sending = false;
+                                          });
+                                        }
+                                      }
+                                    },
+                              icon: const Icon(
+                                Icons.send_rounded,
+                                color: Color(0xFFFCC001),
+                                size: 25,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          );
+        },
+      );
+    } finally {
+      controller.dispose();
+    }
+  }
+
+  Future<void> _showReportPostDialog() async {
+    final detailsController = TextEditingController();
+
+    const reasons = <String, String>{
+      'inappropriate': 'Inappropriate content',
+      'scam': 'Scam or fraud',
+      'spam': 'Spam or misleading content',
+      'harassment': 'Harassment or bullying',
+      'prohibited': 'Prohibited or unsafe service',
+      'other': 'Other',
+    };
+
+    String selectedReason = 'inappropriate';
+    bool isSubmitting = false;
+    String? errorMessage;
+
+    final submitted = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
+              title: const Text(
+                'Report post',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Why are you reporting this post?',
+                      style: TextStyle(color: Colors.black54),
+                    ),
+                    const SizedBox(height: 12),
+
+                    ...reasons.entries.map((entry) {
+                      return RadioListTile<String>(
+                        value: entry.key,
+                        groupValue: selectedReason,
+                        activeColor: const Color(0xfffcc001),
+                        contentPadding: EdgeInsets.zero,
+                        dense: true,
+                        title: Text(
+                          entry.value,
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                        onChanged: isSubmitting
+                            ? null
+                            : (value) {
+                                if (value == null) return;
+
+                                setDialogState(() {
+                                  selectedReason = value;
+                                  errorMessage = null;
+                                });
+                              },
+                      );
+                    }),
+
+                    const SizedBox(height: 12),
+
+                    TextField(
+                      controller: detailsController,
+                      maxLength: 1000,
+                      maxLines: 3,
+                      enabled: !isSubmitting,
+                      decoration: InputDecoration(
+                        hintText: 'Additional details (optional)',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: Color(0xfffcc001),
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    if (errorMessage != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        errorMessage!,
+                        style: const TextStyle(color: Colors.red, fontSize: 13),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isSubmitting
+                      ? null
+                      : () => Navigator.pop(dialogContext, false),
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(color: Colors.black54),
+                  ),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xfffcc001),
+                    foregroundColor: Colors.black,
+                    disabledBackgroundColor: Colors.amber.shade200,
+                  ),
+                  onPressed: isSubmitting
+                      ? null
+                      : () async {
+                          setDialogState(() {
+                            isSubmitting = true;
+                            errorMessage = null;
+                          });
+
+                          try {
+                            await widget.postService.reportPost(
+                              postId: _postId,
+                              reason: selectedReason,
+                              details: detailsController.text,
+                            );
+
+                            if (!dialogContext.mounted) return;
+
+                            Navigator.pop(dialogContext, true);
+                          } catch (e) {
+                            if (!dialogContext.mounted) return;
+
+                            setDialogState(() {
+                              isSubmitting = false;
+                              errorMessage = e is PostException
+                                  ? e.message
+                                  : 'Could not submit report. Please try again.';
+                            });
+                          }
+                        },
+                  child: isSubmitting
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.black,
+                          ),
+                        )
+                      : const Text('Submit report'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    detailsController.dispose();
+
+    if (!mounted || submitted != true) return;
+
+    ScaffoldMessenger.of(this.context).showSnackBar(
+      const SnackBar(content: Text('Report submitted successfully.')),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final dynamic userData = post['user'];
+
+    final String postUserId = _idOf(userData);
+    final bool isMyPost = postUserId == widget.currentUserId;
+
+    final Map<String, dynamic> user = userData is Map<String, dynamic>
+        ? userData
+        : userData is Map
+        ? Map<String, dynamic>.from(userData)
+        : {};
+
+    final String username = user['username']?.toString() ?? 'Student';
+    final String profilePicture = user['profilePicture']?.toString() ?? '';
+    final String category = post['category']?.toString() ?? 'Other';
+    final String caption = post['caption']?.toString() ?? '';
+
+    final List<dynamic> postMedia = post['media'] is List
+        ? post['media'] as List<dynamic>
+        : [];
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFEEEEEE), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.035),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // USER HEADER
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
+            child: Row(
+              children: [
+                _buildAvatar(profilePicture, username),
+
+                const SizedBox(width: 10),
+
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        username,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF202124),
+                        ),
+                      ),
+
+                      const SizedBox(height: 5),
+
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 9,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF7D6),
+                          borderRadius: BorderRadius.circular(7),
+                        ),
+                        child: Text(
+                          category,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFF8A6800),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                PopupMenuButton<String>(
+                  tooltip: 'Post options',
+                  color: Colors.white,
+                  elevation: 8,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  icon: const Icon(
+                    Icons.more_horiz,
+                    color: Color(0xFF777777),
+                    size: 24,
+                  ),
+
+                  onSelected: (action) async {
+                    itemBuilder:
+                    (context) => [
+                      PopupMenuItem<String>(
+                        value: 'edit',
+                        child: Row(
+                          children: [
+                            SvgPicture.asset(
+                              'assets/icons/edit.svg',
+                              width: 20,
+                              height: 20,
+                            ),
+                            const SizedBox(width: 12),
+                            const Text('Edit post'),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem<String>(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            SvgPicture.asset(
+                              'assets/icons/delete.svg',
+                              width: 20,
+                              height: 20,
+                            ),
+                            const SizedBox(width: 12),
+                            const Text('Delete post'),
+                          ],
+                        ),
+                      ),
+                    ];
+                    switch (action) {
+                      case 'edit':
+                        final result =
+                            await Navigator.push<Map<String, dynamic>>(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => CreatePostPage(
+                                  postService: widget.postService,
+                                  post: widget.post,
+                                ),
+                              ),
+                            );
+
+                        if (!context.mounted) return;
+
+                        if (result != null) {
+                          // Refresh the post or notify HomePage to reload the feed.
+                        }
+                        break;
+
+                      case 'delete':
+                        final confirmed = await showDialog<bool>(
+                          context: context,
+                          builder: (dialogContext) => AlertDialog(
+                            backgroundColor: Colors.white,
+                            title: const Text('Delete post?'),
+                            content: const Text(
+                              'Are you sure you want to delete this post? This action cannot be undone.',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.pop(dialogContext, false),
+                                child: const Text(
+                                  'Cancel',
+                                  style: TextStyle(color: Colors.black),
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.pop(dialogContext, true),
+                                child: const Text(
+                                  'Delete',
+                                  style: TextStyle(color: Colors.red),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+
+                        if (confirmed != true || !context.mounted) {
+                          break;
+                        }
+
+                        try {
+                          await widget.postService.deletePost(_postId);
+
+                          if (!context.mounted) break;
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Post deleted successfully.'),
+                            ),
+                          );
+                        } catch (e) {
+                          if (!context.mounted) break;
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Could not delete post: $e'),
+                            ),
+                          );
+                        }
+                        break;
+
+                      case 'report':
+                        await _showReportPostDialog();
+                        break;
+
+                      case 'block':
+                        // TODO: Ask for confirmation, then block the user.
+                        break;
+                    }
+                  },
+
+                  itemBuilder: (context) => [
+                    if (isMyPost) ...[
+                      const PopupMenuItem<String>(
+                        value: 'edit',
+                        child: Row(
+                          children: [
+                            Icon(Icons.edit_outlined, size: 19),
+                            SizedBox(width: 10),
+                            Text('Edit post'),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem<String>(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.delete_outline,
+                              color: Colors.red,
+                              size: 19,
+                            ),
+                            SizedBox(width: 10),
+                            Text(
+                              'Delete post',
+                              style: TextStyle(color: Colors.red),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ] else ...[
+                      const PopupMenuItem<String>(
+                        value: 'report',
+                        child: Row(
+                          children: [
+                            Icon(Icons.flag_outlined, size: 19),
+                            SizedBox(width: 10),
+                            Text('Report post'),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem<String>(
+                        value: 'block',
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.block_outlined,
+                              color: Colors.red,
+                              size: 19,
+                            ),
+                            SizedBox(width: 10),
+                            Text(
+                              'Block user',
+                              style: TextStyle(color: Colors.red),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          // POST CAPTION
+          if (caption.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+              child: Text(
+                caption,
+                style: const TextStyle(
+                  fontSize: 15,
+                  height: 1.5,
+                  color: Color(0xFF333333),
+                ),
+              ),
+            ),
+
+          // POST MEDIA (PHOTOS AND VIDEOS)
+          if (postMedia.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: postMedia.length == 1
+                  ? _buildMediaItem(
+                      context,
+                      postMedia.first,
+                      double.infinity,
+                      180,
+                    )
+                  : SizedBox(
+                      height: 180,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: postMedia.length,
+                        separatorBuilder: (_, __) => const SizedBox(width: 8),
+                        itemBuilder: (context, index) {
+                          return _buildMediaItem(
+                            context,
+                            postMedia[index],
+                            240,
+                            180,
+                          );
+                        },
+                      ),
+                    ),
+            ),
+
+          // DIVIDER
+          const Padding(
+            padding: EdgeInsets.only(top: 10),
+            child: Divider(height: 1, thickness: 1, color: Color(0xFFF0F0F0)),
+          ),
+
+          // LIKE AND COMMENT COUNTS
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 10),
+            child: Row(
+              children: [
+                // LIKE ICON
+                GestureDetector(
+                  onTap: _isLiking ? null : _toggleLike,
+                  child: SizedBox(
+                    width: 28,
+                    height: 28,
+                    child: SvgPicture.asset(
+                      _isLiked
+                          ? 'assets/icons/full_heart.svg'
+                          : 'assets/icons/empty_heart.svg',
+                      width: 25,
+                      height: 25,
+                      colorFilter: ColorFilter.mode(
+                        _isLiked ? Colors.red : const Color(0xFF666666),
+                        BlendMode.srcIn,
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(width: 8),
+
+                // LIKE COUNT
+                Text(
+                  '$_likeCount',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Color(0xFF666666),
+                  ),
+                ),
+
+                const Spacer(),
+
+                // COMMENT ICON
+                GestureDetector(
+                  onTap: _openComments,
+                  child: SizedBox(
+                    width: 28,
+                    height: 28,
+                    child: SvgPicture.asset(
+                      'assets/icons/comment.svg',
+                      width: 24,
+                      height: 24,
+                      colorFilter: const ColorFilter.mode(
+                        Color(0xFF666666),
+                        BlendMode.srcIn,
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(width: 8),
+
+                // COMMENT COUNT
+                Text(
+                  '$_commentCount',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Color(0xFF666666),
+                  ),
+                ),
+
+                const Spacer(),
+
+                // BOOKMARK ICON
+                GestureDetector(
+                  onTap: () {
+                    // Add bookmark functionality here later.
+                  },
+                  child: SizedBox(
+                    width: 28,
+                    height: 28,
+                    child: SvgPicture.asset(
+                      'assets/icons/send.svg',
+                      width: 24,
+                      height: 24,
+                      colorFilter: const ColorFilter.mode(
+                        Color(0xFF666666),
+                        BlendMode.srcIn,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMediaItem(
+    BuildContext context,
+    dynamic item,
+    double width,
+    double height,
+  ) {
+    if (item is! Map) {
+      return const SizedBox.shrink();
+    }
+
+    final String url = item['url']?.toString() ?? '';
+    final String type = item['type']?.toString() ?? 'image';
+
+    if (url.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final bool isVideo = type.toLowerCase() == 'video';
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => MediaViewerPage(url: url, isVideo: isVideo),
+          ),
+        );
+      },
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: SizedBox(
+          width: width,
+          height: height,
+          child: isVideo
+              ? Container(
+                  color: Colors.black,
+                  child: const Center(
+                    child: Icon(
+                      Icons.play_circle_fill,
+                      color: Colors.white,
+                      size: 58,
+                    ),
+                  ),
+                )
+              : Image.network(
+                  url,
+                  width: width,
+                  height: height,
+                  fit: BoxFit.cover,
+                  loadingBuilder: (context, child, progress) {
+                    if (progress == null) return child;
+
+                    return const Center(
+                      child: CircularProgressIndicator(color: accent),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      color: const Color(0xFFF5F5F5),
+                      alignment: Alignment.center,
+                      child: const Icon(
+                        Icons.broken_image_outlined,
+                        color: Colors.grey,
+                        size: 35,
+                      ),
+                    );
+                  },
+                ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAvatar(String imageUrl, String username) {
+    return CircleAvatar(
+      radius: 23,
+      backgroundColor: const Color(0xFFFFF2C2),
+      backgroundImage: imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
+      onBackgroundImageError: imageUrl.isNotEmpty
+          ? (exception, stackTrace) {}
+          : null,
+      child: imageUrl.isEmpty
+          ? Text(
+              username.isNotEmpty ? username[0].toUpperCase() : '?',
+              style: const TextStyle(
+                color: Color(0xFF8A6800),
+                fontWeight: FontWeight.w600,
+                fontSize: 16,
+              ),
+            )
+          : null,
+    );
+  }
+}
+
+class CommentTextDialog extends StatefulWidget {
+  final String title;
+  final String initialText;
+  final String hintText;
+  final String actionLabel;
+
+  const CommentTextDialog({
+    super.key,
+    required this.title,
+    this.initialText = '',
+    required this.hintText,
+    required this.actionLabel,
+  });
+
+  @override
+  State<CommentTextDialog> createState() => _CommentTextDialogState();
+}
+
+class _CommentTextDialogState extends State<CommentTextDialog> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialText);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: Colors.white,
+      title: Text(widget.title),
+      content: TextField(
+        controller: _controller,
+        cursorColor: Colors.black,
+        autofocus: true,
+        maxLength: 500,
+        maxLines: 4,
+        decoration: InputDecoration(
+          hintText: widget.hintText,
+
+          // Line color when the TextField is not selected
+          enabledBorder: const UnderlineInputBorder(
+            borderSide: BorderSide(color: Color(0xFf000000), width: 1.5),
+          ),
+
+          // Line color when the user taps the TextField
+          focusedBorder: const UnderlineInputBorder(
+            borderSide: BorderSide(
+              color: Color(0xFF000000), // Hands yellow
+              width: 1.5,
+            ),
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel', style: TextStyle(color: Colors.black)),
+        ),
+        TextButton(
+          onPressed: () {
+            Navigator.pop(context, _controller.text.trim());
+          },
+          child: Text(
+            widget.actionLabel,
+            style: const TextStyle(color: Color(0xFFFCC001)),
+          ),
+        ),
+      ],
+    );
+  }
+}
