@@ -299,7 +299,7 @@ class PostService {
   }) async {
     final response = await http.get(
       _uri(
-        '/api/posts/search',
+        '/posts/search',
         queryParameters: {
           'q': query.trim(),
           'page': '$page',

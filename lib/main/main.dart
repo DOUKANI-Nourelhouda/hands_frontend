@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-
 import 'package:hands/widgets/costombuttomnav.dart';
 import 'package:hands/main/home.dart';
 import 'package:hands/main/search.dart';
@@ -7,6 +5,9 @@ import 'package:hands/main/msgs.dart';
 import 'package:hands/main/profile.dart';
 import 'package:hands/main/createpost.dart';
 import 'package:hands/services/post_service.dart';
+import 'package:flutter/material.dart';
+import 'package:hands/services/auth_service.dart';
+import 'package:hands/services/group_service.dart';
 
 class MainScreen extends StatefulWidget {
   final PostService postService;
@@ -21,8 +22,58 @@ class _MainScreenState extends State<MainScreen> {
   int currentIndex = 0;
 
   final GlobalKey<HomePageState> homePageKey = GlobalKey<HomePageState>();
+  final AuthService _authService = AuthService();
 
+  Map<String, dynamic>? currentUser;
+  String? authToken;
+  GroupService? groupService;
+
+  bool isLoadingMessagesSetup = true;
+  String? messagesSetupError;
   late final List<Widget> pages;
+
+  Future<void> _initializeMessages() async {
+    try {
+      final results = await Future.wait([
+        _authService.getSavedToken(),
+        _authService.getCurrentUser(),
+      ]);
+
+      final token = results[0] as String?;
+      final userResult = results[1];
+
+      if (token == null || token.isEmpty) {
+        throw Exception('Please log in again.');
+      }
+
+      // Adjust this if getCurrentUser() returns a wrapper
+      // such as {"user": {...}} instead of the user map.
+      if (userResult is! Map<String, dynamic>) {
+        throw Exception('Could not retrieve your user information.');
+      }
+
+      final user = userResult;
+
+      if (!mounted) return;
+
+      setState(() {
+        authToken = token;
+        currentUser = user;
+        groupService = GroupService(
+          baseUrl: 'http://10.140.155.2:5000/api',
+          token: token,
+        );
+        isLoadingMessagesSetup = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        messagesSetupError = e.toString().replaceFirst('Exception: ', '');
+        isLoadingMessagesSetup = false;
+      });
+    }
+  }
 
   @override
   void initState() {
@@ -31,9 +82,11 @@ class _MainScreenState extends State<MainScreen> {
     pages = [
       HomePage(key: homePageKey, postService: widget.postService),
       SearchPage(postService: widget.postService),
-      const MsgsPage(),
+      const SizedBox.shrink(), // Messages placeholder
       const ProfilePage(),
     ];
+
+    _initializeMessages();
   }
 
   Future<void> _openCreatePost() async {

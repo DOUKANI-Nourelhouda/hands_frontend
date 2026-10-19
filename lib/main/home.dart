@@ -212,7 +212,23 @@ class HomePageState extends State<HomePage> {
         return PostWidget(
           key: ValueKey(posts[index]['_id']),
           post: posts[index],
-          postService: _postService!,
+          postService: widget.postService,
+          onPostReported: (postId) {
+            setState(() {
+              posts.removeWhere((post) => post['_id']?.toString() == postId);
+            });
+          },
+          onPostUpdated: (updatedPost) {
+            setState(() {
+              final index = posts.indexWhere(
+                (p) => p['_id']?.toString() == updatedPost['_id']?.toString(),
+              );
+
+              if (index != -1) {
+                posts[index] = updatedPost;
+              }
+            });
+          },
           currentUserId: _currentUserId,
         );
       },

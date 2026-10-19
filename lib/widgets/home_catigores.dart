@@ -11,9 +11,9 @@ class HomeCategories extends StatelessWidget {
     required this.onCategorySelected,
   });
 
-  static const Color accent = Color(0xFFFCC001);
+  static const Color accent = Color(0xfffcc001);
 
-  final List<Map<String, String>> categories = const [
+  static const List<Map<String, String>> categories = [
     {'name': 'All', 'icon': 'assets/icons/all.svg'},
     {'name': 'Food', 'icon': 'assets/icons/food.svg'},
     {'name': 'Beauty', 'icon': 'assets/icons/beauty.svg'},
@@ -37,6 +37,12 @@ class HomeCategories extends StatelessWidget {
     {'name': 'Projects', 'icon': 'assets/icons/projects.svg'},
     {'name': 'Programming', 'icon': 'assets/icons/programming.svg'},
     {'name': 'Trips', 'icon': 'assets/icons/trips.svg'},
+    {'name': 'Lost & Found', 'icon': 'assets/icons/losts&founds.svg'},
+    {
+      'name': 'Rentals & Borrowing',
+      'icon': 'assets/icons/rentals&borrowing.svg',
+    },
+    {'name': 'Questions & Answers', 'icon': 'assets/icons/q&a.svg'},
     {'name': 'Other', 'icon': 'assets/icons/others.svg'},
   ];
 
@@ -52,50 +58,54 @@ class HomeCategories extends StatelessWidget {
         separatorBuilder: (_, __) => const SizedBox(width: 14),
         itemBuilder: (context, index) {
           final category = categories[index];
-          final isSelected = index == 0;
+          final name = category['name']!;
 
-          return Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? const Color(0xfffcc001)
-                      : const Color(0xFFF5F5F5),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: isSelected
-                        ? const Color(0xfffcc001)
-                        : const Color(0xFFEEEEEE),
-                    width: 2,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SvgPicture.asset(
-                      category['icon']!,
-                      width: 22,
-                      height: 22,
-                      color: isSelected ? Color(0xffffffff) : Color(0xff333333),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      category['name']!,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: isSelected
-                            ? FontWeight.w600
-                            : FontWeight.w400,
-                        color: isSelected
-                            ? Colors.white
-                            : const Color(0xff333333),
-                      ),
-                    ),
-                  ],
+          // The selected category now comes from HomePageState.
+          final isSelected = name == (selectedCategory ?? 'All');
+
+          return GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              onCategorySelected(name == 'All' ? null : name);
+            },
+            child: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: isSelected ? accent : const Color(0xFFF5F5F5),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: isSelected ? accent : const Color(0xFFEEEEEE),
+                  width: 2,
                 ),
               ),
-            ],
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SvgPicture.asset(
+                    category['icon']!,
+                    width: 22,
+                    height: 22,
+                    colorFilter: ColorFilter.mode(
+                      isSelected ? Colors.white : const Color(0xff333333),
+                      BlendMode.srcIn,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    name,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: isSelected
+                          ? FontWeight.w600
+                          : FontWeight.w400,
+                      color: isSelected
+                          ? Colors.white
+                          : const Color(0xff333333),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           );
         },
       ),

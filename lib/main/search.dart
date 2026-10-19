@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:hands/main/profile.dart';
 import 'package:hands/services/auth_service.dart';
 import 'package:hands/services/post_service.dart';
 import 'package:hands/widgets/postwidget.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:hands/services/user_service.dart';
+import 'dart:async';
+import 'package:hands/main/profile.dart';
 
 class SearchPage extends StatefulWidget {
   final PostService postService;
@@ -14,13 +18,20 @@ class SearchPage extends StatefulWidget {
 }
 
 class _SearchPageState extends State<SearchPage> {
+  List<Map<String, dynamic>> searchResults = [];
+
+  Timer? _searchDebounce;
+  int _searchRequestId = 0;
+
+  bool isSearching = false;
+  String? searchErrorMessage;
   static const Color accent = Color(0xfffcc001);
   static const Color textColor = Color(0xff333333);
 
   final TextEditingController _searchController = TextEditingController();
 
   final AuthService _authService = AuthService();
-
+  final UserService _userService = UserService();
   String selectedFilter = 'Posts';
   String searchQuery = '';
 
@@ -35,7 +46,7 @@ class _SearchPageState extends State<SearchPage> {
 
   final List<Map<String, String>> filters = const [
     {'name': 'Posts', 'icon': 'assets/icons/posts.svg'},
-    {'name': 'Users', 'icon': 'assets/icons/profile.svg'},
+    {'name': 'Users', 'icon': 'assets/icons/user.svg'},
     {'name': 'Groups', 'icon': 'assets/icons/groups.svg'},
   ];
 
@@ -47,13 +58,67 @@ class _SearchPageState extends State<SearchPage> {
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
+    _searchRequestId++;
+
     _searchController.dispose();
+
     super.dispose();
   }
 
   Future<void> _initializeSearch() async {
     await _loadCurrentUser();
     await _loadPosts();
+  }
+
+  Future<void> _searchUsers(String query, int requestId) async {
+    if (query.trim().isEmpty) return;
+
+    debugPrint('[USER SEARCH] Searching for: $query');
+
+    try {
+      final result = await _userService.searchUsers(
+        query: query,
+        page: 1,
+        limit: 20,
+      );
+
+      debugPrint('[USER SEARCH] API response: $result');
+
+      final rawUsers = result['users'];
+
+      final matchingUsers = rawUsers is List
+          ? rawUsers
+                .whereType<Map>()
+                .map((item) => Map<String, dynamic>.from(item))
+                .toList()
+          : <Map<String, dynamic>>[];
+
+      if (!mounted ||
+          requestId != _searchRequestId ||
+          selectedFilter != 'Users' ||
+          searchQuery != query.toLowerCase()) {
+        return;
+      }
+
+      setState(() {
+        users = matchingUsers;
+        isSearching = false;
+        searchErrorMessage = null;
+      });
+
+      debugPrint('[USER SEARCH] Found ${matchingUsers.length} users');
+    } catch (e, stackTrace) {
+      debugPrint('[USER SEARCH ERROR] $e');
+      debugPrint('$stackTrace');
+
+      if (!mounted || requestId != _searchRequestId) return;
+
+      setState(() {
+        isSearching = false;
+        searchErrorMessage = 'Could not search students. Please try again.';
+      });
+    }
   }
 
   Future<void> _loadCurrentUser() async {
@@ -116,41 +181,116 @@ class _SearchPageState extends State<SearchPage> {
     }
   }
 
+  List<Map<String, dynamic>> get filteredPosts {
+    return searchQuery.isEmpty ? posts : searchResults;
+  }
+
   void _onSearchChanged(String value) {
+    final query = value.trim();
+
+    _searchDebounce?.cancel();
+    final requestId = ++_searchRequestId;
+
     setState(() {
-      searchQuery = value.trim().toLowerCase();
+      searchQuery = query.toLowerCase();
+      searchResults = [];
+      users = [];
+      searchErrorMessage = null;
+      isSearching = query.isNotEmpty;
     });
+
+    if (query.isEmpty) {
+      setState(() {
+        isSearching = false;
+      });
+      return;
+    }
+
+    _searchDebounce = Timer(const Duration(milliseconds: 400), () {
+      if (selectedFilter == 'Users') {
+        _searchUsers(query, requestId);
+      } else if (selectedFilter == 'Posts') {
+        _searchPosts(query, requestId);
+      }
+    });
+  }
+
+  Future<void> _searchPosts(String query, int requestId) async {
+    try {
+      final result = await widget.postService.searchPosts(
+        query: query,
+        page: 1,
+        limit: 50,
+      );
+
+      final rawPosts = result['posts'] as List<dynamic>? ?? [];
+
+      final matchingPosts = rawPosts
+          .whereType<Map>()
+          .map((post) => Map<String, dynamic>.from(post))
+          .toList();
+
+      if (!mounted ||
+          requestId != _searchRequestId ||
+          searchQuery != query.toLowerCase()) {
+        return;
+      }
+
+      setState(() {
+        searchResults = matchingPosts;
+        isSearching = false;
+        searchErrorMessage = null;
+      });
+    } catch (e) {
+      if (!mounted || requestId != _searchRequestId) {
+        return;
+      }
+
+      setState(() {
+        isSearching = false;
+        searchErrorMessage = 'Search failed. Please try again.';
+      });
+
+      debugPrint('Backend search error: $e');
+    }
   }
 
   void _selectFilter(String filter) {
     FocusScope.of(context).unfocus();
 
+    if (selectedFilter == filter) return;
+
     setState(() {
       selectedFilter = filter;
+      searchResults = [];
+      users = [];
+      searchErrorMessage = null;
+      isSearching = false;
     });
-  }
 
-  List<Map<String, dynamic>> get filteredPosts {
-    if (searchQuery.isEmpty) return posts;
+    _searchDebounce?.cancel();
 
-    return posts.where((post) {
-      final title = (post['title'] ?? '').toString().toLowerCase();
-      final description = (post['description'] ?? '').toString().toLowerCase();
-      final category = (post['category'] ?? '').toString().toLowerCase();
+    // Invalidate any previous search request.
+    final requestId = ++_searchRequestId;
 
-      final author = post['user'] is Map
-          ? Map<String, dynamic>.from(post['user'])
-          : post['user'] is String
-          ? <String, dynamic>{'username': post['user']}
-          : <String, dynamic>{};
+    if (searchQuery.trim().isEmpty) return;
 
-      final username = (author['username'] ?? '').toString().toLowerCase();
+    final query = searchQuery.trim();
 
-      return title.contains(searchQuery) ||
-          description.contains(searchQuery) ||
-          category.contains(searchQuery) ||
-          username.contains(searchQuery);
-    }).toList();
+    setState(() {
+      isSearching = filter == 'Posts' || filter == 'Users';
+    });
+
+    _searchDebounce = Timer(const Duration(milliseconds: 100), () {
+      if (filter == 'Users') {
+        _searchUsers(query, requestId);
+      } else if (filter == 'Posts') {
+        _searchPosts(query, requestId);
+      } else {
+        if (!mounted || requestId != _searchRequestId) return;
+        setState(() => isSearching = false);
+      }
+    });
   }
 
   @override
@@ -325,13 +465,40 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   Widget _buildPostResults() {
-    if (isLoading && posts.isEmpty) {
+    if (searchQuery.isNotEmpty && isSearching) {
       return const Center(child: CircularProgressIndicator(color: accent));
     }
 
-    if (errorMessage != null && posts.isEmpty) {
+    if (searchQuery.isNotEmpty && searchErrorMessage != null) {
       return _buildMessage(
-        icon: Icons.wifi_off_rounded,
+        icon: SvgPicture.asset(
+          'assets/icons/no_wifi.svg',
+          width: 60,
+          height: 60,
+          colorFilter: const ColorFilter.mode(
+            Color(0xffC4C4C4),
+            BlendMode.srcIn,
+          ),
+        ),
+        message: searchErrorMessage!,
+      );
+    }
+
+    if (searchQuery.isEmpty && isLoading && posts.isEmpty) {
+      return const Center(child: CircularProgressIndicator(color: accent));
+    }
+
+    if (searchQuery.isEmpty && errorMessage != null && posts.isEmpty) {
+      return _buildMessage(
+        icon: SvgPicture.asset(
+          'assets/icons/no_wifi.svg',
+          width: 60,
+          height: 60,
+          colorFilter: const ColorFilter.mode(
+            Color(0xffC4C4C4),
+            BlendMode.srcIn,
+          ),
+        ),
         message: errorMessage!,
         showRetry: true,
       );
@@ -341,7 +508,15 @@ class _SearchPageState extends State<SearchPage> {
 
     if (results.isEmpty) {
       return _buildMessage(
-        icon: Icons.search_off_rounded,
+        icon: SvgPicture.asset(
+          'assets/icons/post.svg',
+          width: 60,
+          height: 60,
+          colorFilter: const ColorFilter.mode(
+            Color(0xffC4C4C4),
+            BlendMode.srcIn,
+          ),
+        ),
         message: searchQuery.isEmpty
             ? 'No posts yet.'
             : 'No posts found for "$searchQuery".',
@@ -350,7 +525,19 @@ class _SearchPageState extends State<SearchPage> {
 
     return RefreshIndicator(
       color: accent,
-      onRefresh: _loadPosts,
+      onRefresh: searchQuery.isEmpty
+          ? _loadPosts
+          : () async {
+              _searchDebounce?.cancel();
+              final requestId = ++_searchRequestId;
+
+              setState(() {
+                isSearching = true;
+                searchErrorMessage = null;
+              });
+
+              await _searchPosts(searchQuery, requestId);
+            },
       child: ListView.builder(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
@@ -370,52 +557,98 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   Widget _buildUserResults() {
-    final results = users.where((user) {
-      final username = (user['username'] ?? '').toString().toLowerCase();
-      final name = (user['name'] ?? '').toString().toLowerCase();
+    if (isSearching) {
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xfffcc001)),
+      );
+    }
 
-      return searchQuery.isEmpty ||
-          username.contains(searchQuery) ||
-          name.contains(searchQuery);
-    }).toList();
+    if (searchErrorMessage != null) {
+      return Center(child: Text(searchErrorMessage!));
+    }
 
-    if (results.isEmpty) {
+    if (searchQuery.trim().isEmpty) {
       return _buildMessage(
-        icon: Icons.people_outline_rounded,
+        icon: SvgPicture.asset(
+          'assets/icons/empty_users.svg',
+          width: 52,
+          height: 52,
+        ),
         message: 'Search for students in your residence.',
-        subtitle: 'Connect your users search API to show results here.',
+        subtitle: 'Enter a username to find students.',
+      );
+    }
+
+    if (users.isEmpty) {
+      return _buildMessage(
+        icon: SvgPicture.asset(
+          'assets/icons/empty_users.svg',
+          width: 52,
+          height: 52,
+        ),
+        message: 'No students found.',
+        subtitle: 'Try searching for another username.',
       );
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: results.length,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: users.length,
       itemBuilder: (context, index) {
-        final user = results[index];
+        final user = users[index];
+        final username = user['username']?.toString() ?? 'Student';
+        final bio = user['bio']?.toString() ?? '';
+        final profilePicture = user['profilePicture']?.toString() ?? '';
 
-        return ListTile(
-          contentPadding: const EdgeInsets.symmetric(vertical: 4),
-          leading: CircleAvatar(
-            backgroundColor: const Color(0xFFFFF4CC),
-            backgroundImage: user['profilePicture'] != null
-                ? NetworkImage(user['profilePicture'].toString())
-                : null,
-            child: user['profilePicture'] == null
-                ? const Icon(Icons.person, color: accent)
-                : null,
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0xFFF0F0F0), width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.07),
+                blurRadius: 12,
+                spreadRadius: 1,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-          title: Text(
-            (user['username'] ?? user['name'] ?? 'Student').toString(),
-            style: const TextStyle(fontWeight: FontWeight.w600),
+          child: ListTile(
+            leading: CircleAvatar(
+              radius: 23,
+              backgroundColor: const Color(0xFFFFF2C2),
+              backgroundImage: profilePicture.isNotEmpty
+                  ? NetworkImage(profilePicture)
+                  : const AssetImage('assets/default_pfp.jpg') as ImageProvider,
+            ),
+            title: Text(
+              username,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF333333),
+              ),
+            ),
+            subtitle: bio.isNotEmpty ? Text(bio) : null,
+            onTap: () {
+              final userId = (user['_id'] ?? user['id'] ?? '').toString();
+
+              if (userId.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Could not open this profile.')),
+                );
+                return;
+              }
+
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => ProfilePage(userId: userId)),
+              );
+            },
           ),
-          subtitle: Text(
-            (user['bio'] ?? 'Hands student').toString(),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          onTap: () {
-            // Open the user's profile page here.
-          },
         );
       },
     );
@@ -433,7 +666,15 @@ class _SearchPageState extends State<SearchPage> {
 
     if (results.isEmpty) {
       return _buildMessage(
-        icon: Icons.groups_outlined,
+        icon: SvgPicture.asset(
+          'assets/icons/groups.svg',
+          width: 60,
+          height: 60,
+          colorFilter: const ColorFilter.mode(
+            Color(0xffC4C4C4),
+            BlendMode.srcIn,
+          ),
+        ),
         message: 'Discover student groups.',
         subtitle: 'Connect your groups API to show results here.',
       );
@@ -469,7 +710,7 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   Widget _buildMessage({
-    required IconData icon,
+    required Widget icon,
     required String message,
     String? subtitle,
     bool showRetry = false,
@@ -478,7 +719,7 @@ class _SearchPageState extends State<SearchPage> {
       physics: const AlwaysScrollableScrollPhysics(),
       children: [
         const SizedBox(height: 100),
-        Icon(icon, size: 52, color: const Color(0xffC4C4C4)),
+        icon,
         const SizedBox(height: 16),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),

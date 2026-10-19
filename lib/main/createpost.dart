@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/post_service.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:hands/widgets/catigory_dropdown.dart';
+import 'dart:io';
 
 class CreatePostPage extends StatefulWidget {
   final PostService postService;
@@ -120,6 +121,9 @@ class _CreatePostPageState extends State<CreatePostPage> {
     'Projects',
     'Programming',
     'Trips',
+    'Lost & Found',
+    'Rentals & Borrowing',
+    'Questions & Answers',
     'Other',
   ];
 
@@ -336,76 +340,212 @@ class _CreatePostPageState extends State<CreatePostPage> {
               const SizedBox(height: 12),
 
               // Existing media from the post
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: List.generate(_existingMedia.length, (index) {
-                  final item = _existingMedia[index];
-                  final url = item['url']?.toString() ?? '';
-                  final type = item['type']?.toString() ?? '';
-                  final isVideo = type.toLowerCase().contains('video');
 
-                  return Stack(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: SizedBox(
-                          width: 120,
-                          height: 120,
-                          child: isVideo
-                              ? Container(
-                                  color: Colors.black87,
-                                  child: const Center(
-                                    child: Icon(
-                                      Icons.play_circle_outline,
-                                      color: Colors.white,
-                                      size: 45,
-                                    ),
-                                  ),
-                                )
-                              : Image.network(
-                                  url,
-                                  width: 120,
-                                  height: 120,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) =>
-                                      const ColoredBox(
-                                        color: Color(0xFFF2F2F2),
+              // EXISTING MEDIA FROM THE POST
+              if (_existingMedia.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Existing media',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  height: 130,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _existingMedia.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 10),
+                    itemBuilder: (context, index) {
+                      final item = _existingMedia[index];
+                      final url = item['url']?.toString() ?? '';
+                      final type = item['type']?.toString().toLowerCase() ?? '';
+                      final isVideo = type.contains('video');
+
+                      return Stack(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: SizedBox(
+                              width: 120,
+                              height: 120,
+                              child: isVideo
+                                  ? Container(
+                                      color: Colors.black87,
+                                      child: const Center(
                                         child: Icon(
-                                          Icons.broken_image_outlined,
+                                          Icons.play_circle_outline,
+                                          color: Colors.white,
+                                          size: 45,
                                         ),
                                       ),
-                                ),
-                        ),
-                      ),
-                      Positioned(
-                        top: 5,
-                        right: 5,
-                        child: GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _existingMedia.removeAt(index);
-                            });
-                          },
-                          child: Container(
-                            width: 28,
-                            height: 28,
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.close,
-                              size: 19,
-                              color: Colors.redAccent,
+                                    )
+                                  : Image.network(
+                                      url,
+                                      width: 120,
+                                      height: 120,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) =>
+                                          const SizedBox(
+                                            width: 120,
+                                            height: 120,
+                                            child: ColoredBox(
+                                              color: Color(0xFFF2F2F2),
+                                              child: Icon(
+                                                Icons.broken_image_outlined,
+                                              ),
+                                            ),
+                                          ),
+                                    ),
                             ),
                           ),
-                        ),
-                      ),
-                    ],
-                  );
-                }),
-              ),
+                          Positioned(
+                            top: 5,
+                            right: 5,
+                            child: GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _existingMedia.removeAt(index);
+                                });
+                              },
+                              child: Container(
+                                width: 28,
+                                height: 28,
+                                decoration: const BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.close,
+                                  size: 19,
+                                  color: Colors.redAccent,
+                                ),
+                              ),
+                            ),
+                          ),
+                          if (isVideo)
+                            const Positioned(
+                              bottom: 5,
+                              left: 5,
+                              child: Icon(
+                                Icons.videocam,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                            ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ],
+
+              // NEWLY SELECTED MEDIA
+              if (_selectedMedia.isNotEmpty) ...[
+                const SizedBox(height: 15),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'New media',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  height: 130,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _selectedMedia.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 10),
+                    itemBuilder: (context, index) {
+                      final file = _selectedMedia[index];
+                      final name = file.name.toLowerCase();
+                      final isVideo = [
+                        '.mp4',
+                        '.mov',
+                        '.avi',
+                        '.mkv',
+                        '.webm',
+                        '.3gp',
+                        '.m4v',
+                      ].any((extension) => name.endsWith(extension));
+
+                      return Stack(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: SizedBox(
+                              width: 120,
+                              height: 120,
+                              child: isVideo
+                                  ? Container(
+                                      color: Colors.black87,
+                                      child: const Center(
+                                        child: Icon(
+                                          Icons.play_circle_outline,
+                                          color: Colors.white,
+                                          size: 45,
+                                        ),
+                                      ),
+                                    )
+                                  : Image.file(
+                                      File(file.path),
+                                      width: 120,
+                                      height: 120,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) =>
+                                          const SizedBox(
+                                            width: 120,
+                                            height: 120,
+                                            child: ColoredBox(
+                                              color: Color(0xFFF2F2F2),
+                                              child: Icon(
+                                                Icons.broken_image_outlined,
+                                              ),
+                                            ),
+                                          ),
+                                    ),
+                            ),
+                          ),
+                          Positioned(
+                            top: 5,
+                            right: 5,
+                            child: GestureDetector(
+                              onTap: () => _removeMedia(index),
+                              child: Container(
+                                width: 28,
+                                height: 28,
+                                decoration: const BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.close,
+                                  size: 19,
+                                  color: Colors.redAccent,
+                                ),
+                              ),
+                            ),
+                          ),
+                          if (isVideo)
+                            const Positioned(
+                              bottom: 5,
+                              left: 5,
+                              child: Icon(
+                                Icons.videocam,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                            ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ],
+
               const SizedBox(height: 10),
 
               const SizedBox(height: 60),
@@ -446,6 +586,43 @@ class _CreatePostPageState extends State<CreatePostPage> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildMediaPreview({
+    required bool isVideo,
+    required VoidCallback onRemove,
+    required Widget image,
+  }) {
+    return Stack(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: SizedBox(width: 120, height: 120, child: image),
+        ),
+        Positioned(
+          top: 5,
+          right: 5,
+          child: GestureDetector(
+            onTap: onRemove,
+            child: Container(
+              width: 28,
+              height: 28,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.close, size: 19, color: Colors.redAccent),
+            ),
+          ),
+        ),
+        if (isVideo)
+          const Positioned(
+            bottom: 5,
+            left: 5,
+            child: Icon(Icons.videocam, color: Colors.white, size: 20),
+          ),
+      ],
     );
   }
 }

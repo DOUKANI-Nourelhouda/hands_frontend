@@ -3,17 +3,23 @@ import 'package:hands/main/media_viewer_page.dart';
 import 'package:hands/services/post_service.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:hands/main/createpost.dart';
+import 'package:hands/services/user_service.dart';
 
 class PostWidget extends StatefulWidget {
   final Map<String, dynamic> post;
   final PostService postService;
   final String currentUserId;
-
+  final void Function(String postId)? onPostReported;
+  final void Function(Map<String, dynamic> post)? onPostUpdated;
+  final void Function(String userId)? onUserBlocked;
   const PostWidget({
     super.key,
     required this.post,
     required this.postService,
     required this.currentUserId,
+    this.onPostReported,
+    this.onPostUpdated,
+    this.onUserBlocked,
   });
 
   @override
@@ -39,6 +45,8 @@ class _PostWidgetState extends State<PostWidget> {
     return value?.toString() ?? '';
   }
 
+  final UserService userService = UserService();
+
   @override
   void initState() {
     super.initState();
@@ -51,6 +59,47 @@ class _PostWidgetState extends State<PostWidget> {
     _commentCount = comments.length;
 
     _isLiked = likes.any((like) => _idOf(like) == widget.currentUserId);
+  }
+
+  Future<bool> _showBlockUserDialog(String username) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text(
+            'Block user?',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          content: Text(
+            'Are you sure you want to block $username? '
+            'Their posts will no longer appear in your feed.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: Colors.black54),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('Block'),
+            ),
+          ],
+        );
+      },
+    );
+
+    return confirmed == true;
   }
 
   Future<void> _toggleLike() async {
@@ -580,31 +629,31 @@ class _PostWidgetState extends State<PostWidget> {
                                                       ),
                                                     ),
                                                     PopupMenuItem<String>(
-                                                      value: 'reply',
+                                                      value: 'delete',
                                                       child: Row(
                                                         children: [
                                                           SvgPicture.asset(
-                                                            'assets/icons/reply.svg',
+                                                            'assets/icons/delete.svg',
                                                             width: 19,
                                                             height: 19,
                                                           ),
                                                           SizedBox(width: 10),
-                                                          Text('Reply'),
+                                                          Text('Delete  '),
                                                         ],
                                                       ),
                                                     ),
                                                   ],
                                                   PopupMenuItem<String>(
-                                                    value: 'delete',
+                                                    value: 'reply',
                                                     child: Row(
                                                       children: [
                                                         SvgPicture.asset(
-                                                          'assets/icons/delete.svg',
+                                                          'assets/icons/reply.svg',
                                                           width: 19,
                                                           height: 19,
                                                         ),
                                                         SizedBox(width: 10),
-                                                        Text('Delete  '),
+                                                        Text('Reply'),
                                                       ],
                                                     ),
                                                   ),
@@ -1197,7 +1246,7 @@ class _PostWidgetState extends State<PostWidget> {
     }
   }
 
-  Future<void> _showReportPostDialog() async {
+  Future<bool?> _showReportPostDialog() async {
     final detailsController = TextEditingController();
 
     const reasons = <String, String>{
@@ -1221,9 +1270,11 @@ class _PostWidgetState extends State<PostWidget> {
           builder: (context, setDialogState) {
             return AlertDialog(
               backgroundColor: Colors.white,
+
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(15),
               ),
+
               title: const Text(
                 'Report post',
                 style: TextStyle(fontWeight: FontWeight.w700),
@@ -1267,8 +1318,8 @@ class _PostWidgetState extends State<PostWidget> {
 
                     TextField(
                       controller: detailsController,
-                      maxLength: 1000,
-                      maxLines: 3,
+                      maxLength: 500,
+                      maxLines: 6,
                       enabled: !isSubmitting,
                       decoration: InputDecoration(
                         hintText: 'Additional details (optional)',
@@ -1360,7 +1411,7 @@ class _PostWidgetState extends State<PostWidget> {
 
     detailsController.dispose();
 
-    if (!mounted || submitted != true) return;
+    if (!mounted || submitted != true) return false;
 
     ScaffoldMessenger.of(this.context).showSnackBar(
       const SnackBar(content: Text('Report submitted successfully.')),
@@ -1408,7 +1459,7 @@ class _PostWidgetState extends State<PostWidget> {
         children: [
           // USER HEADER
           Padding(
-            padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
+            padding: const EdgeInsets.fromLTRB(14, 10, 10, 5),
             child: Row(
               children: [
                 _buildAvatar(profilePicture, username),
@@ -1514,8 +1565,8 @@ class _PostWidgetState extends State<PostWidget> {
 
                         if (!context.mounted) return;
 
-                        if (result != null) {
-                          // Refresh the post or notify HomePage to reload the feed.
+                        if (result != null && mounted) {
+                          widget.onPostUpdated?.call(result);
                         }
                         break;
 
@@ -1576,10 +1627,53 @@ class _PostWidgetState extends State<PostWidget> {
 
                       case 'report':
                         await _showReportPostDialog();
+                        final reported = await _showReportPostDialog();
+
+                        if (reported == true && mounted) {
+                          widget.onPostReported?.call(_postId);
+                        }
                         break;
 
                       case 'block':
-                        // TODO: Ask for confirmation, then block the user.
+                        final confirmed = await _showBlockUserDialog(username);
+
+                        if (!confirmed || !mounted) break;
+
+                        final postUser = widget.post['user'];
+
+                        final String? userId = postUser is Map
+                            ? postUser['_id']?.toString()
+                            : postUser?.toString();
+
+                        if (userId == null || userId.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Could not identify this user.'),
+                            ),
+                          );
+                          break;
+                        }
+
+                        try {
+                          await userService.blockUser(userId);
+
+                          if (!mounted) break;
+
+                          widget.onUserBlocked?.call(userId);
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('$username has been blocked.'),
+                            ),
+                          );
+                        } catch (e) {
+                          if (!mounted) break;
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Could not block user: $e')),
+                          );
+                        }
+
                         break;
                     }
                   },
@@ -1671,10 +1765,12 @@ class _PostWidgetState extends State<PostWidget> {
                       context,
                       postMedia.first,
                       double.infinity,
-                      180,
+                      300,
+                      0,
+                      postMedia,
                     )
                   : SizedBox(
-                      height: 180,
+                      height: 300,
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
                         itemCount: postMedia.length,
@@ -1685,15 +1781,16 @@ class _PostWidgetState extends State<PostWidget> {
                             postMedia[index],
                             240,
                             180,
+                            index,
+                            postMedia,
                           );
                         },
                       ),
                     ),
             ),
-
           // DIVIDER
           const Padding(
-            padding: EdgeInsets.only(top: 10),
+            padding: EdgeInsets.only(top: 7),
             child: Divider(height: 1, thickness: 1, color: Color(0xFFF0F0F0)),
           ),
 
@@ -1766,11 +1863,9 @@ class _PostWidgetState extends State<PostWidget> {
 
                 const Spacer(),
 
-                // BOOKMARK ICON
+                // share ICON
                 GestureDetector(
-                  onTap: () {
-                    // Add bookmark functionality here later.
-                  },
+                  onTap: () {},
                   child: SizedBox(
                     width: 28,
                     height: 28,
@@ -1798,6 +1893,8 @@ class _PostWidgetState extends State<PostWidget> {
     dynamic item,
     double width,
     double height,
+    int index,
+    List<dynamic> postMedia,
   ) {
     if (item is! Map) {
       return const SizedBox.shrink();
@@ -1817,7 +1914,13 @@ class _PostWidgetState extends State<PostWidget> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => MediaViewerPage(url: url, isVideo: isVideo),
+            builder: (_) => MediaViewerPage(
+              media: postMedia
+                  .whereType<Map>()
+                  .map((item) => Map<String, dynamic>.from(item))
+                  .toList(),
+              initialIndex: index,
+            ),
           ),
         );
       },
@@ -1844,7 +1947,6 @@ class _PostWidgetState extends State<PostWidget> {
                   fit: BoxFit.cover,
                   loadingBuilder: (context, child, progress) {
                     if (progress == null) return child;
-
                     return const Center(
                       child: CircularProgressIndicator(color: accent),
                     );
@@ -1870,20 +1972,9 @@ class _PostWidgetState extends State<PostWidget> {
     return CircleAvatar(
       radius: 23,
       backgroundColor: const Color(0xFFFFF2C2),
-      backgroundImage: imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
-      onBackgroundImageError: imageUrl.isNotEmpty
-          ? (exception, stackTrace) {}
-          : null,
-      child: imageUrl.isEmpty
-          ? Text(
-              username.isNotEmpty ? username[0].toUpperCase() : '?',
-              style: const TextStyle(
-                color: Color(0xFF8A6800),
-                fontWeight: FontWeight.w600,
-                fontSize: 16,
-              ),
-            )
-          : null,
+      backgroundImage: imageUrl.isNotEmpty
+          ? NetworkImage(imageUrl)
+          : const AssetImage('assets/default_pfp.jpg') as ImageProvider,
     );
   }
 }
