@@ -110,6 +110,7 @@ class ProfileService {
     String? username,
     String? bio,
     String? profilePicture,
+    String? residenceId,
   }) async {
     final updates = <String, dynamic>{};
 
@@ -117,6 +118,9 @@ class ProfileService {
     if (bio != null) updates['bio'] = bio;
     if (profilePicture != null) {
       updates['profilePicture'] = profilePicture;
+    }
+    if (residenceId != null) {
+      updates['residence'] = residenceId;
     }
 
     final response = await http.put(
@@ -126,7 +130,6 @@ class ProfileService {
     );
 
     final data = _parseResponse(response);
-
     return Map<String, dynamic>.from(data as Map);
   }
 }

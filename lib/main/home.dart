@@ -195,11 +195,34 @@ class HomePageState extends State<HomePage> {
     }
 
     if (posts.isEmpty) {
+      final category = selectedCategory;
+
+      final message = category == null || category == 'All'
+          ? 'No posts yet. Be the first to post!'
+          : 'No posts about $category yet.';
+
       return ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        children: const [
-          SizedBox(height: 200),
-          Center(child: Text('No posts yet. Be the first to post !')),
+        children: [
+          const SizedBox(height: 250),
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                children: [
+                  Text(
+                    message,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Color(0xff777777),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       );
     }

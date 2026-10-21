@@ -114,4 +114,63 @@ class UserService {
 
     return _parseResponse(response);
   }
+
+  // GET BLOCK STATUS
+  // GET /user/:userId/block-status
+  Future<Map<String, dynamic>> getBlockStatus(String userId) async {
+    final response = await http.get(
+      _uri('user/$userId/block-status'),
+      headers: await _authHeaders(),
+    );
+
+    return _parseResponse(response);
+  }
+
+  // GET FOLLOWERS
+  // GET /user/:userId/followers
+  Future<Map<String, dynamic>> getFollowers(String userId) async {
+    final response = await http.get(
+      _uri('user/$userId/followers'),
+      headers: await _authHeaders(),
+    );
+
+    return _parseResponse(response);
+  }
+
+  // GET FOLLOWING
+  // GET /user/:userId/following
+  Future<Map<String, dynamic>> getFollowing(String userId) async {
+    final response = await http.get(
+      _uri('user/$userId/following'),
+      headers: await _authHeaders(),
+    );
+
+    return _parseResponse(response);
+  }
+
+  // GET USER POSTS
+  // GET /user/:userId/posts?page=1&limit=10
+  Future<Map<String, dynamic>> getUserPosts({
+    required String userId,
+    int page = 1,
+    int limit = 10,
+  }) async {
+    final response = await http.get(
+      _uri('user/$userId/posts').replace(
+        queryParameters: {'page': page.toString(), 'limit': limit.toString()},
+      ),
+      headers: await _authHeaders(),
+    );
+
+    return _parseResponse(response);
+  }
+
+  Future<Map<String, dynamic>> removeFollower(String followerId) async {
+    final response = await http.delete(
+      _uri('user/me/followers/$followerId'),
+      headers: await _authHeaders(),
+    );
+
+    return _parseResponse(response);
+  }
 }

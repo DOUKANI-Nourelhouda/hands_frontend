@@ -1,20 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:hands/main/settings/blocklist.dart';
+import 'package:hands/main/settings/editprofile.dart';
+import 'package:hands/main/settings/followers&followings.dart';
+import 'package:hands/main/settings/privacy.dart';
 import 'package:hands/services/profile_service.dart';
 import 'package:hands/widgets/postwidget.dart';
 import 'package:hands/services/post_service.dart';
 import 'package:hands/services/auth_service.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class ProfilePage extends StatefulWidget {
   final String? userId;
   final VoidCallback? onSettingsTap;
   final VoidCallback? onCreditsTap;
-
+  final PostService postService;
   const ProfilePage({
     super.key,
     this.userId,
     this.onSettingsTap,
     this.onCreditsTap,
+    required this.postService,
   });
 
   @override
@@ -216,6 +222,176 @@ class _ProfilePageState extends State<ProfilePage> {
     });
   }
 
+  String _selectedLanguage = 'English';
+
+  void _showLanguageDialog(BuildContext context) {
+    String tempLanguage = _selectedLanguage;
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(22),
+              ),
+              title: const Text(
+                'Choose a language',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                  color: Color(0xff333333),
+                ),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: ['English', 'Français', 'العربية'].map((language) {
+                  final selected = tempLanguage == language;
+
+                  return RadioListTile<String>(
+                    value: language,
+                    groupValue: tempLanguage,
+                    activeColor: const Color(0xfffcc001),
+                    title: Text(language),
+                    contentPadding: EdgeInsets.zero,
+                    onChanged: (value) {
+                      if (value != null) {
+                        setDialogState(() => tempLanguage = value);
+                      }
+                    },
+                  );
+                }).toList(),
+              ),
+              actions: [
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xfffcc001),
+                      foregroundColor: const Color(0xff333333),
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _selectedLanguage = tempLanguage;
+                      });
+
+                      Navigator.pop(dialogContext);
+                    },
+                    child: const Text(
+                      'Confirm',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  String _selectedDisplayMode = 'System';
+
+  void _showDisplayModeDialog(BuildContext context) {
+    String tempMode = _selectedDisplayMode;
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(22),
+              ),
+              title: const Text(
+                'Choose display mode',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                  color: Color(0xff333333),
+                ),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _modeOption(
+                    title: 'Light',
+                    icon: Icons.light_mode_outlined,
+                    selected: tempMode == 'Light',
+                    onTap: () => setDialogState(() => tempMode = 'Light'),
+                  ),
+                  _modeOption(
+                    title: 'Dark',
+                    icon: Icons.dark_mode_outlined,
+                    selected: tempMode == 'Dark',
+                    onTap: () => setDialogState(() => tempMode = 'Dark'),
+                  ),
+                ],
+              ),
+              actions: [
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xfffcc001),
+                      foregroundColor: const Color(0xff333333),
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _selectedDisplayMode = tempMode;
+                      });
+
+                      Navigator.pop(dialogContext);
+                    },
+                    child: const Text(
+                      'Confirm',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _modeOption({
+    required String title,
+    required IconData icon,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: Icon(
+        icon,
+        color: selected ? const Color(0xffc99700) : Colors.grey,
+      ),
+      title: Text(title),
+      trailing: selected
+          ? const Icon(Icons.check_circle, color: Color(0xfffcc001))
+          : const Icon(Icons.circle_outlined, color: Colors.grey),
+      onTap: onTap,
+    );
+  }
+
   void _showProfileOptions() {
     final bool isOwnProfile =
         widget.userId == null || widget.userId == currentUserId;
@@ -257,31 +433,36 @@ class _ProfilePageState extends State<ProfilePage> {
                     icon: Icons.edit_outlined,
                     title: 'Edit profile',
                     onTap: () {
-                      Navigator.pop(sheetContext);
-                      // TODO: Open EditProfilePage
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              EditProfilePage(postService: widget.postService),
+                        ),
+                      );
                     },
                   ),
                   _optionTile(
-                    icon: Icons.people_outline,
+                    svgPath: 'assets/icons/groups.svg',
+
                     title: 'Followers & following',
                     onTap: () {
-                      Navigator.pop(sheetContext);
-                      // TODO: Open FollowersFollowingPage
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => FollowersFollowingPage(
+                            postService: widget.postService,
+                            userId: _currentUserId,
+                          ),
+                        ),
+                      );
                     },
                   ),
-                  _optionTile(
-                    icon: Icons.block_outlined,
-                    title: 'Blocked accounts',
-                    onTap: () {
-                      Navigator.pop(sheetContext);
-                      // TODO: Open BlockedUsersPage
-                    },
-                  ),
+
                   _optionTile(
                     icon: Icons.notifications_outlined,
                     title: 'Notifications',
                     onTap: () {
-                      Navigator.pop(sheetContext);
                       // TODO: Open notification settings
                     },
                   ),
@@ -289,24 +470,35 @@ class _ProfilePageState extends State<ProfilePage> {
                     icon: Icons.language,
                     title: 'Language',
                     onTap: () {
-                      Navigator.pop(sheetContext);
-                      // TODO: Open language settings
+                      _showLanguageDialog(context);
                     },
                   ),
                   _optionTile(
-                    icon: Icons.post_add_outlined,
-                    title: 'Post credits',
+                    icon: Icons.dark_mode_outlined,
+                    title: 'Mode',
                     onTap: () {
-                      Navigator.pop(sheetContext);
-                      widget.onCreditsTap?.call();
+                      _showDisplayModeDialog(context);
+                    },
+                  ),
+
+                  _optionTile(
+                    icon: Icons.block_outlined,
+                    title: 'Blocked accounts',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => BlockedUsersPage()),
+                      );
                     },
                   ),
                   _optionTile(
                     icon: Icons.privacy_tip_outlined,
                     title: 'Privacy policy',
                     onTap: () {
-                      Navigator.pop(sheetContext);
-                      // TODO: Open PrivacyPolicyPage or a policy URL
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => PrivacyPolicyPage()),
+                      );
                     },
                   ),
                   _optionTile(
@@ -353,20 +545,13 @@ class _ProfilePageState extends State<ProfilePage> {
                       // TODO: Open or create a direct conversation
                     },
                   ),
+
                   _optionTile(
-                    icon: Icons.person_add_alt_1,
-                    title: 'Follow / Unfollow',
+                    icon: Icons.share_outlined,
+                    title: 'Share profile',
                     onTap: () {
                       Navigator.pop(sheetContext);
-                      // TODO: Call your follow/unfollow service
-                    },
-                  ),
-                  _optionTile(
-                    icon: Icons.person_remove_outlined,
-                    title: 'Remove from followers',
-                    onTap: () {
-                      Navigator.pop(sheetContext);
-                      // TODO: Remove this student from your followers
+                      // TODO: Share a profile link
                     },
                   ),
                   _optionTile(
@@ -385,14 +570,6 @@ class _ProfilePageState extends State<ProfilePage> {
                     onTap: () {
                       Navigator.pop(sheetContext);
                       // TODO: Open report dialog and submit the report
-                    },
-                  ),
-                  _optionTile(
-                    icon: Icons.share_outlined,
-                    title: 'Share profile',
-                    onTap: () {
-                      Navigator.pop(sheetContext);
-                      // TODO: Share a profile link
                     },
                   ),
                 ],
@@ -808,14 +985,17 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _optionTile({
-    required IconData icon,
+    IconData? icon,
+    String? svgPath,
     required String title,
     required VoidCallback onTap,
     Color color = Colors.black87,
   }) {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 4),
-      leading: Icon(icon, color: color),
+      leading: svgPath != null
+          ? SvgPicture.asset(svgPath, width: 24, height: 24)
+          : Icon(icon, color: color),
       title: Text(
         title,
         style: TextStyle(

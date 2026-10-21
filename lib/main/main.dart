@@ -1,13 +1,13 @@
 import 'package:hands/widgets/costombuttomnav.dart';
 import 'package:hands/main/home.dart';
 import 'package:hands/main/search.dart';
-import 'package:hands/main/msgs.dart';
 import 'package:hands/main/profile.dart';
 import 'package:hands/main/createpost.dart';
 import 'package:hands/services/post_service.dart';
 import 'package:flutter/material.dart';
 import 'package:hands/services/auth_service.dart';
 import 'package:hands/services/group_service.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class MainScreen extends StatefulWidget {
   final PostService postService;
@@ -60,7 +60,7 @@ class _MainScreenState extends State<MainScreen> {
         authToken = token;
         currentUser = user;
         groupService = GroupService(
-          baseUrl: 'http://10.140.155.2:5000/api',
+          baseUrl: dotenv.env['BASE_URL']!,
           token: token,
         );
         isLoadingMessagesSetup = false;
@@ -82,8 +82,8 @@ class _MainScreenState extends State<MainScreen> {
     pages = [
       HomePage(key: homePageKey, postService: widget.postService),
       SearchPage(postService: widget.postService),
-      const SizedBox.shrink(), // Messages placeholder
-      const ProfilePage(),
+      SizedBox.shrink(), // Messages placeholder
+      ProfilePage(postService: widget.postService),
     ];
 
     _initializeMessages();
@@ -99,7 +99,6 @@ class _MainScreenState extends State<MainScreen> {
 
     if (!mounted || result == null) return;
 
-    // Refresh the home feed after a successful post.
     await homePageKey.currentState?.refresh();
   }
 

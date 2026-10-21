@@ -6,7 +6,6 @@ import 'package:hands/widgets/postwidget.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:hands/services/user_service.dart';
 import 'dart:async';
-import 'package:hands/main/profile.dart';
 
 class SearchPage extends StatefulWidget {
   final PostService postService;
@@ -570,9 +569,13 @@ class _SearchPageState extends State<SearchPage> {
     if (searchQuery.trim().isEmpty) {
       return _buildMessage(
         icon: SvgPicture.asset(
-          'assets/icons/empty_users.svg',
+          'assets/icons/user.svg',
           width: 52,
           height: 52,
+          colorFilter: const ColorFilter.mode(
+            Color(0xffC4C4C4),
+            BlendMode.srcIn,
+          ),
         ),
         message: 'Search for students in your residence.',
         subtitle: 'Enter a username to find students.',
@@ -582,9 +585,13 @@ class _SearchPageState extends State<SearchPage> {
     if (users.isEmpty) {
       return _buildMessage(
         icon: SvgPicture.asset(
-          'assets/icons/empty_users.svg',
+          'assets/icons/user.svg',
           width: 52,
           height: 52,
+          colorFilter: const ColorFilter.mode(
+            Color(0xffC4C4C4),
+            BlendMode.srcIn,
+          ),
         ),
         message: 'No students found.',
         subtitle: 'Try searching for another username.',
@@ -645,7 +652,9 @@ class _SearchPageState extends State<SearchPage> {
 
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => ProfilePage(userId: userId)),
+                MaterialPageRoute(
+                  builder: (_) => ProfilePage(postService: widget.postService),
+                ),
               );
             },
           ),
