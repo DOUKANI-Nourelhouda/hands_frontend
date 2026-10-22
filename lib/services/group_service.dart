@@ -19,7 +19,22 @@ class GroupService {
   }
 
   dynamic _decode(http.Response response) {
-    final dynamic body = jsonDecode(response.body);
+    final contentType = response.headers['content-type'] ?? '';
+
+    print('[GROUPS] Status: ${response.statusCode}');
+    print('[GROUPS] Content-Type: $contentType');
+    print('[GROUPS] Response: ${response.body}');
+
+    dynamic body;
+
+    try {
+      body = jsonDecode(response.body);
+    } catch (_) {
+      throw Exception(
+        'Groups API returned a non-JSON response '
+        '(${response.statusCode}). Check the endpoint URL and backend route.',
+      );
+    }
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
       final message = body is Map
@@ -34,7 +49,7 @@ class GroupService {
 
   // GET /api/groups
   Future<List<Map<String, dynamic>>> getGroups() async {
-    final response = await http.get(_uri('/groups'), headers: _headers);
+    final response = await http.get(_uri('/group'), headers: _headers);
 
     final data = _decode(response);
     final groups = data is Map ? data['groups'] : null;
@@ -53,7 +68,7 @@ class GroupService {
     required List<String> memberIds,
   }) async {
     final response = await http.post(
-      _uri('/groups'),
+      _uri('/group'),
       headers: _headers,
       body: jsonEncode({'name': name.trim(), 'memberIds': memberIds}),
     );
@@ -67,7 +82,7 @@ class GroupService {
     return Map<String, dynamic>.from(data['group'] as Map);
   }
 
-  // GET /api/groups/:groupId/messages
+  // GET /api/group/:groupId/messages
   Future<List<Map<String, dynamic>>> getMessages(String groupId) async {
     final response = await http.get(
       _uri('/group/$groupId/messages'),

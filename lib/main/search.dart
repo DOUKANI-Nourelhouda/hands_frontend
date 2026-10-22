@@ -6,11 +6,20 @@ import 'package:hands/widgets/postwidget.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:hands/services/user_service.dart';
 import 'dart:async';
+import 'package:hands/services/group_service.dart';
+import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'package:hands/main/group_chat_page.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class SearchPage extends StatefulWidget {
   final PostService postService;
+  final IO.Socket socket;
 
-  const SearchPage({super.key, required this.postService});
+  const SearchPage({
+    super.key,
+    required this.postService,
+    required this.socket,
+  });
 
   @override
   State<SearchPage> createState() => _SearchPageState();
@@ -21,7 +30,10 @@ class _SearchPageState extends State<SearchPage> {
 
   Timer? _searchDebounce;
   int _searchRequestId = 0;
+  GroupService? _groupService;
 
+  bool isLoadingGroups = true;
+  String? groupsError;
   bool isSearching = false;
   String? searchErrorMessage;
   static const Color accent = Color(0xfffcc001);
@@ -36,7 +48,8 @@ class _SearchPageState extends State<SearchPage> {
 
   bool isLoading = true;
   String? errorMessage;
-
+  bool isLoadingFollowing = false;
+  String? followingError;
   List<Map<String, dynamic>> posts = [];
   List<Map<String, dynamic>> users = [];
   List<Map<String, dynamic>> groups = [];
@@ -53,6 +66,78 @@ class _SearchPageState extends State<SearchPage> {
   void initState() {
     super.initState();
     _initializeSearch();
+    _initializeGroups();
+  }
+
+  Future<void> _initializeGroups() async {
+    try {
+      final token = await _authService.getSavedToken();
+
+      if (token == null || token.isEmpty) {
+        throw Exception('Please log in again.');
+      }
+
+      final service = GroupService(
+        baseUrl: dotenv.env['BASE_URL']!,
+        token: token,
+      );
+
+      if (!mounted) return;
+
+      _groupService = service;
+
+      await _loadGroups();
+    } catch (e, stackTrace) {
+      debugPrint('[SEARCH GROUPS INIT ERROR] $e');
+      debugPrint('$stackTrace');
+
+      if (!mounted) return;
+
+      setState(() {
+        groupsError = e.toString();
+        isLoadingGroups = false;
+      });
+    }
+  }
+
+  Future<void> _loadGroups() async {
+    final service = _groupService;
+
+    if (service == null) {
+      return;
+    }
+
+    setState(() {
+      isLoadingGroups = true;
+      groupsError = null;
+    });
+
+    try {
+      final fetchedGroups = await service.getGroups();
+
+      if (!mounted) return;
+
+      setState(() {
+        groups = fetchedGroups;
+      });
+
+      debugPrint('[SEARCH GROUPS] Loaded ${groups.length} groups');
+    } catch (e, stackTrace) {
+      debugPrint('[SEARCH GROUPS ERROR] $e');
+      debugPrint('$stackTrace');
+
+      if (!mounted) return;
+
+      setState(() {
+        groupsError = e.toString();
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoadingGroups = false;
+        });
+      }
+    }
   }
 
   @override
@@ -68,6 +153,62 @@ class _SearchPageState extends State<SearchPage> {
   Future<void> _initializeSearch() async {
     await _loadCurrentUser();
     await _loadPosts();
+    await _loadFollowing();
+  }
+
+  Future<void> _loadFollowing() async {
+    if (currentUserId.isEmpty) {
+      debugPrint('[FOLLOWING] Current user ID is empty.');
+
+      if (mounted) {
+        setState(() {
+          isLoadingFollowing = false;
+          followingError = 'Could not identify your account.';
+        });
+      }
+      return;
+    }
+
+    setState(() {
+      isLoadingFollowing = true;
+      followingError = null;
+    });
+
+    try {
+      debugPrint('[FOLLOWING] Loading accounts for $currentUserId');
+
+      final result = await _userService.getFollowing(currentUserId);
+
+      debugPrint('[FOLLOWING] API response: $result');
+
+      final rawFollowing = result['following'];
+
+      final fetchedUsers = rawFollowing is List
+          ? rawFollowing
+                .whereType<Map>()
+                .map((user) => Map<String, dynamic>.from(user))
+                .toList()
+          : <Map<String, dynamic>>[];
+
+      if (!mounted) return;
+
+      setState(() {
+        users = fetchedUsers;
+        isLoadingFollowing = false;
+      });
+
+      debugPrint('[FOLLOWING] Loaded ${fetchedUsers.length} accounts.');
+    } catch (e, stackTrace) {
+      debugPrint('[FOLLOWING ERROR] $e');
+      debugPrint('$stackTrace');
+
+      if (!mounted) return;
+
+      setState(() {
+        isLoadingFollowing = false;
+        followingError = 'Could not load the accounts you follow.';
+      });
+    }
   }
 
   Future<void> _searchUsers(String query, int requestId) async {
@@ -193,15 +334,18 @@ class _SearchPageState extends State<SearchPage> {
     setState(() {
       searchQuery = query.toLowerCase();
       searchResults = [];
-      users = [];
       searchErrorMessage = null;
       isSearching = query.isNotEmpty;
     });
 
     if (query.isEmpty) {
-      setState(() {
-        isSearching = false;
-      });
+      if (selectedFilter == 'Users') {
+        _loadFollowing();
+      } else {
+        setState(() {
+          isSearching = false;
+        });
+      }
       return;
     }
 
@@ -210,6 +354,11 @@ class _SearchPageState extends State<SearchPage> {
         _searchUsers(query, requestId);
       } else if (selectedFilter == 'Posts') {
         _searchPosts(query, requestId);
+      } else {
+        if (!mounted || requestId != _searchRequestId) return;
+        setState(() {
+          isSearching = false;
+        });
       }
     });
   }
@@ -259,22 +408,24 @@ class _SearchPageState extends State<SearchPage> {
 
     if (selectedFilter == filter) return;
 
+    _searchDebounce?.cancel();
+    final requestId = ++_searchRequestId;
+
     setState(() {
       selectedFilter = filter;
       searchResults = [];
-      users = [];
       searchErrorMessage = null;
       isSearching = false;
     });
 
-    _searchDebounce?.cancel();
-
-    // Invalidate any previous search request.
-    final requestId = ++_searchRequestId;
-
-    if (searchQuery.trim().isEmpty) return;
-
     final query = searchQuery.trim();
+
+    if (filter == 'Users' && query.isEmpty) {
+      _loadFollowing();
+      return;
+    }
+
+    if (query.isEmpty) return;
 
     setState(() {
       isSearching = filter == 'Posts' || filter == 'Users';
@@ -556,29 +707,38 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   Widget _buildUserResults() {
-    if (isSearching) {
+    if (searchQuery.trim().isNotEmpty && isSearching) {
       return const Center(
         child: CircularProgressIndicator(color: Color(0xfffcc001)),
       );
     }
 
-    if (searchErrorMessage != null) {
+    if (searchErrorMessage != null && searchQuery.trim().isNotEmpty) {
       return Center(child: Text(searchErrorMessage!));
     }
 
-    if (searchQuery.trim().isEmpty) {
-      return _buildMessage(
-        icon: SvgPicture.asset(
-          'assets/icons/user.svg',
-          width: 52,
-          height: 52,
-          colorFilter: const ColorFilter.mode(
-            Color(0xffC4C4C4),
-            BlendMode.srcIn,
-          ),
+    // No query: show the accounts the user follows
+    if (searchQuery.trim().isEmpty && isLoadingFollowing) {
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xfffcc001)),
+      );
+    }
+
+    if (searchQuery.trim().isEmpty && followingError != null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(followingError!),
+            TextButton(
+              onPressed: _loadFollowing,
+              child: const Text(
+                'Try again',
+                style: TextStyle(color: Color(0xfffcc001)),
+              ),
+            ),
+          ],
         ),
-        message: 'Search for students in your residence.',
-        subtitle: 'Enter a username to find students.',
       );
     }
 
@@ -593,10 +753,16 @@ class _SearchPageState extends State<SearchPage> {
             BlendMode.srcIn,
           ),
         ),
-        message: 'No students found.',
-        subtitle: 'Try searching for another username.',
+        message: searchQuery.trim().isEmpty
+            ? 'You are not following anyone yet.'
+            : 'No students found.',
+        subtitle: searchQuery.trim().isEmpty
+            ? 'Follow students to see them here.'
+            : 'Try searching for another username.',
       );
     }
+
+    // Keep your existing user-card ListView.builder here.
 
     return ListView.builder(
       shrinkWrap: true,
@@ -640,6 +806,7 @@ class _SearchPageState extends State<SearchPage> {
               ),
             ),
             subtitle: bio.isNotEmpty ? Text(bio) : null,
+
             onTap: () {
               final userId = (user['_id'] ?? user['id'] ?? '').toString();
 
@@ -653,7 +820,10 @@ class _SearchPageState extends State<SearchPage> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => ProfilePage(postService: widget.postService),
+                  builder: (_) => ProfilePage(
+                    userId: userId,
+                    postService: widget.postService,
+                  ),
                 ),
               );
             },
@@ -664,13 +834,32 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   Widget _buildGroupResults() {
+    if (isLoadingGroups && groups.isEmpty) {
+      return const Center(child: CircularProgressIndicator(color: accent));
+    }
+
+    if (groupsError != null && groups.isEmpty) {
+      return _buildMessage(
+        icon: const Icon(
+          Icons.error_outline_rounded,
+          size: 60,
+          color: Color(0xffC4C4C4),
+        ),
+        message: 'Could not load your groups.',
+        subtitle: 'Check your connection and try again.',
+        showRetry: true,
+      );
+    }
+
+    final query = searchQuery.trim().toLowerCase();
+
     final results = groups.where((group) {
       final name = (group['name'] ?? '').toString().toLowerCase();
       final description = (group['description'] ?? '').toString().toLowerCase();
 
-      return searchQuery.isEmpty ||
-          name.contains(searchQuery) ||
-          description.contains(searchQuery);
+      return query.isEmpty ||
+          name.contains(query) ||
+          description.contains(query);
     }).toList();
 
     if (results.isEmpty) {
@@ -684,37 +873,117 @@ class _SearchPageState extends State<SearchPage> {
             BlendMode.srcIn,
           ),
         ),
-        message: 'Discover student groups.',
-        subtitle: 'Connect your groups API to show results here.',
+        message: query.isEmpty
+            ? 'You haven’t joined any groups yet.'
+            : 'No groups found.',
+        subtitle: query.isEmpty
+            ? 'Groups you join will appear here.'
+            : 'Try searching for another group.',
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: results.length,
-      itemBuilder: (context, index) {
-        final group = results[index];
+    return RefreshIndicator(
+      color: accent,
+      onRefresh: _loadGroups,
+      child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        itemCount: results.length,
+        itemBuilder: (context, index) {
+          final group = results[index];
 
-        return ListTile(
-          contentPadding: const EdgeInsets.symmetric(vertical: 4),
-          leading: const CircleAvatar(
-            backgroundColor: Color(0xFFFFF4CC),
-            child: Icon(Icons.groups_rounded, color: accent),
-          ),
-          title: Text(
-            (group['name'] ?? 'Student group').toString(),
-            style: const TextStyle(fontWeight: FontWeight.w600),
-          ),
-          subtitle: Text(
-            (group['description'] ?? '').toString(),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          onTap: () {
-            // Open the group page here.
-          },
-        );
-      },
+          final groupId = (group['_id'] ?? group['id'] ?? '').toString();
+          final groupName = (group['name'] ?? 'Student group').toString();
+          final description = (group['description'] ?? '').toString();
+
+          return Container(
+            margin: const EdgeInsets.symmetric(vertical: 5),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: const Color(0xFFF0F0F0), width: 1),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.07),
+                  blurRadius: 12,
+                  spreadRadius: 1,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: ListTile(
+              leading: CircleAvatar(
+                radius: 25,
+                backgroundColor: accent.withValues(alpha: 0.22),
+                child: ClipOval(
+                  child: Image.asset(
+                    'assets/default_grp.png',
+                    width: 50,
+                    height: 50,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+              title: Text(
+                groupName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF333333),
+                ),
+              ),
+              subtitle: description.isNotEmpty
+                  ? Padding(
+                      padding: const EdgeInsets.only(top: 3),
+                      child: Text(
+                        description,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    )
+                  : null,
+              trailing: const Icon(
+                Icons.chevron_right_rounded,
+                color: Color(0xff8E92A0),
+              ),
+              onTap: () {
+                final service = _groupService;
+                final socket = widget.socket;
+
+                if (groupId.isEmpty ||
+                    currentUserId.isEmpty ||
+                    service == null ||
+                    socket == null ||
+                    !socket.connected) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Connecting to chat. Please try again in a moment.',
+                      ),
+                    ),
+                  );
+                  return;
+                }
+
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => GroupChatPage(
+                      groupId: groupId,
+                      groupName: groupName,
+                      currentUserId: currentUserId,
+                      groupService: service,
+                      socket: socket,
+                    ),
+                  ),
+                );
+              },
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -757,7 +1026,7 @@ class _SearchPageState extends State<SearchPage> {
           const SizedBox(height: 16),
           Center(
             child: TextButton(
-              onPressed: _loadPosts,
+              onPressed: selectedFilter == 'Groups' ? _loadGroups : _loadPosts,
               child: const Text('Try again', style: TextStyle(color: accent)),
             ),
           ),

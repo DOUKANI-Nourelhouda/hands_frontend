@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:hands/main/notification.dart';
 
 class HomeHeader extends StatelessWidget {
   const HomeHeader({super.key});
@@ -14,7 +15,6 @@ class HomeHeader extends StatelessWidget {
         height: 55,
         child: Row(
           children: [
-            // Logo: top left
             Image.asset(
               'assets/logo_exct.png',
               width: 40,
@@ -40,7 +40,10 @@ class HomeHeader extends StatelessWidget {
             // SVG notification: top right
             IconButton(
               onPressed: () {
-                // Navigate to notifications
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const NotificationsPage()),
+                );
               },
               icon: SvgPicture.asset(
                 'assets/icons/notification.svg',

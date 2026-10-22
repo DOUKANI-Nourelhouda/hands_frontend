@@ -227,9 +227,13 @@ class _GroupChatPageState extends State<GroupChatPage> {
         titleSpacing: 0,
         title: Row(
           children: [
-            const CircleAvatar(
-              backgroundColor: Color(0xfffff1bf),
-              child: Icon(Icons.groups, color: Colors.black87),
+            ClipOval(
+              child: Image.asset(
+                'assets/default_grp.png',
+                width: 50,
+                height: 50,
+                fit: BoxFit.cover,
+              ),
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -392,6 +396,7 @@ class _GroupChatPageState extends State<GroupChatPage> {
                 maxLines: 5,
                 maxLength: 5000,
                 onSubmitted: (_) => sendMessage(),
+
                 decoration: InputDecoration(
                   counterText: '',
                   hintText: 'Message your group...',
@@ -411,18 +416,12 @@ class _GroupChatPageState extends State<GroupChatPage> {
             const SizedBox(width: 8),
             IconButton(
               onPressed: isSending ? null : sendMessage,
-              style: IconButton.styleFrom(
-                backgroundColor: groupChatYellow,
-                foregroundColor: Colors.black,
-                minimumSize: const Size(46, 46),
+              style: IconButton.styleFrom(),
+              icon: const Icon(
+                Icons.send_rounded,
+                color: Color(0xFFFCC001),
+                size: 27,
               ),
-              icon: isSending
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.send_rounded),
             ),
           ],
         ),

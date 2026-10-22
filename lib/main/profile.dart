@@ -5,10 +5,17 @@ import 'package:hands/main/settings/editprofile.dart';
 import 'package:hands/main/settings/followers&followings.dart';
 import 'package:hands/main/settings/privacy.dart';
 import 'package:hands/services/profile_service.dart';
+import 'package:hands/splash/welcome_screen.dart';
 import 'package:hands/widgets/postwidget.dart';
 import 'package:hands/services/post_service.dart';
 import 'package:hands/services/auth_service.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:hands/main/settings/terms.dart';
+import 'package:hands/main/settings/help&support.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:hands/services/user_service.dart';
+import 'package:hands/services/payment_service.dart';
+import 'package:hands/main/post_credits.dart';
 
 class ProfilePage extends StatefulWidget {
   final String? userId;
@@ -73,7 +80,6 @@ class _ProfilePageState extends State<ProfilePage> {
     });
 
     try {
-      // Get the logged-in user's profile first.
       final myProfile = await _profileService.getMyProfile();
 
       final currentUser = myProfile['user'] is Map
@@ -200,6 +206,277 @@ class _ProfilePageState extends State<ProfilePage> {
     }
 
     return 0;
+  }
+
+  Future<void> _shareProfile() async {
+    final username = (_user?['username'] ?? '').toString();
+    final profileId = (_user?['_id'] ?? _user?['id'] ?? '').toString();
+
+    if (username.isEmpty || profileId.isEmpty) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to share this profile.')),
+      );
+      return;
+    }
+
+    final baseUrl = dotenv.env['BASE_URL']?.replaceAll(RegExp(r'/+$'), '');
+
+    if (baseUrl == null || baseUrl.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Profile link is unavailable.')),
+      );
+      return;
+    }
+
+    final profileLink = '$baseUrl/user/$profileId';
+
+    try {
+      await SharePlus.instance.share(
+        ShareParams(
+          text: 'Check out @$username on Hands!\n$profileLink',
+          subject: 'Check out @$username on Hands',
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Could not share profile: $e')));
+    }
+  }
+
+  Future<bool> _showBlockUserDialog(String username) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text(
+            'Block user?',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          content: Text(
+            'Are you sure you want to block $username? '
+            'Their posts will no longer appear in your feed.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: Colors.black54),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('Block'),
+            ),
+          ],
+        );
+      },
+    );
+
+    return confirmed == true;
+  }
+
+  Future<bool?> _showReportUserDialog() async {
+    final detailsController = TextEditingController();
+
+    const reasons = <String, String>{
+      'inappropriate': 'Inappropriate profile or content',
+      'scam': 'Scam or fraud',
+      'spam': 'Spam or fake account',
+      'harassment': 'Harassment or bullying',
+      'impersonation': 'Pretending to be someone else',
+      'other': 'Other',
+    };
+
+    String selectedReason = 'inappropriate';
+    bool isSubmitting = false;
+    String? errorMessage;
+
+    final submitted = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15),
+              ),
+              title: const Text(
+                'Report user',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Why are you reporting this user?',
+                      style: TextStyle(color: Colors.black54),
+                    ),
+                    const SizedBox(height: 12),
+
+                    ...reasons.entries.map((entry) {
+                      return RadioListTile<String>(
+                        value: entry.key,
+                        groupValue: selectedReason,
+                        activeColor: const Color(0xfffcc001),
+                        contentPadding: EdgeInsets.zero,
+                        dense: true,
+                        title: Text(
+                          entry.value,
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                        onChanged: isSubmitting
+                            ? null
+                            : (value) {
+                                if (value == null) return;
+
+                                setDialogState(() {
+                                  selectedReason = value;
+                                  errorMessage = null;
+                                });
+                              },
+                      );
+                    }),
+
+                    const SizedBox(height: 12),
+
+                    TextField(
+                      controller: detailsController,
+                      maxLength: 500,
+                      maxLines: 6,
+                      enabled: !isSubmitting,
+                      decoration: InputDecoration(
+                        hintText: 'Additional details (optional)',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: Color(0xfffcc001),
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    if (errorMessage != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        errorMessage!,
+                        style: const TextStyle(color: Colors.red, fontSize: 13),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isSubmitting
+                      ? null
+                      : () => Navigator.pop(dialogContext, false),
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(color: Colors.black54),
+                  ),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xfffcc001),
+                    foregroundColor: Colors.black,
+                    disabledBackgroundColor: Colors.amber.shade200,
+                  ),
+                  onPressed: isSubmitting
+                      ? null
+                      : () async {
+                          setDialogState(() {
+                            isSubmitting = true;
+                            errorMessage = null;
+                          });
+
+                          try {
+                            final reportedUserId =
+                                (_user?['_id'] ?? _user?['id'] ?? '')
+                                    .toString();
+
+                            if (reportedUserId.isEmpty ||
+                                reportedUserId == _currentUserId) {
+                              throw Exception('Invalid user to report.');
+                            }
+
+                            final token = await _authService.getSavedToken();
+
+                            if (token == null || token.isEmpty) {
+                              throw Exception(
+                                'Please log in again to report this user.',
+                              );
+                            }
+
+                            await _profileService.reportUser(
+                              baseUrl: dotenv.env['BASE_URL']!,
+                              token: token,
+                              userId: reportedUserId,
+                              reason: selectedReason,
+                              details: detailsController.text.trim(),
+                            );
+                            if (!dialogContext.mounted) return;
+
+                            Navigator.pop(dialogContext, true);
+                          } catch (e) {
+                            if (!dialogContext.mounted) return;
+
+                            setDialogState(() {
+                              isSubmitting = false;
+                              errorMessage = e is PostException
+                                  ? e.message
+                                  : 'Could not submit report. Please try again.';
+                            });
+                          }
+                        },
+                  child: isSubmitting
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.black,
+                          ),
+                        )
+                      : const Text('Submit report'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    detailsController.dispose();
+
+    if (!mounted || submitted != true) return false;
+
+    ScaffoldMessenger.of(this.context).showSnackBar(
+      const SnackBar(content: Text('User reported successfully.')),
+    );
+
+    return true;
   }
 
   Future<void> _initializePostService() async {
@@ -506,34 +783,427 @@ class _ProfilePageState extends State<ProfilePage> {
                     title: 'Terms of service',
                     onTap: () {
                       Navigator.pop(sheetContext);
-                      // TODO: Open TermsPage or a terms URL
+
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const TermsPage()),
+                      );
                     },
                   ),
+
                   _optionTile(
                     icon: Icons.help_outline,
                     title: 'Help & support',
                     onTap: () {
                       Navigator.pop(sheetContext);
-                      // TODO: Open HelpSupportPage
+
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const HelpSupportPage(),
+                        ),
+                      );
                     },
                   ),
+
                   const Divider(height: 20),
+
                   _optionTile(
                     icon: Icons.logout,
                     title: 'Log out',
                     color: Colors.red,
                     onTap: () {
                       Navigator.pop(sheetContext);
-                      // TODO: Confirm logout, clear token, then navigate to login
+
+                      showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (dialogContext) {
+                          return AlertDialog(
+                            backgroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            contentPadding: const EdgeInsets.fromLTRB(
+                              24,
+                              24,
+                              24,
+                              12,
+                            ),
+                            content: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 65,
+                                  height: 65,
+                                  decoration: BoxDecoration(
+                                    color: Colors.red.withValues(alpha: 0.1),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.logout_rounded,
+                                    color: Colors.red,
+                                    size: 30,
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+
+                                const Text(
+                                  'Log out?',
+                                  style: TextStyle(
+                                    fontSize: 21,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xff1e1f24),
+                                  ),
+                                ),
+
+                                const SizedBox(height: 10),
+
+                                const Text(
+                                  'Are you sure you want to log out of your '
+                                  'Hands account?',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    height: 1.5,
+                                    color: Colors.black54,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            actionsPadding: const EdgeInsets.fromLTRB(
+                              20,
+                              12,
+                              20,
+                              20,
+                            ),
+                            actions: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: OutlinedButton(
+                                      onPressed: () {
+                                        Navigator.pop(dialogContext);
+                                      },
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: const Color(
+                                          0xff1e1f24,
+                                        ),
+                                        side: BorderSide(
+                                          color: Colors.grey.shade300,
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 13,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
+                                      ),
+                                      child: const Text(
+                                        'Cancel',
+                                        style: TextStyle(
+                                          color: Color(0xff333333),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: ElevatedButton(
+                                      onPressed: () async {
+                                        Navigator.pop(dialogContext);
+
+                                        try {
+                                          await AuthService().logout();
+
+                                          if (!context.mounted) return;
+
+                                          Navigator.of(
+                                            context,
+                                          ).pushAndRemoveUntil(
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  const WelcomeScreen(),
+                                            ),
+                                            (route) => false,
+                                          );
+                                        } catch (e) {
+                                          debugPrint('Logout error: $e');
+
+                                          if (!context.mounted) return;
+
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Failed to log out. Please try again.',
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                      },
+
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.red,
+                                        foregroundColor: Colors.white,
+                                        elevation: 0,
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 13,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
+                                      ),
+                                      child: const Text('Log out'),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          );
+                        },
+                      );
                     },
                   ),
+
                   _optionTile(
                     icon: Icons.delete_outline,
                     title: 'Delete account',
                     color: Colors.red,
                     onTap: () {
                       Navigator.pop(sheetContext);
-                      // TODO: Confirm deletion and call your backend
+
+                      showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (dialogContext) {
+                          bool isDeleting = false;
+
+                          return StatefulBuilder(
+                            builder: (context, setDialogState) {
+                              return AlertDialog(
+                                backgroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(22),
+                                ),
+                                contentPadding: const EdgeInsets.fromLTRB(
+                                  24,
+                                  24,
+                                  24,
+                                  12,
+                                ),
+                                content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      width: 72,
+                                      height: 72,
+                                      decoration: BoxDecoration(
+                                        color: Colors.red.withValues(
+                                          alpha: 0.1,
+                                        ),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.delete_forever_outlined,
+                                        color: Colors.red,
+                                        size: 36,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 20),
+
+                                    const Text(
+                                      'Delete account?',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 21,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xff1e1f24),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+
+                                    const Text(
+                                      'Are you sure you want to permanently '
+                                      'delete your Hands account? This action '
+                                      'cannot be undone.',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        height: 1.6,
+                                        color: Colors.black54,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+
+                                    const Text(
+                                      'Your account and associated data may be '
+                                      'deleted according to our data retention policy.',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        height: 1.5,
+                                        color: Colors.red,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                actionsPadding: const EdgeInsets.fromLTRB(
+                                  20,
+                                  12,
+                                  20,
+                                  20,
+                                ),
+                                actions: [
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: OutlinedButton(
+                                          onPressed: isDeleting
+                                              ? null
+                                              : () {
+                                                  Navigator.pop(dialogContext);
+                                                },
+                                          style: OutlinedButton.styleFrom(
+                                            foregroundColor: const Color(
+                                              0xff1e1f24,
+                                            ),
+                                            side: BorderSide(
+                                              color: Colors.grey.shade300,
+                                            ),
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 13,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                            ),
+                                          ),
+                                          child: const Text(
+                                            'Cancel',
+                                            style: TextStyle(
+                                              color: Color(0xff333333),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+
+                                      Expanded(
+                                        child: ElevatedButton(
+                                          onPressed: isDeleting
+                                              ? null
+                                              : () async {
+                                                  setDialogState(() {
+                                                    isDeleting = true;
+                                                  });
+
+                                                  try {
+                                                    final result =
+                                                        await AuthService()
+                                                            .deleteAccount();
+
+                                                    if (!dialogContext.mounted)
+                                                      return;
+
+                                                    Navigator.of(
+                                                      dialogContext,
+                                                    ).pop();
+
+                                                    if (!context.mounted)
+                                                      return;
+
+                                                    ScaffoldMessenger.of(
+                                                      context,
+                                                    ).showSnackBar(
+                                                      SnackBar(
+                                                        content: Text(
+                                                          result['message'] ??
+                                                              'Account deleted successfully.',
+                                                        ),
+                                                      ),
+                                                    );
+
+                                                    Navigator.of(
+                                                      context,
+                                                    ).pushAndRemoveUntil(
+                                                      MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            const WelcomeScreen(),
+                                                      ),
+                                                      (route) => false,
+                                                    );
+                                                  } catch (e) {
+                                                    debugPrint(
+                                                      'Delete account error: $e',
+                                                    );
+
+                                                    if (!dialogContext
+                                                        .mounted) {
+                                                      return;
+                                                    }
+
+                                                    setDialogState(() {
+                                                      isDeleting = false;
+                                                    });
+
+                                                    ScaffoldMessenger.of(
+                                                      context,
+                                                    ).showSnackBar(
+                                                      const SnackBar(
+                                                        content: Text(
+                                                          'Failed to delete account. '
+                                                          'Please try again.',
+                                                        ),
+                                                      ),
+                                                    );
+                                                  }
+                                                },
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.red,
+                                            foregroundColor: Colors.white,
+                                            disabledBackgroundColor: Colors.red
+                                                .withValues(alpha: 0.5),
+                                            elevation: 0,
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 13,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                            ),
+                                          ),
+                                          child: isDeleting
+                                              ? const SizedBox(
+                                                  width: 18,
+                                                  height: 18,
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                        strokeWidth: 2,
+                                                        color: Colors.white,
+                                                      ),
+                                                )
+                                              : const Text(
+                                                  'Delete',
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
+                      );
                     },
                   ),
                 ] else ...[
@@ -551,16 +1221,55 @@ class _ProfilePageState extends State<ProfilePage> {
                     title: 'Share profile',
                     onTap: () {
                       Navigator.pop(sheetContext);
-                      // TODO: Share a profile link
+                      _shareProfile();
                     },
                   ),
                   _optionTile(
                     icon: Icons.block,
                     title: 'Block account',
                     color: Colors.red,
-                    onTap: () {
+                    onTap: () async {
                       Navigator.pop(sheetContext);
-                      // TODO: Confirm and call your block service
+
+                      final username = (_user?['username'] ?? 'this user')
+                          .toString();
+                      final userId = (_user?['_id'] ?? _user?['id'] ?? '')
+                          .toString();
+
+                      if (userId.isEmpty || userId == _currentUserId) {
+                        return;
+                      }
+
+                      final confirmed = await _showBlockUserDialog(username);
+
+                      if (!confirmed || !mounted) return;
+
+                      try {
+                        // Replace UserService() with your existing service instance
+                        // if it is already declared in this class.
+                        await UserService().blockUser(userId);
+
+                        if (!mounted) return;
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('$username has been blocked.'),
+                          ),
+                        );
+
+                        // If this is another user's profile, return to the previous page.
+                        Navigator.of(context).pop();
+                      } catch (e) {
+                        if (!mounted) return;
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Could not block user: ${e.toString().replaceFirst('Exception: ', '')}',
+                            ),
+                          ),
+                        );
+                      }
                     },
                   ),
                   _optionTile(
@@ -568,8 +1277,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     title: 'Report account',
                     color: Colors.red,
                     onTap: () {
-                      Navigator.pop(sheetContext);
-                      // TODO: Open report dialog and submit the report
+                      _showReportUserDialog();
                     },
                   ),
                 ],
@@ -793,7 +1501,25 @@ class _ProfilePageState extends State<ProfilePage> {
                               color: const Color(0xfffcc001),
                               borderRadius: BorderRadius.circular(13),
                               child: InkWell(
-                                onTap: widget.onCreditsTap,
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => PostCreditsPage(
+                                        onBuyPackage: (packageId) async {
+                                          final result = await PaymentService()
+                                              .createPostPackagePayment(
+                                                packageId: packageId,
+                                              );
+
+                                          debugPrint(
+                                            'PAYMENT RESPONSE: $result',
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  );
+                                },
                                 borderRadius: BorderRadius.circular(13),
                                 child: const Center(
                                   child: Text(

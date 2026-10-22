@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import '../services/group_service.dart';
-import 'package:hands/main/group_page.dart';
 import 'package:hands/services/msgs_service.dart';
-import '../services/auth_service.dart';
-import '../services/msgs_service.dart';
+import 'package:hands/main/group_page.dart';
 
 class MsgsPage extends StatefulWidget {
   final String baseUrl;
@@ -39,15 +35,13 @@ class _MsgsPageState extends State<MsgsPage> {
 
   List<Map<String, dynamic>> _conversations = [];
   List<Map<String, dynamic>> _groups = [];
-
+  List<Map<String, dynamic>> groups = [];
+  bool isLoadingGroups = false;
+  String? groupsError;
   bool _isLoading = true;
   String? _errorMessage;
   String _searchQuery = '';
   late final MsgService _msgService;
-  Map<String, String> get _headers => {
-    'Content-Type': 'application/json',
-    'token': widget.token,
-  };
 
   String get _baseUrl => widget.baseUrl.replaceAll(RegExp(r'/+$'), '');
   @override
@@ -68,22 +62,21 @@ class _MsgsPageState extends State<MsgsPage> {
   }
 
   Future<void> _loadChats() async {
-    if (mounted) {
-      setState(() {
-        _isLoading = true;
-        _errorMessage = null;
-      });
-    }
+    if (!mounted) return;
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
 
     try {
-      final results = await Future.wait([
-        _msgService.getConversations(),
-        widget.groupService.getGroups(),
-      ]);
+      debugPrint('[MSGS] Loading direct conversations...');
+      final conversations = await _msgService.getConversations();
+      debugPrint('[MSGS] Conversations loaded: ${conversations.length}');
 
-      final conversations = results[0] as List<Map<String, dynamic>>;
-
-      final groups = results[1] as List<Map<String, dynamic>>;
+      debugPrint('[MSGS] Loading groups...');
+      final groups = await widget.groupService.getGroups();
+      debugPrint('[MSGS] Groups loaded: ${groups.length}');
 
       if (!mounted) return;
 
@@ -93,7 +86,7 @@ class _MsgsPageState extends State<MsgsPage> {
         _isLoading = false;
       });
     } catch (error, stackTrace) {
-      debugPrint('❌ Messages loading failed: $error');
+      debugPrint('[MSGS] Loading failed: $error');
       debugPrintStack(stackTrace: stackTrace);
 
       if (!mounted) return;
@@ -235,66 +228,67 @@ class _MsgsPageState extends State<MsgsPage> {
   }
 
   Widget _buildProfileHeader() {
-    final username = widget.currentUser['username']?.toString() ?? 'Student';
-
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
-      child: Center(
-        child: Column(
-          children: [
-            _buildAvatar(
-              picture: _pictureOf(widget.currentUser),
-              fallbackText: username,
-              radius: 34,
+      padding: const EdgeInsets.fromLTRB(12, 12, 16, 4),
+      child: Row(
+        children: [
+          IconButton(
+            onPressed: () {
+              if (Navigator.canPop(context)) {
+                Navigator.pop(context);
+              }
+            },
+            icon: const Icon(
+              Icons.arrow_back_rounded,
+              color: Color(0xFF333333),
+              size: 26,
             ),
-            const SizedBox(height: 9),
-            Text(
-              username,
-              style: const TextStyle(
-                fontSize: 19,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
-            ),
-            const SizedBox(height: 5),
-            const Text(
-              'Messages',
-              style: TextStyle(fontSize: 13, color: Colors.grey),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(width: 4),
+          Expanded(child: _buildSearchBar()),
+        ],
       ),
     );
   }
 
   Widget _buildSearchBar() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+    return Container(
+      height: 48,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF5F5F5),
+        borderRadius: BorderRadius.circular(25),
+        border: Border.all(color: const Color(0xFFEEEEEE), width: 1.5),
+      ),
       child: TextField(
         controller: _searchController,
+        cursorColor: Colors.black,
         onChanged: (value) {
           setState(() => _searchQuery = value);
         },
+        textInputAction: TextInputAction.search,
         decoration: InputDecoration(
           hintText: 'Search people or groups',
-          hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
-          prefixIcon: const Icon(Icons.search, color: Colors.grey),
+          hintStyle: const TextStyle(fontSize: 14, color: Color(0xFF8E92A0)),
+          prefixIcon: const Icon(
+            Icons.search_rounded,
+            color: Color(0xFF8E92A0),
+            size: 22,
+          ),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
                   onPressed: () {
                     _searchController.clear();
                     setState(() => _searchQuery = '');
                   },
-                  icon: const Icon(Icons.close),
+                  icon: const Icon(
+                    Icons.close_rounded,
+                    size: 20,
+                    color: Color(0xFF8E92A0),
+                  ),
                 )
               : null,
-          filled: true,
-          fillColor: const Color(0xfff5f5f5),
+          border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(vertical: 13),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide.none,
-          ),
         ),
       ),
     );
@@ -388,10 +382,13 @@ class _MsgsPageState extends State<MsgsPage> {
             CircleAvatar(
               radius: 25,
               backgroundColor: accent.withValues(alpha: 0.22),
-              child: const Icon(
-                Icons.groups_rounded,
-                color: Colors.black87,
-                size: 27,
+              child: ClipOval(
+                child: Image.asset(
+                  'assets/default_grp.png',
+                  width: 50,
+                  height: 50,
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
             const SizedBox(width: 13),
@@ -443,25 +440,111 @@ class _MsgsPageState extends State<MsgsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text('Messages DEBUG'),
-        backgroundColor: const Color(0xfffcc001),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+      extendBody: false,
+      resizeToAvoidBottomInset: true,
+      body: SafeArea(
+        child: Stack(
           children: [
-            const Text(
-              'MSGS PAGE IS OPEN',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            Column(
+              children: [
+                _buildProfileHeader(),
+
+                if (_isLoading)
+                  const Expanded(
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xfffcc001),
+                      ),
+                    ),
+                  )
+                else if (_errorMessage != null)
+                  Expanded(
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.error_outline,
+                              size: 48,
+                              color: Colors.red,
+                            ),
+                            const SizedBox(height: 12),
+                            Text(_errorMessage!, textAlign: TextAlign.center),
+                            const SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed: _loadChats,
+                              child: const Text('Try again'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  Expanded(
+                    child: RefreshIndicator(
+                      color: const Color(0xfffcc001),
+                      onRefresh: _loadChats,
+                      child: ListView(
+                        padding: const EdgeInsets.only(bottom: 90),
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        children: [
+                          _buildSectionTitle(
+                            'Direct messages',
+                            _filteredConversations.length,
+                          ),
+
+                          if (_filteredConversations.isEmpty)
+                            _buildEmptyState(
+                              _searchQuery.isEmpty
+                                  ? 'No conversations yet.'
+                                  : 'No conversations match your search.',
+                            )
+                          else
+                            ..._filteredConversations.map(
+                              _buildConversationTile,
+                            ),
+
+                          _buildSectionTitle('Groups', _filteredGroups.length),
+
+                          if (_filteredGroups.isEmpty)
+                            _buildEmptyState(
+                              _searchQuery.isEmpty
+                                  ? 'You have not joined any groups yet.'
+                                  : 'No groups match your search.',
+                            )
+                          else
+                            ..._filteredGroups.map(_buildGroupTile),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
             ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                debugPrint('TEST BUTTON PRESSED');
-                _loadChats();
-              },
-              child: const Text('TEST BACKEND REQUESTS'),
+
+            // Floating button
+            Positioned(
+              right: 20,
+              bottom: 16,
+              child: FloatingActionButton(
+                heroTag: 'msgs_fab',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          CreateGroupPage(groupService: widget.groupService),
+                    ),
+                  );
+                },
+                backgroundColor: Colors.white,
+                foregroundColor: Color(0xfffcc001),
+                elevation: 6,
+                shape: const CircleBorder(),
+                child: const Icon(Icons.edit_rounded, size: 30),
+              ),
             ),
           ],
         ),

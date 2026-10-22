@@ -132,4 +132,96 @@ class ProfileService {
     final data = _parseResponse(response);
     return Map<String, dynamic>.from(data as Map);
   }
+
+  Future<void> reportUser({
+    required String baseUrl,
+    required String token,
+    required String userId,
+    required String reason,
+    String details = '',
+  }) async {
+    final url = Uri.parse(
+      '${baseUrl.replaceAll(RegExp(r'/+$'), '')}/report/user/$userId',
+    );
+
+    print('\n========== REPORT USER DEBUG ==========');
+    print('BASE URL: $baseUrl');
+    print('REQUEST URL: $url');
+    print('USER ID: $userId');
+    print('REASON: $reason');
+    print('DETAILS: ${details.trim()}');
+    print('TOKEN EXISTS: ${token.isNotEmpty}');
+    print('TOKEN LENGTH: ${token.length}');
+    print('=======================================\n');
+
+    try {
+      print('[REPORT] Sending POST request...');
+
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'token': token,
+        },
+        body: jsonEncode({'reason': reason, 'details': details.trim()}),
+      );
+
+      print('\n========== REPORT RESPONSE ==========');
+      print('STATUS CODE: ${response.statusCode}');
+      print('RESPONSE HEADERS: ${response.headers}');
+      print('RESPONSE BODY: ${response.body}');
+      print('=====================================\n');
+
+      Map<String, dynamic> data = {};
+
+      if (response.body.isNotEmpty) {
+        final decoded = jsonDecode(response.body);
+
+        if (decoded is Map<String, dynamic>) {
+          data = decoded;
+        }
+      }
+
+      if (response.statusCode == 201) {
+        print('[REPORT] SUCCESS: User reported successfully.');
+        return;
+      }
+
+      final message =
+          data['message']?.toString() ?? 'Could not report this user.';
+
+      print('[REPORT] FAILED: $message');
+
+      switch (response.statusCode) {
+        case 400:
+          throw Exception(message);
+        case 401:
+        case 403:
+          throw Exception('Please log in again to report this user.');
+        case 404:
+          throw Exception('This user could not be found.');
+        case 409:
+          throw Exception('You have already reported this user.');
+        default:
+          throw Exception('$message (Status code: ${response.statusCode})');
+      }
+    } on FormatException catch (e, stackTrace) {
+      print('[REPORT] JSON FORMAT ERROR: $e');
+      print(stackTrace);
+      throw Exception('The server returned an invalid response.');
+    } on http.ClientException catch (e, stackTrace) {
+      print('[REPORT] HTTP CLIENT ERROR: $e');
+      print(stackTrace);
+      throw Exception(
+        'Could not connect to the server. Check your internet connection.',
+      );
+    } catch (e, stackTrace) {
+      print('[REPORT] ERROR: $e');
+      print(stackTrace);
+      rethrow;
+    } finally {
+      print('[REPORT] Request finished.');
+    }
+  }
 }

@@ -156,7 +156,10 @@ class _PostWidgetState extends State<PostWidget> {
     try {
       await showModalBottomSheet<void>(
         context: context,
+        useRootNavigator: true,
         isScrollControlled: true,
+        isDismissible: true,
+        enableDrag: true,
         backgroundColor: Colors.white,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
@@ -271,43 +274,28 @@ class _PostWidgetState extends State<PostWidget> {
                                                       ? Image.network(
                                                           profilePicture,
                                                           fit: BoxFit.cover,
+                                                          width: 44,
+                                                          height: 44,
                                                           errorBuilder:
                                                               (
                                                                 context,
                                                                 error,
                                                                 stackTrace,
                                                               ) {
-                                                                return Container(
-                                                                  color: const Color(
-                                                                    0xFFFFF0BD,
-                                                                  ),
-                                                                  alignment:
-                                                                      Alignment
-                                                                          .center,
-                                                                  child: const Icon(
-                                                                    Icons
-                                                                        .person,
-                                                                    color: Color(
-                                                                      0xFF8A6800,
-                                                                    ),
-                                                                    size: 25,
-                                                                  ),
+                                                                return Image.asset(
+                                                                  'assets/default_pfp.jpg',
+                                                                  width: 44,
+                                                                  height: 44,
+                                                                  fit: BoxFit
+                                                                      .cover,
                                                                 );
                                                               },
                                                         )
-                                                      : Container(
-                                                          color: const Color(
-                                                            0xFFFFF0BD,
-                                                          ),
-                                                          alignment:
-                                                              Alignment.center,
-                                                          child: const Icon(
-                                                            Icons.person,
-                                                            color: Color(
-                                                              0xFF8A6800,
-                                                            ),
-                                                            size: 25,
-                                                          ),
+                                                      : Image.asset(
+                                                          'assets/default_pfp.jpg',
+                                                          width: 44,
+                                                          height: 44,
+                                                          fit: BoxFit.cover,
                                                         ),
                                                 ),
                                               ),
@@ -758,45 +746,42 @@ class _PostWidgetState extends State<PostWidget> {
                                                                 .start,
                                                         children: [
                                                           // REPLY PROFILE PICTURE
+                                                          // CIRCULAR PROFILE PICTURE
                                                           ClipOval(
                                                             child: SizedBox(
-                                                              width: 36,
-                                                              height: 36,
+                                                              width: 44,
+                                                              height: 44,
                                                               child:
-                                                                  replyPicture
+                                                                  profilePicture
                                                                       .isNotEmpty
                                                                   ? Image.network(
-                                                                      replyPicture,
+                                                                      profilePicture,
                                                                       fit: BoxFit
                                                                           .cover,
-                                                                      errorBuilder: (_, __, ___) => Container(
-                                                                        color: const Color(
-                                                                          0xFFFFF0BD,
-                                                                        ),
-                                                                        child: const Icon(
-                                                                          Icons
-                                                                              .person,
-                                                                          color: Color(
-                                                                            0xFF8A6800,
-                                                                          ),
-                                                                          size:
-                                                                              21,
-                                                                        ),
-                                                                      ),
+                                                                      width: 44,
+                                                                      height:
+                                                                          44,
+                                                                      errorBuilder:
+                                                                          (
+                                                                            context,
+                                                                            error,
+                                                                            stackTrace,
+                                                                          ) {
+                                                                            return Image.asset(
+                                                                              'assets/default_pfp.jpg',
+                                                                              width: 44,
+                                                                              height: 44,
+                                                                              fit: BoxFit.cover,
+                                                                            );
+                                                                          },
                                                                     )
-                                                                  : Container(
-                                                                      color: const Color(
-                                                                        0xFFFFF0BD,
-                                                                      ),
-                                                                      child: const Icon(
-                                                                        Icons
-                                                                            .person,
-                                                                        color: Color(
-                                                                          0xFF8A6800,
-                                                                        ),
-                                                                        size:
-                                                                            21,
-                                                                      ),
+                                                                  : Image.asset(
+                                                                      'assets/default_pfp.jpg',
+                                                                      width: 44,
+                                                                      height:
+                                                                          44,
+                                                                      fit: BoxFit
+                                                                          .cover,
                                                                     ),
                                                             ),
                                                           ),

@@ -50,6 +50,8 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   provider: ^6.1.5+1
+  share_plus: ^13.3.1
+  url_launcher: ^6.3.3
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -78,6 +80,7 @@ flutter:
      - assets/sbigha.png
      - assets/logo.png
      - assets/default_pfp.jpg
+     - assets/default_grp.png
      - assets/
      - assets/icons/
      - .env

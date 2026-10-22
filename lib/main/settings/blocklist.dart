@@ -132,6 +132,61 @@ class _BlockedUsersPageState extends State<BlockedUsersPage> {
     final bio = (user['bio'] ?? '').toString();
     final userId = (user['_id'] ?? user['id'] ?? '').toString();
     final isRemoving = _removingUsers.contains(userId);
+    Future<void> _confirmUnblockUser(Map<String, dynamic> user) async {
+      final username = (user['username'] ?? 'this user').toString();
+
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) {
+          return AlertDialog(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            title: const Text(
+              'Unblock account?',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+            content: Text(
+              'Are you sure you want to unblock $username?',
+              style: const TextStyle(fontSize: 14, color: Colors.black54),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(color: Color(0xff333333)),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(dialogContext, true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xfffcc001),
+                  foregroundColor: Colors.black,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text(
+                  'Unblock',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (confirmed == true && mounted) {
+        await _unblockUser(user);
+      }
+    }
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
@@ -173,7 +228,7 @@ class _BlockedUsersPageState extends State<BlockedUsersPage> {
           tooltip: 'Unblock user',
           onPressed: userId.isEmpty || isRemoving
               ? null
-              : () => _unblockUser(user),
+              : () => _confirmUnblockUser(user),
           icon: isRemoving
               ? const SizedBox(
                   width: 21,

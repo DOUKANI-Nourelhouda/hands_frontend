@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 import '../services/group_service.dart';
@@ -361,30 +362,53 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
       ),
       body: Column(
         children: [
+          SizedBox(height: 10),
           Padding(
             padding: const EdgeInsets.all(16),
             child: TextField(
               controller: nameController,
+              cursorColor: Color(0xff333333),
               maxLength: 60,
               decoration: InputDecoration(
-                labelText: 'Group name',
-                hintText: 'e.g. Study Group',
-                prefixIcon: const Icon(Icons.groups_outlined),
+                hintText: 'Group name',
+                hintStyle: TextStyle(color: Color(0xffC4C4C4)),
+                floatingLabelStyle: const TextStyle(color: Color(0xfffcc001)),
+                prefixIcon: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: SvgPicture.asset(
+                    'assets/icons/groups.svg',
+                    width: 24,
+                    height: 24,
+                    colorFilter: const ColorFilter.mode(
+                      Color(0xffC4C4C4),
+                      BlendMode.srcIn,
+                    ),
+                  ),
+                ),
                 filled: true,
                 fillColor: Colors.white,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(
+                    color: Color(0xfffcc001),
+                    width: 2,
+                  ),
+                ),
               ),
             ),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.all(16),
             child: TextField(
               controller: searchController,
+              cursorColor: Color(0xff333333),
               onChanged: searchStudents,
               decoration: InputDecoration(
                 hintText: 'Search students',
+                hintStyle: const TextStyle(color: Color(0xffC4C4C4)),
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: searching
                     ? const Padding(
@@ -392,7 +416,10 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                         child: SizedBox(
                           width: 18,
                           height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Color(0xfffcc001),
+                          ),
                         ),
                       )
                     : null,
@@ -400,6 +427,13 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                 fillColor: Colors.white,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(
+                    color: Color(0xfffcc001),
+                    width: 2,
+                  ),
                 ),
               ),
             ),
@@ -417,12 +451,13 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
             ),
           if (searchError != null)
             Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(14),
               child: Text(searchError!),
             ),
           Expanded(
             child: ListView(
               children: [
+                SizedBox(height: 15),
                 ...selected.values.map((user) {
                   final id = studentId(user);
 
@@ -492,7 +527,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
           ),
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(14, 14, 14, 25),
               child: SizedBox(
                 width: double.infinity,
                 height: 50,
@@ -509,7 +544,10 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                       ? const CircularProgressIndicator()
                       : const Text(
                           'Create group',
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 25,
+                          ),
                         ),
                 ),
               ),
