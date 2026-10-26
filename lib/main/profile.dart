@@ -16,17 +16,24 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:hands/services/user_service.dart';
 import 'package:hands/services/payment_service.dart';
 import 'package:hands/main/post_credits.dart';
+import 'package:hands/services/lang_manager.dart';
+import 'package:hands/utils/langs.dart';
+import 'package:provider/provider.dart';
+import 'package:hands/utils/langs.dart';
 
 class ProfilePage extends StatefulWidget {
   final String? userId;
   final VoidCallback? onSettingsTap;
   final VoidCallback? onCreditsTap;
   final PostService postService;
+  final Future<void> Function(String recipientId)? onMessageTap;
+
   const ProfilePage({
     super.key,
     this.userId,
     this.onSettingsTap,
     this.onCreditsTap,
+    this.onMessageTap,
     required this.postService,
   });
 
@@ -501,75 +508,34 @@ class _ProfilePageState extends State<ProfilePage> {
 
   String _selectedLanguage = 'English';
 
-  void _showLanguageDialog(BuildContext context) {
-    String tempLanguage = _selectedLanguage;
+  void _showLanguageDialog() {
+    final languageManager = context.read<LanguageManager>();
 
     showDialog(
       context: context,
       builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              backgroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(22),
-              ),
-              title: const Text(
-                'Choose a language',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
-                  color: Color(0xff333333),
-                ),
-              ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: ['English', 'Français', 'العربية'].map((language) {
-                  final selected = tempLanguage == language;
+        return AlertDialog(
+          title: Text(text(context, 'choose_language')),
+          content: RadioGroup<String>(
+            groupValue: languageManager.locale.languageCode,
+            onChanged: (value) async {
+              if (value == null) return;
 
-                  return RadioListTile<String>(
-                    value: language,
-                    groupValue: tempLanguage,
-                    activeColor: const Color(0xfffcc001),
-                    title: Text(language),
-                    contentPadding: EdgeInsets.zero,
-                    onChanged: (value) {
-                      if (value != null) {
-                        setDialogState(() => tempLanguage = value);
-                      }
-                    },
-                  );
-                }).toList(),
-              ),
-              actions: [
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xfffcc001),
-                      foregroundColor: const Color(0xff333333),
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _selectedLanguage = tempLanguage;
-                      });
+              await languageManager.changeLanguage(value);
 
-                      Navigator.pop(dialogContext);
-                    },
-                    child: const Text(
-                      'Confirm',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
+              if (dialogContext.mounted) {
+                Navigator.pop(dialogContext);
+              }
+            },
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: const [
+                RadioListTile<String>(title: Text('English'), value: 'en'),
+                RadioListTile<String>(title: Text('Français'), value: 'fr'),
+                RadioListTile<String>(title: Text('العربية'), value: 'ar'),
               ],
-            );
-          },
+            ),
+          ),
         );
       },
     );
@@ -730,6 +696,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           builder: (_) => FollowersFollowingPage(
                             postService: widget.postService,
                             userId: _currentUserId,
+                            onMessageTap: widget.onMessageTap,
                           ),
                         ),
                       );
@@ -737,17 +704,10 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
 
                   _optionTile(
-                    icon: Icons.notifications_outlined,
-                    title: 'Notifications',
-                    onTap: () {
-                      // TODO: Open notification settings
-                    },
-                  ),
-                  _optionTile(
                     icon: Icons.language,
                     title: 'Language',
                     onTap: () {
-                      _showLanguageDialog(context);
+                      _showLanguageDialog();
                     },
                   ),
                   _optionTile(
@@ -1039,18 +999,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                         color: Colors.black54,
                                       ),
                                     ),
-                                    const SizedBox(height: 12),
-
-                                    const Text(
-                                      'Your account and associated data may be '
-                                      'deleted according to our data retention policy.',
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        height: 1.5,
-                                        color: Colors.red,
-                                      ),
-                                    ),
+                                    const SizedBox(height: 7),
                                   ],
                                 ),
                                 actionsPadding: const EdgeInsets.fromLTRB(
@@ -1211,8 +1160,44 @@ class _ProfilePageState extends State<ProfilePage> {
                     icon: Icons.message_outlined,
                     title: 'Send message',
                     onTap: () {
+                      debugPrint('[PROFILE] Send message tapped');
+
+                      final recipientId = (_user?['_id'] ?? _user?['id'] ?? '')
+                          .toString();
+
                       Navigator.pop(sheetContext);
-                      // TODO: Open or create a direct conversation
+
+                      if (recipientId.isEmpty) {
+                        debugPrint('[PROFILE] ERROR: recipient ID is empty');
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Cannot find this user.'),
+                          ),
+                        );
+                        return;
+                      }
+
+                      if (recipientId == _currentUserId) {
+                        debugPrint('[PROFILE] Cannot message yourself');
+                        return;
+                      }
+
+                      if (widget.onMessageTap == null) {
+                        debugPrint('[PROFILE] ERROR: onMessageTap is null');
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Messaging is not connected yet.'),
+                          ),
+                        );
+                        return;
+                      }
+
+                      debugPrint(
+                        '[PROFILE] Opening conversation with $recipientId',
+                      );
+                      widget.onMessageTap!(recipientId);
                     },
                   ),
 
@@ -1350,9 +1335,7 @@ class _ProfilePageState extends State<ProfilePage> {
             children: [
               IconButton(
                 onPressed: () {
-                  if (Navigator.canPop(context)) {
-                    Navigator.pop(context);
-                  }
+                  Navigator.pop(context);
                 },
                 icon: const Icon(
                   Icons.arrow_back_rounded,

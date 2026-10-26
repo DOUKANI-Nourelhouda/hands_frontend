@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter/material.dart';
 
 class GroupService {
   // Example: http://10.140.155.2:5000/api
@@ -49,16 +50,30 @@ class GroupService {
 
   // GET /api/groups
   Future<List<Map<String, dynamic>>> getGroups() async {
-    final response = await http.get(_uri('/group'), headers: _headers);
+    final url = Uri.parse('$baseUrl/group');
 
-    final data = _decode(response);
-    final groups = data is Map ? data['groups'] : null;
+    final response = await http.get(
+      url,
+      headers: {'Content-Type': 'application/json', 'token': token},
+    );
 
-    if (groups is! List) return [];
+    debugPrint('[GROUPS] Status: ${response.statusCode}');
+    debugPrint('[GROUPS] Response: ${response.body}');
 
-    return groups
+    if (response.statusCode != 200) {
+      throw Exception('Failed to load groups: ${response.statusCode}');
+    }
+
+    final dynamic decoded = jsonDecode(response.body);
+
+    // The GET endpoint returns a JSON array directly.
+    if (decoded is! List) {
+      throw Exception('Invalid groups response: expected a JSON list.');
+    }
+
+    return decoded
         .whereType<Map>()
-        .map((item) => Map<String, dynamic>.from(item))
+        .map((group) => Map<String, dynamic>.from(group))
         .toList();
   }
 
@@ -126,5 +141,19 @@ class GroupService {
         .whereType<Map>()
         .map((user) => Map<String, dynamic>.from(user))
         .toList();
+  }
+
+  Future<void> leaveGroup(String groupId) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/group/$groupId/leave'),
+      headers: {'Content-Type': 'application/json', 'token': token},
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Failed to leave group (${response.statusCode}): '
+        '${response.body}',
+      );
+    }
   }
 }

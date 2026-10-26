@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
-import 'package:flutter/material.dart';
-import 'package:video_player/video_player.dart';
+import 'package:hands/utils/langs.dart';
 
 class MediaViewerPage extends StatefulWidget {
   final List<Map<String, dynamic>> media;

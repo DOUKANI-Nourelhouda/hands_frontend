@@ -3,6 +3,7 @@ import '../services/post_service.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:hands/widgets/catigory_dropdown.dart';
 import 'dart:io';
+import 'package:hands/utils/langs.dart';
 
 class CreatePostPage extends StatefulWidget {
   final PostService postService;

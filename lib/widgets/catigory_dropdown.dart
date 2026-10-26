@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hands/utils/langs.dart';
 
 class CategoryDropdown extends StatefulWidget {
   final String? selectedCategory;

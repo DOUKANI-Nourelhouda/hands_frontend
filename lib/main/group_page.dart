@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
-
+import 'package:hands/utils/langs.dart';
 import '../services/group_service.dart';
 import 'group_chat_page.dart';
 
@@ -544,10 +544,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                       ? const CircularProgressIndicator()
                       : const Text(
                           'Create group',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 25,
-                          ),
+                          style: TextStyle(fontSize: 23),
                         ),
                 ),
               ),

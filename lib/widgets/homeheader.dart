@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:hands/main/notification.dart';
+import 'package:hands/utils/langs.dart';
 
 class HomeHeader extends StatelessWidget {
   const HomeHeader({super.key});

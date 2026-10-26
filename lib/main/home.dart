@@ -4,6 +4,7 @@ import 'package:hands/widgets/homeheader.dart';
 import 'package:hands/widgets/home_catigores.dart';
 import 'package:hands/widgets/postwidget.dart';
 import 'package:hands/services/post_service.dart';
+import 'package:hands/utils/langs.dart';
 
 class HomePage extends StatefulWidget {
   final PostService postService;
@@ -198,7 +199,7 @@ class HomePageState extends State<HomePage> {
       final category = selectedCategory;
 
       final message = category == null || category == 'All'
-          ? 'No posts yet. Be the first to post!'
+          ? 'No posts yet. Be the first who post!'
           : 'No posts about $category yet.';
 
       return ListView(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:hands/utils/langs.dart';
 
 class CustomFloatingNavBar extends StatelessWidget {
   final int currentIndex;

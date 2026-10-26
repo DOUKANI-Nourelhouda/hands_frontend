@@ -3,15 +3,17 @@ import 'package:hands/services/post_service.dart';
 import 'package:hands/services/user_service.dart';
 import 'package:hands/services/profile_service.dart';
 import 'package:hands/main/profile.dart';
+import 'package:hands/utils/langs.dart';
 
 class FollowersFollowingPage extends StatefulWidget {
   final PostService postService;
   final String userId;
-
+  final Future<void> Function(String recipientId)? onMessageTap;
   const FollowersFollowingPage({
     super.key,
     required this.postService,
     required this.userId,
+    this.onMessageTap,
   });
 
   @override
@@ -215,12 +217,30 @@ class _FollowersFollowingPageState extends State<FollowersFollowingPage>
           icon: const Icon(Icons.remove_circle, color: _red, size: 27),
         ),
         onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => ProfilePage(postService: widget.postService),
-            ),
-          );
+          onTap:
+          () {
+            final selectedUserId = _idOf(user);
+
+            if (selectedUserId.isEmpty) {
+              _showMessage('Could not identify this user.');
+              return;
+            }
+
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ProfilePage(
+                  userId: selectedUserId,
+                  postService: widget.postService,
+
+                  onMessageTap: (recipientId) async {
+                    Navigator.pop(context); // Close the profile first.
+                    await widget.onMessageTap?.call(recipientId);
+                  },
+                ),
+              ),
+            );
+          };
         },
       ),
     );

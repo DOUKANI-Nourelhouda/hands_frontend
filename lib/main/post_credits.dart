@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:hands/services/payment_service.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:hands/utils/langs.dart';
 
 class PostCreditsPage extends StatefulWidget {
   final Future<void> Function(String packageId) onBuyPackage;

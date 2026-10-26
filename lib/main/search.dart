@@ -10,15 +10,17 @@ import 'package:hands/services/group_service.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:hands/main/group_chat_page.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:hands/utils/langs.dart';
 
 class SearchPage extends StatefulWidget {
   final PostService postService;
   final IO.Socket socket;
-
+  final Future<void> Function(String recipientId)? onMessageTap;
   const SearchPage({
     super.key,
     required this.postService,
     required this.socket,
+    this.onMessageTap,
   });
 
   @override
@@ -808,21 +810,29 @@ class _SearchPageState extends State<SearchPage> {
             subtitle: bio.isNotEmpty ? Text(bio) : null,
 
             onTap: () {
-              final userId = (user['_id'] ?? user['id'] ?? '').toString();
+              final selectedUserId = (user['_id'] ?? user['id'] ?? '')
+                  .toString();
 
-              if (userId.isEmpty) {
+              if (selectedUserId.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Could not open this profile.')),
                 );
                 return;
               }
 
+              debugPrint('[SEARCH] Opening profile: $selectedUserId');
+
               Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (_) => ProfilePage(
-                    userId: userId,
+                    userId: selectedUserId,
                     postService: widget.postService,
+                    onMessageTap: (recipientId) async {
+                      debugPrint('[SEARCH] Opening direct chat: $recipientId');
+
+                      await widget.onMessageTap?.call(recipientId);
+                    },
                   ),
                 ),
               );

@@ -121,3 +121,5 @@ flutter_launcher_icons:
   ios: true
   image_path: "assets/logo_exct.png"
   min_sdk_android: 21
+flutter_localizations:
+  sdk: flutter  

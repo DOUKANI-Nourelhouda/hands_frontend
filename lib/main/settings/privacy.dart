@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hands/utils/langs.dart';
 
 class PrivacyPolicyPage extends StatelessWidget {
   const PrivacyPolicyPage({super.key});

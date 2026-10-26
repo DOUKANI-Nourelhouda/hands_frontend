@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hands/utils/langs.dart';
 
 class ResidenceDropdown extends StatefulWidget {
   final String? selectedResidenceId;

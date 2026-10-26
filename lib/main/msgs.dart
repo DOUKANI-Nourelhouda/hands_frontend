@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/group_service.dart';
 import 'package:hands/services/msgs_service.dart';
 import 'package:hands/main/group_page.dart';
+import 'package:hands/utils/langs.dart';
 
 class MsgsPage extends StatefulWidget {
   final String baseUrl;
@@ -12,7 +13,7 @@ class MsgsPage extends StatefulWidget {
 
   final void Function(Map<String, dynamic> conversation) onOpenConversation;
   final void Function(Map<String, dynamic> group) onOpenGroup;
-
+  final VoidCallback? onRefreshRequested;
   const MsgsPage({
     super.key,
     required this.baseUrl,
@@ -22,6 +23,7 @@ class MsgsPage extends StatefulWidget {
     required this.groupService,
     required this.onOpenConversation,
     required this.onOpenGroup,
+    this.onRefreshRequested,
   });
 
   @override
@@ -50,7 +52,7 @@ class _MsgsPageState extends State<MsgsPage> {
 
     debugPrint('[MSGS] Page initialized');
 
-    _msgService = MsgService();
+    _msgService = MsgService(baseUrl: _baseUrl, token: widget.token);
 
     _loadChats();
   }
@@ -59,6 +61,12 @@ class _MsgsPageState extends State<MsgsPage> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant MsgsPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _loadChats();
   }
 
   Future<void> _loadChats() async {
@@ -75,14 +83,21 @@ class _MsgsPageState extends State<MsgsPage> {
       debugPrint('[MSGS] Conversations loaded: ${conversations.length}');
 
       debugPrint('[MSGS] Loading groups...');
-      final groups = await widget.groupService.getGroups();
-      debugPrint('[MSGS] Groups loaded: ${groups.length}');
+      final allGroups = await widget.groupService.getGroups();
+
+      debugPrint('[MSGS] Groups returned by API: ${allGroups.length}');
 
       if (!mounted) return;
 
       setState(() {
         _conversations = conversations;
-        _groups = groups;
+        _groups = allGroups;
+
+        debugPrint('[MSGS] Current user ID: ${widget.currentUserId}');
+        debugPrint('[MSGS] Groups returned by API: ${allGroups.length}');
+        debugPrint('[MSGS] Groups displayed: ${_groups.length}');
+        debugPrint('[MSGS] Group data: $_groups');
+
         _isLoading = false;
       });
     } catch (error, stackTrace) {
@@ -530,14 +545,18 @@ class _MsgsPageState extends State<MsgsPage> {
               bottom: 16,
               child: FloatingActionButton(
                 heroTag: 'msgs_fab',
-                onPressed: () {
-                  Navigator.push(
+                onPressed: () async {
+                  await Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (_) =>
                           CreateGroupPage(groupService: widget.groupService),
                     ),
                   );
+
+                  if (mounted) {
+                    await _loadChats();
+                  }
                 },
                 backgroundColor: Colors.white,
                 foregroundColor: Color(0xfffcc001),

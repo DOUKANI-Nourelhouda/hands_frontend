@@ -1,57 +1,39 @@
 import 'dart:convert';
+
 import 'package:http/http.dart' as http;
-import 'auth_service.dart';
 
 class MsgService {
-  final AuthService _authService = AuthService();
+  final String baseUrl;
+  final String token;
 
-  String get _baseUrl => AuthService.baseUrl.replaceAll(RegExp(r'/+$'), '');
+  MsgService({required this.baseUrl, required this.token});
 
-  Future<Map<String, String>> _headers() async {
-    final token = await _authService.getSavedToken();
+  Map<String, String> get _headers => {
+    'Content-Type': 'application/json',
+    'token': token,
+  };
 
-    if (token == null || token.isEmpty) {
-      throw Exception('Your session has expired. Please log in again.');
-    }
-
-    return {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'token': token,
-    };
-  }
-
-  dynamic _decode(http.Response response) {
-    dynamic data;
-
-    try {
-      data = jsonDecode(response.body);
-    } catch (_) {
-      throw Exception('Invalid server response (${response.statusCode}).');
-    }
-
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      final message = data is Map ? data['message']?.toString() : null;
-
-      throw Exception(message ?? 'Request failed (${response.statusCode}).');
-    }
-
-    return data;
-  }
-
+  /// Load the current user's direct conversations.
   Future<List<Map<String, dynamic>>> getConversations() async {
-    final url = '$_baseUrl/conversations';
+    final response = await http.get(
+      Uri.parse('$baseUrl/conversations'),
+      headers: _headers,
+    );
 
-    print('[MESSAGES] GET $url');
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Failed to load conversations (${response.statusCode}): '
+        '${response.body}',
+      );
+    }
 
-    final response = await http.get(Uri.parse(url), headers: await _headers());
+    final dynamic decoded = jsonDecode(response.body);
 
-    print('[MESSAGES] Status: ${response.statusCode}');
-
-    final data = _decode(response);
+    // Supports either a JSON list or { conversations: [...] }.
+    final dynamic data = decoded is List ? decoded : decoded['conversations'];
 
     if (data is! List) {
-      throw Exception('Expected a list from GET /conversations.');
+      throw Exception('Invalid conversations response.');
     }
 
     return data
@@ -60,27 +42,97 @@ class MsgService {
         .toList();
   }
 
-  Future<Map<String, dynamic>> getOrCreateConversation(String userId) async {
-    final url = '$_baseUrl/conversations';
-
-    print('[MESSAGES] POST $url');
-
+  /// Create a conversation, or retrieve an existing one if the backend
+  /// implements that behavior.
+  Future<Map<String, dynamic>> createConversation(String recipientId) async {
     final response = await http.post(
-      Uri.parse(url),
-      headers: await _headers(),
-      body: jsonEncode({'userId': userId}),
+      Uri.parse('$baseUrl/conversations'),
+      headers: _headers,
+      body: jsonEncode({'recipientId': recipientId}),
     );
 
-    final data = _decode(response);
-
-    if (data is Map && data['conversation'] is Map) {
-      return Map<String, dynamic>.from(data['conversation'] as Map);
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception(
+        'Failed to open conversation (${response.statusCode}): '
+        '${response.body}',
+      );
     }
 
-    if (data is Map && data['_id'] != null) {
-      return Map<String, dynamic>.from(data);
+    final dynamic decoded = jsonDecode(response.body);
+
+    if (decoded is! Map) {
+      throw Exception('Invalid conversation response.');
     }
 
-    throw Exception('The server did not return a valid conversation.');
+    // Supports { conversation: {...} } or a conversation object directly.
+    final dynamic conversation = decoded['conversation'] ?? decoded;
+
+    if (conversation is! Map) {
+      throw Exception('Conversation not found in response.');
+    }
+
+    return Map<String, dynamic>.from(conversation);
+  }
+
+  /// Load message history for one conversation.
+  Future<List<Map<String, dynamic>>> getMessages(String conversationId) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/messages/$conversationId'),
+      headers: _headers,
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Failed to load messages (${response.statusCode}): '
+        '${response.body}',
+      );
+    }
+
+    final dynamic decoded = jsonDecode(response.body);
+
+    // Supports [...] or { messages: [...] }.
+    final dynamic data = decoded is List ? decoded : decoded['messages'];
+
+    if (data is! List) {
+      throw Exception('Invalid messages response.');
+    }
+
+    return data
+        .whereType<Map>()
+        .map((item) => Map<String, dynamic>.from(item))
+        .toList();
+  }
+
+  /// Send a text message to a conversation.
+  Future<Map<String, dynamic>> sendMessage({
+    required String conversationId,
+    required String content,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/messages/$conversationId'),
+      headers: _headers,
+      body: jsonEncode({'content': content}),
+    );
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception(
+        'Failed to send message (${response.statusCode}): '
+        '${response.body}',
+      );
+    }
+
+    final dynamic decoded = jsonDecode(response.body);
+
+    if (decoded is! Map) {
+      throw Exception('Invalid sent-message response.');
+    }
+
+    final dynamic message = decoded['message'] ?? decoded;
+
+    if (message is! Map) {
+      throw Exception('Message not found in response.');
+    }
+
+    return Map<String, dynamic>.from(message);
   }
 }

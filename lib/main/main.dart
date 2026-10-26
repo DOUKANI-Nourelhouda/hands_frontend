@@ -11,6 +11,9 @@ import 'package:hands/services/group_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:hands/main/group_chat_page.dart';
+import 'package:hands/main/chat_page.dart';
+import 'package:hands/services/msgs_service.dart';
+import 'package:hands/utils/langs.dart';
 
 class MainScreen extends StatefulWidget {
   final PostService postService;
@@ -26,7 +29,7 @@ class _MainScreenState extends State<MainScreen> {
   IO.Socket? socket;
   final GlobalKey<HomePageState> homePageKey = GlobalKey<HomePageState>();
   final AuthService _authService = AuthService();
-
+  int _groupsRefreshKey = 0;
   Map<String, dynamic>? currentUser;
   String? authToken;
   GroupService? groupService;
@@ -37,13 +40,17 @@ class _MainScreenState extends State<MainScreen> {
     HomePage(key: homePageKey, postService: widget.postService),
 
     if (groupService != null && socket != null)
-      SearchPage(postService: widget.postService, socket: socket!)
+      SearchPage(
+        postService: widget.postService,
+        socket: socket!,
+        onMessageTap: _openDirectChat,
+      )
     else
       const Center(child: CircularProgressIndicator(color: Color(0xfffcc001))),
 
     _buildMessagesPage(),
 
-    ProfilePage(postService: widget.postService),
+    ProfilePage(postService: widget.postService, onMessageTap: _openDirectChat),
   ];
   @override
   void dispose() {
@@ -89,6 +96,105 @@ class _MainScreenState extends State<MainScreen> {
 
     socket!.connect();
     debugPrint('[SOCKET] Connection requested with authentication');
+  }
+
+  Future<void> _openDirectChat(String recipientId) async {
+    final targetId = recipientId.trim();
+
+    if (targetId.isEmpty) {
+      debugPrint('[DIRECT CHAT] ERROR: Empty recipient ID');
+      return;
+    }
+
+    if (!mounted) return;
+
+    try {
+      // Make sure we have the authentication token.
+      final token = authToken ?? await _authService.getSavedToken();
+
+      if (token == null || token.isEmpty) {
+        throw Exception('Please log in again.');
+      }
+
+      // Make sure we know the logged-in user's ID.
+      Map<String, dynamic>? user = currentUser;
+
+      if (user == null) {
+        final result = await _authService.getCurrentUser();
+
+        user = result['user'] is Map
+            ? Map<String, dynamic>.from(result['user'])
+            : Map<String, dynamic>.from(result);
+      }
+
+      final myId = (user['_id'] ?? user['id'] ?? '').toString();
+
+      if (myId.isEmpty) {
+        throw Exception('Could not identify your account.');
+      }
+
+      if (targetId == myId) {
+        throw Exception('You cannot message yourself.');
+      }
+
+      // A connected socket is required by your ChatPage.
+      final activeSocket = socket;
+
+      if (activeSocket == null || !activeSocket.connected) {
+        throw Exception('Chat connection is unavailable. Please try again.');
+      }
+
+      final baseUrl = dotenv.env['BASE_URL'];
+
+      if (baseUrl == null || baseUrl.isEmpty) {
+        throw Exception('BASE_URL is missing from your environment.');
+      }
+
+      final msgService = MsgService(baseUrl: baseUrl, token: token);
+
+      debugPrint('[DIRECT CHAT] Opening conversation with $targetId');
+
+      // Create the conversation or retrieve the existing one.
+      final conversation = await msgService.createConversation(targetId);
+
+      final conversationId = (conversation['_id'] ?? conversation['id'] ?? '')
+          .toString();
+
+      if (conversationId.isEmpty) {
+        debugPrint('[DIRECT CHAT] Invalid response: $conversation');
+        throw Exception('The server did not return a conversation ID.');
+      }
+
+      if (!mounted) return;
+
+      debugPrint('[DIRECT CHAT] Conversation ID: $conversationId');
+
+      // Open the actual chat screen.
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ChatPage(
+            conversationId: conversationId,
+            postService: widget.postService,
+            currentUserId: myId,
+            otherUserId: targetId,
+            otherUserName: 'Student',
+            otherUserPicture: '',
+            msgService: msgService,
+            socket: activeSocket,
+          ),
+        ),
+      );
+    } catch (e, stackTrace) {
+      debugPrint('[DIRECT CHAT] ERROR: $e');
+      debugPrint('$stackTrace');
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    }
   }
 
   Future<void> _initializeMessages() async {
@@ -190,6 +296,7 @@ class _MainScreenState extends State<MainScreen> {
     }
 
     return MsgsPage(
+      key: ValueKey(_groupsRefreshKey),
       baseUrl: dotenv.env['BASE_URL']!,
       token: token,
       currentUserId: userId,
@@ -200,13 +307,98 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  void onOpenConversation(Map<String, dynamic> conversation) {
-    debugPrint('[MSGS] Opening conversation: ${conversation['_id']}');
+  Future<void> onOpenConversation(Map<String, dynamic> conversation) async {
+    final conversationId = (conversation['_id'] ?? conversation['id'] ?? '')
+        .toString();
 
-    // TODO: Navigate to your direct chat page.
+    final userId = (currentUser?['_id'] ?? currentUser?['id'] ?? '').toString();
+
+    final connectedSocket = socket;
+    final token = authToken;
+
+    if (conversationId.isEmpty ||
+        userId.isEmpty ||
+        token == null ||
+        token.isEmpty ||
+        connectedSocket == null ||
+        !connectedSocket.connected) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Chat is not initialized. Please try again.'),
+        ),
+      );
+      return;
+    }
+
+    // Get the other participant in this conversation.
+    final participants = conversation['participants'] is List
+        ? List<Map<String, dynamic>>.from(
+            (conversation['participants'] as List).whereType<Map>().map(
+              (item) => Map<String, dynamic>.from(item),
+            ),
+          )
+        : <Map<String, dynamic>>[];
+
+    final otherUser = participants.firstWhere((participant) {
+      final participantId = (participant['_id'] ?? participant['id'] ?? '')
+          .toString();
+
+      return participantId.isNotEmpty && participantId != userId;
+    }, orElse: () => <String, dynamic>{});
+
+    if (otherUser.isEmpty) {
+      debugPrint('[CHAT] Could not find the other participant: $conversation');
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not find the other participant.')),
+      );
+      return;
+    }
+
+    final otherUserId = (otherUser['_id'] ?? otherUser['id'] ?? '').toString();
+
+    final otherUserName = (otherUser['username'] ?? otherUser['name'] ?? 'User')
+        .toString();
+
+    final otherUserPicture =
+        (otherUser['profilePicture'] ??
+                otherUser['profileImage'] ??
+                otherUser['avatar'] ??
+                '')
+            .toString();
+
+    // Use the same base URL convention as your existing MsgsPage.
+    final msgService = MsgService(
+      baseUrl: dotenv.env['BASE_URL']!.replaceAll(RegExp(r'/+$'), ''),
+      token: token,
+    );
+
+    debugPrint('[CHAT] Conversation ID: $conversationId');
+    debugPrint('[CHAT] Current user ID: $userId');
+    debugPrint('[CHAT] Other user ID: $otherUserId');
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ChatPage(
+          conversationId: conversationId,
+          postService: widget.postService,
+          currentUserId: userId,
+          otherUserId: otherUserId,
+          otherUserName: otherUserName,
+          otherUserPicture: otherUserPicture,
+          msgService: msgService,
+          socket: connectedSocket,
+        ),
+      ),
+    );
   }
 
-  void onOpenGroup(Map<String, dynamic> group) {
+  Future<void> onOpenGroup(Map<String, dynamic> group) async {
     final groupId = (group['_id'] ?? group['id'] ?? '').toString();
     final groupName = (group['name'] ?? group['groupName'] ?? 'Group')
         .toString();
@@ -218,9 +410,6 @@ class _MainScreenState extends State<MainScreen> {
 
     debugPrint('[OPEN GROUP] groupId: $groupId');
     debugPrint('[OPEN GROUP] currentUserId: $currentUserId');
-    debugPrint('[OPEN GROUP] service available: ${service != null}');
-    debugPrint('[OPEN GROUP] socket available: ${connectedSocket != null}');
-    debugPrint('[OPEN GROUP] socket connected: ${connectedSocket?.connected}');
 
     if (groupId.isEmpty ||
         currentUserId.isEmpty ||
@@ -232,7 +421,7 @@ class _MainScreenState extends State<MainScreen> {
       return;
     }
 
-    Navigator.push(
+    final result = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
         builder: (_) => GroupChatPage(
@@ -244,6 +433,14 @@ class _MainScreenState extends State<MainScreen> {
         ),
       ),
     );
+
+    if (!mounted) return;
+
+    if (result == true) {
+      setState(() {
+        _groupsRefreshKey++;
+      });
+    }
   }
 
   Future<void> _openCreatePost() async {
@@ -261,17 +458,29 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: IndexedStack(index: currentIndex, children: pages),
-      extendBody: true,
-      bottomNavigationBar: CustomFloatingNavBar(
-        currentIndex: currentIndex,
-        onTap: (index) {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+
+        if (currentIndex != 0) {
           setState(() {
-            currentIndex = index;
+            currentIndex = 0;
           });
-        },
-        onCenterTap: _openCreatePost,
+        }
+      },
+      child: Scaffold(
+        body: IndexedStack(index: currentIndex, children: pages),
+        extendBody: true,
+        bottomNavigationBar: CustomFloatingNavBar(
+          currentIndex: currentIndex,
+          onTap: (index) {
+            setState(() {
+              currentIndex = index;
+            });
+          },
+          onCenterTap: _openCreatePost,
+        ),
       ),
     );
   }

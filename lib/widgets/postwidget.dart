@@ -4,6 +4,7 @@ import 'package:hands/services/post_service.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:hands/main/createpost.dart';
 import 'package:hands/services/user_service.dart';
+import 'package:hands/utils/langs.dart';
 
 class PostWidget extends StatefulWidget {
   final Map<String, dynamic> post;
@@ -166,7 +167,7 @@ class _PostWidgetState extends State<PostWidget> {
         ),
         builder: (sheetContext) {
           return StatefulBuilder(
-            builder: (context, setSheetState) {
+            builder: (sheetContext, setSheetState) {
               return Padding(
                 padding: EdgeInsets.only(
                   bottom: MediaQuery.of(context).viewInsets.bottom,

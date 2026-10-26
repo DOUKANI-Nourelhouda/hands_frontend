@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
-
+import 'package:hands/utils/langs.dart';
 import '../services/group_service.dart';
 
 const Color groupChatYellow = Color(0xfffcc001);
@@ -38,12 +38,21 @@ class _GroupChatPageState extends State<GroupChatPage> {
   void initState() {
     super.initState();
 
+    // Listen for new messages broadcast by the backend.
     widget.socket.on('group:message:new', onNewMessage);
+
+    // Listen for confirmation that we joined the group room.
+    widget.socket.on('group:joined', (data) {
+      debugPrint('[GROUP CHAT] Joined confirmation: $data');
+    });
+
+    // Display errors returned by the backend.
     widget.socket.on('group:error', onGroupError);
 
+    // Load the previous messages.
     loadMessages();
 
-    // The backend verifies membership before joining the room.
+    // Ask the backend to join this group room.
     widget.socket.emit('group:join', {'groupId': widget.groupId});
   }
 
@@ -58,7 +67,12 @@ class _GroupChatPageState extends State<GroupChatPage> {
     if (data is! Map) return;
 
     final message = Map<String, dynamic>.from(data);
-    if (_id(message['group']) != widget.groupId) return;
+    final receivedGroupId = _id(message['group'] ?? message['groupId']);
+
+    debugPrint('[GROUP CHAT] Received message: $message');
+    debugPrint('[GROUP CHAT] Received group ID: $receivedGroupId');
+
+    if (receivedGroupId != widget.groupId) return;
 
     final messageId = _id(message['_id']);
 
@@ -77,6 +91,9 @@ class _GroupChatPageState extends State<GroupChatPage> {
     });
 
     _scrollToLatest();
+    if (messageController.text.trim().isNotEmpty) {
+      messageController.clear();
+    }
   }
 
   void onGroupError(dynamic data) {
@@ -108,7 +125,36 @@ class _GroupChatPageState extends State<GroupChatPage> {
       if (!mounted) return;
 
       setState(() {
-        messages = result;
+        // Keep messages that arrived through Socket.IO while
+        // the HTTP history request was running.
+        final combined = <String, Map<String, dynamic>>{};
+
+        for (final message in result) {
+          final id = _id(message['_id']);
+          if (id.isNotEmpty) {
+            combined[id] = message;
+          }
+        }
+
+        for (final message in messages) {
+          final id = _id(message['_id']);
+          if (id.isNotEmpty) {
+            combined[id] = message;
+          }
+        }
+
+        messages = combined.values.toList()
+          ..sort((a, b) {
+            final dateA = DateTime.tryParse((a['createdAt'] ?? '').toString());
+            final dateB = DateTime.tryParse((b['createdAt'] ?? '').toString());
+
+            if (dateA == null && dateB == null) return 0;
+            if (dateA == null) return -1;
+            if (dateB == null) return 1;
+
+            return dateA.compareTo(dateB);
+          });
+
         isLoading = false;
       });
 
@@ -138,28 +184,29 @@ class _GroupChatPageState extends State<GroupChatPage> {
     }
 
     if (!widget.socket.connected) {
+      debugPrint('[GROUP CHAT] Socket is NOT connected');
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Not connected. Check your internet connection.'),
-        ),
+        const SnackBar(content: Text('Not connected. Please try again.')),
       );
       return;
     }
+
+    final payload = {'groupId': widget.groupId, 'text': text};
+
+    debugPrint('[GROUP CHAT] Sending event: group:message:send');
+    debugPrint('[GROUP CHAT] Payload: $payload');
+    debugPrint('[GROUP CHAT] Socket ID: ${widget.socket.id}');
 
     setState(() {
       isSending = true;
       errorMessage = null;
     });
 
-    widget.socket.emit('group:message:send', {
-      'groupId': widget.groupId,
-      'text': text,
-    });
+    widget.socket.emit('group:message:send', payload);
 
-    messageController.clear();
-
-    // The server's group:error or group:message:new event will
-    // update the sending state.
+    // Keep the text until the server confirms the message
+    // by sending the group:message:new event.
   }
 
   void _scrollToLatest() {
@@ -216,10 +263,48 @@ class _GroupChatPageState extends State<GroupChatPage> {
     super.dispose();
   }
 
+  Future<void> _confirmLeaveGroup() async {
+    final shouldLeave = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Leave group?'),
+        content: const Text('Are you sure you want to leave this group?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel', style: TextStyle(color: Colors.black)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Leave', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldLeave != true || !mounted) return;
+
+    try {
+      await widget.groupService.leaveGroup(widget.groupId);
+
+      if (!mounted) return;
+
+      // Return to the previous screen after leaving.
+      Navigator.pop(context, true);
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Could not leave group: $e')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xfff7f7f7),
+
       appBar: AppBar(
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
@@ -249,14 +334,38 @@ class _GroupChatPageState extends State<GroupChatPage> {
             ),
           ],
         ),
+        actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            color: Colors.white,
+            onSelected: (value) {
+              if (value == 'leave') {
+                _confirmLeaveGroup();
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem<String>(
+                value: 'leave',
+                child: Row(
+                  children: [
+                    Icon(Icons.logout, color: Colors.red, size: 20),
+                    SizedBox(width: 10),
+                    Text('Leave group', style: TextStyle(color: Colors.red)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
+
       body: Column(
         children: [
           if (errorMessage != null)
             Material(
               color: const Color(0xfffff0f0),
               child: Padding(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(5),
                 child: Row(
                   children: [
                     const Icon(Icons.info_outline, color: Colors.red),
@@ -307,7 +416,7 @@ class _GroupChatPageState extends State<GroupChatPage> {
                 : ListView.builder(
                     controller: scrollController,
                     reverse: true,
-                    padding: const EdgeInsets.all(14),
+                    padding: const EdgeInsets.all(5),
                     itemCount: messages.length,
                     itemBuilder: (context, index) {
                       final message = messages[messages.length - 1 - index];
@@ -328,55 +437,116 @@ class _GroupChatPageState extends State<GroupChatPage> {
     final text = _messageText(message);
     final time = _formatTime(message['createdAt']);
 
-    return Align(
-      alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.78,
-        ),
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
-        decoration: BoxDecoration(
-          color: isMine ? groupChatYellow : Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(16),
-            topRight: const Radius.circular(16),
-            bottomLeft: Radius.circular(isMine ? 16 : 4),
-            bottomRight: Radius.circular(isMine ? 4 : 16),
-          ),
-          border: isMine ? null : Border.all(color: const Color(0xffeeeeee)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (!isMine)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Text(
-                  _senderName(message),
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-            Text(text, style: const TextStyle(fontSize: 15)),
-            if (time.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 5),
-                child: Align(
-                  alignment: Alignment.bottomRight,
-                  child: Text(
-                    time,
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: isMine ? Colors.black54 : Colors.black45,
-                    ),
-                  ),
-                ),
-              ),
+    final sender = message['sender'];
+    final profilePicture = sender is Map
+        ? (sender['profilePicture'] ?? '').toString().trim()
+        : '';
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        mainAxisAlignment: isMine
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          // Sender's profile picture: bottom-left for received messages.
+          if (!isMine) ...[
+            _buildSenderAvatar(profilePicture),
+            const SizedBox(width: 7),
           ],
+
+          // Message bubble.
+          Flexible(
+            child: Container(
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width * 0.70,
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
+              decoration: BoxDecoration(
+                color: isMine ? groupChatYellow : Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: const Radius.circular(16),
+                  topRight: const Radius.circular(16),
+                  bottomLeft: Radius.circular(isMine ? 16 : 4),
+                  bottomRight: Radius.circular(isMine ? 4 : 16),
+                ),
+                border: isMine
+                    ? null
+                    : Border.all(color: const Color(0xffeeeeee)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (!isMine)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Text(
+                        _senderName(message),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                          color: groupChatYellow,
+                        ),
+                      ),
+                    ),
+                  Text(text, style: const TextStyle(fontSize: 15)),
+                  if (time.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 5),
+                      child: Align(
+                        alignment: Alignment.bottomRight,
+                        child: Text(
+                          time,
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: isMine ? Colors.black54 : Colors.black45,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+
+          // Your own profile picture: bottom-right for sent messages.
+          if (isMine) ...[
+            const SizedBox(width: 7),
+            _buildSenderAvatar(profilePicture),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSenderAvatar(String imageUrl) {
+    const double avatarSize = 32;
+
+    Widget defaultAvatar() {
+      return ClipOval(
+        child: Image.asset(
+          'assets/default_pfp.jpg',
+          width: avatarSize,
+          height: avatarSize,
+          fit: BoxFit.cover,
         ),
+      );
+    }
+
+    if (imageUrl.trim().isEmpty) {
+      return defaultAvatar();
+    }
+
+    return ClipOval(
+      child: Image.network(
+        imageUrl,
+        width: avatarSize,
+        height: avatarSize,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return defaultAvatar();
+        },
       ),
     );
   }
