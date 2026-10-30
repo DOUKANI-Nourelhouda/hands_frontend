@@ -176,27 +176,19 @@ class _GroupChatPageState extends State<GroupChatPage> {
 
     if (text.length > 5000) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Messages cannot exceed 5000 characters.'),
-        ),
+        SnackBar(content: Text('Messages cannot exceed 5000 characters.')),
       );
       return;
     }
 
     if (!widget.socket.connected) {
-      debugPrint('[GROUP CHAT] Socket is NOT connected');
-
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Not connected. Please try again.')),
+        SnackBar(content: Text('Not connected. Please try again.')),
       );
       return;
     }
 
     final payload = {'groupId': widget.groupId, 'text': text};
-
-    debugPrint('[GROUP CHAT] Sending event: group:message:send');
-    debugPrint('[GROUP CHAT] Payload: $payload');
-    debugPrint('[GROUP CHAT] Socket ID: ${widget.socket.id}');
 
     setState(() {
       isSending = true;
@@ -204,9 +196,6 @@ class _GroupChatPageState extends State<GroupChatPage> {
     });
 
     widget.socket.emit('group:message:send', payload);
-
-    // Keep the text until the server confirms the message
-    // by sending the group:message:new event.
   }
 
   void _scrollToLatest() {
@@ -254,7 +243,6 @@ class _GroupChatPageState extends State<GroupChatPage> {
     widget.socket.off('group:message:new', onNewMessage);
     widget.socket.off('group:error', onGroupError);
 
-    // Leave the room, but do not disconnect the shared socket.
     widget.socket.emit('group:leave', {'groupId': widget.groupId});
 
     messageController.dispose();
@@ -267,16 +255,24 @@ class _GroupChatPageState extends State<GroupChatPage> {
     final shouldLeave = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Leave group?'),
-        content: const Text('Are you sure you want to leave this group?'),
+        title: Text(textRead(context, 'Leave group?')),
+        content: Text(
+          textRead(context, 'Are you sure you want to leave this group?'),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel', style: TextStyle(color: Colors.black)),
+            child: Text(
+              textRead(context, 'Cancel'),
+              style: TextStyle(color: Colors.black),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Leave', style: TextStyle(color: Colors.red)),
+            child: Text(
+              textRead(context, 'Leave'),
+              style: TextStyle(color: Colors.red),
+            ),
           ),
         ],
       ),
@@ -289,14 +285,13 @@ class _GroupChatPageState extends State<GroupChatPage> {
 
       if (!mounted) return;
 
-      // Return to the previous screen after leaving.
       Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Could not leave group: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(textRead(context, 'Could not leave group: $e'))),
+      );
     }
   }
 
@@ -344,13 +339,16 @@ class _GroupChatPageState extends State<GroupChatPage> {
               }
             },
             itemBuilder: (context) => [
-              const PopupMenuItem<String>(
-                value: 'leave',
+              PopupMenuItem<String>(
+                value: textRead(context, 'leave'),
                 child: Row(
                   children: [
                     Icon(Icons.logout, color: Colors.red, size: 20),
                     SizedBox(width: 10),
-                    Text('Leave group', style: TextStyle(color: Colors.red)),
+                    Text(
+                      textRead(context, 'Leave group'),
+                      style: TextStyle(color: Colors.red),
+                    ),
                   ],
                 ),
               ),
@@ -388,7 +386,7 @@ class _GroupChatPageState extends State<GroupChatPage> {
             child: isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : messages.isEmpty
-                ? const Center(
+                ? Center(
                     child: Padding(
                       padding: EdgeInsets.all(24),
                       child: Column(
@@ -401,14 +399,19 @@ class _GroupChatPageState extends State<GroupChatPage> {
                           ),
                           SizedBox(height: 12),
                           Text(
-                            'Start the conversation!',
+                            text(context, 'Start the conversation!'),
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 17,
                             ),
                           ),
                           SizedBox(height: 6),
-                          Text('Send the first message to your group.'),
+                          Text(
+                            text(
+                              context,
+                              'Send the first message to your group.',
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -456,7 +459,6 @@ class _GroupChatPageState extends State<GroupChatPage> {
             const SizedBox(width: 7),
           ],
 
-          // Message bubble.
           Flexible(
             child: Container(
               constraints: BoxConstraints(
@@ -569,7 +571,7 @@ class _GroupChatPageState extends State<GroupChatPage> {
 
                 decoration: InputDecoration(
                   counterText: '',
-                  hintText: 'Message your group...',
+                  hintText: text(context, 'Message your group...'),
                   filled: true,
                   fillColor: const Color(0xfff5f5f5),
                   contentPadding: const EdgeInsets.symmetric(

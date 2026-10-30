@@ -118,7 +118,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
     'Electronics',
     'Clothing',
     'Jewelry',
-    'Translation',
+    'Exchange',
     'Projects',
     'Programming',
     'Trips',
@@ -207,8 +207,8 @@ class _CreatePostPageState extends State<CreatePostPage> {
         SnackBar(
           content: Text(
             error is PostException
-                ? error.message
-                : 'Could not create post: $error',
+                ? text(context, error.message)
+                : text(context, 'Could not create post: $error'),
           ),
           backgroundColor: Colors.redAccent,
           duration: const Duration(seconds: 6),
@@ -218,7 +218,6 @@ class _CreatePostPageState extends State<CreatePostPage> {
       if (mounted) {
         setState(() => isSubmitting = false);
       }
-      debugPrint('========== SUBMIT FINISHED ==========\n');
     }
   }
 
@@ -256,7 +255,9 @@ class _CreatePostPageState extends State<CreatePostPage> {
         backgroundColor: Colors.white,
         elevation: 0,
         title: Text(
-          widget.isEditing ? 'Edit post' : 'Create a post',
+          widget.isEditing
+              ? text(context, 'Edit post')
+              : text(context, 'Create a post'),
           style: TextStyle(
             color: Color(0xFF333333),
             fontWeight: FontWeight.w700,
@@ -272,8 +273,8 @@ class _CreatePostPageState extends State<CreatePostPage> {
             children: [
               Text(
                 widget.isEditing
-                    ? 'Update your service details'
-                    : 'Share your service with your residence !',
+                    ? text(context, 'Update your service details')
+                    : text(context, 'Share your service with your residence !'),
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
@@ -299,16 +300,16 @@ class _CreatePostPageState extends State<CreatePostPage> {
                 controller: _captionController,
                 maxLength: 300,
                 maxLines: 5,
-                decoration: _decoration('Caption').copyWith(
-                  hintText: 'Describe your service...',
+                decoration: _decoration(text(context, 'Caption')).copyWith(
+                  hintText: text(context, 'Describe your service...'),
                   alignLabelWithHint: true,
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Caption is required';
+                    return text(context, 'Caption is required');
                   }
                   if (value.trim().length > 300) {
-                    return 'Maximum 300 characters';
+                    return text(context, 'Maximum 300 characters');
                   }
                   return null;
                 },
@@ -324,8 +325,8 @@ class _CreatePostPageState extends State<CreatePostPage> {
                     Icons.add_photo_alternate_outlined,
                     size: 26,
                   ),
-                  label: const Text(
-                    'Add photos or videos',
+                  label: Text(
+                    text(context, 'Add photos or videos'),
                     style: TextStyle(fontSize: 18),
                   ),
                   style: OutlinedButton.styleFrom(
@@ -345,10 +346,10 @@ class _CreatePostPageState extends State<CreatePostPage> {
               // EXISTING MEDIA FROM THE POST
               if (_existingMedia.isNotEmpty) ...[
                 const SizedBox(height: 10),
-                const Align(
+                Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    'Existing media',
+                    text(context, 'Existing media'),
                     style: TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),
@@ -446,10 +447,10 @@ class _CreatePostPageState extends State<CreatePostPage> {
               // NEWLY SELECTED MEDIA
               if (_selectedMedia.isNotEmpty) ...[
                 const SizedBox(height: 15),
-                const Align(
+                Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    'New media',
+                    text(context, 'New media'),
                     style: TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),
@@ -549,7 +550,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
 
               const SizedBox(height: 10),
 
-              const SizedBox(height: 60),
+              const SizedBox(height: 120),
 
               SizedBox(
                 height: 52,
@@ -574,7 +575,9 @@ class _CreatePostPageState extends State<CreatePostPage> {
                           ),
                         )
                       : Text(
-                          widget.isEditing ? 'Save changes' : 'Publish post',
+                          widget.isEditing
+                              ? text(context, 'Save changes')
+                              : text(context, 'Publish post'),
                           style: TextStyle(
                             fontSize: 19,
                             fontWeight: FontWeight.w700,

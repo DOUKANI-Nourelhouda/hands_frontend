@@ -37,7 +37,11 @@ class _MainScreenState extends State<MainScreen> {
   bool isLoadingMessagesSetup = true;
   String? messagesSetupError;
   List<Widget> get pages => [
-    HomePage(key: homePageKey, postService: widget.postService),
+    HomePage(
+      key: homePageKey,
+      postService: widget.postService,
+      onMessageTap: _openDirectChat,
+    ),
 
     if (groupService != null && socket != null)
       SearchPage(
@@ -133,10 +137,6 @@ class _MainScreenState extends State<MainScreen> {
         throw Exception('Could not identify your account.');
       }
 
-      if (targetId == myId) {
-        throw Exception('You cannot message yourself.');
-      }
-
       // A connected socket is required by your ChatPage.
       final activeSocket = socket;
 
@@ -156,7 +156,10 @@ class _MainScreenState extends State<MainScreen> {
 
       // Create the conversation or retrieve the existing one.
       final conversation = await msgService.createConversation(targetId);
-
+      debugPrint('[DIRECT CHAT] Full conversation response: $conversation');
+      debugPrint('[DIRECT CHAT] My ID: $myId');
+      debugPrint('[DIRECT CHAT] Target ID: $targetId');
+      debugPrint('[DIRECT CHAT] Participants: ${conversation['participants']}');
       final conversationId = (conversation['_id'] ?? conversation['id'] ?? '')
           .toString();
 
@@ -168,8 +171,36 @@ class _MainScreenState extends State<MainScreen> {
       if (!mounted) return;
 
       debugPrint('[DIRECT CHAT] Conversation ID: $conversationId');
+      // Find the recipient inside the conversation participants.
+      final participants =
+          (conversation['participants'] as List?)
+              ?.whereType<Map>()
+              .map((p) => Map<String, dynamic>.from(p))
+              .toList() ??
+          <Map<String, dynamic>>[];
 
-      // Open the actual chat screen.
+      final recipient = participants.firstWhere(
+        (p) => (p['_id'] ?? p['id'] ?? '').toString() == targetId,
+        orElse: () => <String, dynamic>{},
+      );
+
+      if (recipient.isEmpty) {
+        throw Exception('Could not find the recipient in the conversation.');
+      }
+
+      final recipientName =
+          (recipient['username'] ?? recipient['name'] ?? 'Student').toString();
+
+      final recipientPicture =
+          (recipient['profilePicture'] ??
+                  recipient['profileImage'] ??
+                  recipient['avatar'] ??
+                  '')
+              .toString();
+
+      debugPrint('[DIRECT CHAT] Recipient name: $recipientName');
+      debugPrint('[DIRECT CHAT] Recipient picture: $recipientPicture');
+
       await Navigator.push(
         context,
         MaterialPageRoute(
@@ -178,8 +209,8 @@ class _MainScreenState extends State<MainScreen> {
             postService: widget.postService,
             currentUserId: myId,
             otherUserId: targetId,
-            otherUserName: 'Student',
-            otherUserPicture: '',
+            otherUserName: recipientName,
+            otherUserPicture: recipientPicture,
             msgService: msgService,
             socket: activeSocket,
           ),
@@ -263,7 +294,7 @@ class _MainScreenState extends State<MainScreen> {
           children: [
             const Icon(Icons.error_outline, size: 40, color: Colors.red),
             const SizedBox(height: 12),
-            Text(messagesSetupError!),
+            Text(text(context, messagesSetupError!)),
             const SizedBox(height: 12),
             ElevatedButton(
               onPressed: () {
@@ -273,7 +304,7 @@ class _MainScreenState extends State<MainScreen> {
                 });
                 _initializeMessages();
               },
-              child: const Text('Retry'),
+              child: Text(text(context, 'Retry')),
             ),
           ],
         ),
@@ -285,14 +316,18 @@ class _MainScreenState extends State<MainScreen> {
     final groups = groupService;
 
     if (user == null || token == null || groups == null) {
-      return const Center(child: Text('Messages could not be initialized.'));
+      return Center(
+        child: Text(textRead(context, 'Messages could not be initialized.')),
+      );
     }
 
     // Change these field names if your user model uses different ones.
     final userId = user['_id']?.toString();
 
     if (userId == null || userId.isEmpty) {
-      return const Center(child: Text('Could not identify the current user.'));
+      return Center(
+        child: Text(textRead(context, 'Could not identify the current user.')),
+      );
     }
 
     return MsgsPage(
@@ -325,8 +360,10 @@ class _MainScreenState extends State<MainScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Chat is not initialized. Please try again.'),
+        SnackBar(
+          content: Text(
+            textRead(context, 'Chat is not initialized. Please try again.'),
+          ),
         ),
       );
       return;
@@ -340,24 +377,36 @@ class _MainScreenState extends State<MainScreen> {
             ),
           )
         : <Map<String, dynamic>>[];
+    Map<String, dynamic> otherUser;
 
-    final otherUser = participants.firstWhere((participant) {
-      final participantId = (participant['_id'] ?? participant['id'] ?? '')
-          .toString();
-
-      return participantId.isNotEmpty && participantId != userId;
-    }, orElse: () => <String, dynamic>{});
-
-    if (otherUser.isEmpty) {
-      debugPrint('[CHAT] Could not find the other participant: $conversation');
+    if (participants.isEmpty) {
+      debugPrint('[CHAT] No participants found: $conversation');
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not find the other participant.')),
+        SnackBar(
+          content: Text(
+            textRead(context, 'Could not find the other participant.'),
+          ),
+        ),
       );
       return;
     }
+
+    // Find the other participant for a normal conversation.
+    final otherParticipant = participants.where((participant) {
+      final participantId = (participant['_id'] ?? participant['id'] ?? '')
+          .toString();
+
+      return participantId.isNotEmpty && participantId != userId;
+    }).toList();
+
+    // Normal chat: use the other user.
+    // Self-chat: use the current user.
+    otherUser = otherParticipant.isNotEmpty
+        ? otherParticipant.first
+        : participants.first;
 
     final otherUserId = (otherUser['_id'] ?? otherUser['id'] ?? '').toString();
 
@@ -416,7 +465,11 @@ class _MainScreenState extends State<MainScreen> {
         service == null ||
         connectedSocket == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Group chat is not initialized yet.')),
+        SnackBar(
+          content: Text(
+            textRead(context, 'Group chat is not initialized yet.'),
+          ),
+        ),
       );
       return;
     }

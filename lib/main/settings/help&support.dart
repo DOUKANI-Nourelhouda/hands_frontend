@@ -9,7 +9,10 @@ class HelpSupportPage extends StatelessWidget {
 
   void _showMessage(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
+      SnackBar(
+        content: Text(text(context, message)),
+        behavior: SnackBarBehavior.floating,
+      ),
     );
   }
 
@@ -19,12 +22,17 @@ class HelpSupportPage extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xfff8f8f8),
         borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.13),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: ExpansionTile(
         tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-
-        // Remove the top and bottom lines
         shape: const RoundedRectangleBorder(
           side: BorderSide.none,
           borderRadius: BorderRadius.all(Radius.circular(14)),
@@ -33,7 +41,6 @@ class HelpSupportPage extends StatelessWidget {
           side: BorderSide.none,
           borderRadius: BorderRadius.all(Radius.circular(14)),
         ),
-
         iconColor: textColor,
         collapsedIconColor: Colors.grey,
         title: Text(
@@ -65,10 +72,8 @@ class HelpSupportPage extends StatelessWidget {
     required IconData icon,
     required String title,
     required String subtitle,
-    required VoidCallback onTap,
   }) {
     return InkWell(
-      onTap: onTap,
       borderRadius: BorderRadius.circular(14),
       child: Container(
         padding: const EdgeInsets.all(15),
@@ -108,7 +113,6 @@ class HelpSupportPage extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.arrow_forward_ios, size: 15, color: Colors.grey),
           ],
         ),
       ),
@@ -132,8 +136,8 @@ class HelpSupportPage extends StatelessWidget {
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Help & Support',
+        title: Text(
+          text(context, 'Help & Support'),
           style: TextStyle(
             color: Colors.black87,
             fontSize: 18,
@@ -143,7 +147,7 @@ class HelpSupportPage extends StatelessWidget {
         centerTitle: true,
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(22),
         children: [
           Center(
             child: Container(
@@ -163,9 +167,9 @@ class HelpSupportPage extends StatelessWidget {
 
           const SizedBox(height: 16),
 
-          const Center(
+          Center(
             child: Text(
-              'How can we help you?',
+              text(context, 'How can we help you?'),
               style: TextStyle(
                 fontSize: 21,
                 fontWeight: FontWeight.w700,
@@ -176,9 +180,12 @@ class HelpSupportPage extends StatelessWidget {
 
           const SizedBox(height: 8),
 
-          const Text(
-            'Find answers to common questions or get help '
-            'with your Hands account and services within your residence.',
+          Text(
+            text(context, 'Find answers to common questions or get help ') +
+                text(
+                  context,
+                  'with your Hands account and services within your residence.',
+                ),
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13,
@@ -189,8 +196,8 @@ class HelpSupportPage extends StatelessWidget {
 
           const SizedBox(height: 24),
 
-          const Text(
-            'Frequently asked questions',
+          Text(
+            text(context, 'Frequently asked questions :'),
             style: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.bold,
@@ -202,59 +209,101 @@ class HelpSupportPage extends StatelessWidget {
 
           // Keep your existing FAQ items and support content here.
           _buildFaq(
-            question: 'What is Hands?',
+            question: text(context, 'What is Hands?'),
             answer:
-                'Hands is a social marketplace designed for students living '
-                'in the same residence. It combines social media features '
-                'with a platform where students can offer services, discover '
-                'what others provide, connect through messages, and support '
-                'their student community.',
+                text(
+                  context,
+                  'Hands is a social marketplace designed for students living ',
+                ) +
+                text(
+                  context,
+                  'in the same residence. It combines social media features ',
+                ) +
+                text(
+                  context,
+                  'with a platform where students can offer services, discover ',
+                ) +
+                text(
+                  context,
+                  'what others provide, connect through messages, and support ',
+                ) +
+                text(context, 'their student community.'),
           ),
 
           _buildFaq(
-            question: 'Why can I only see certain posts?',
+            question: text(context, 'Why can I only see certain posts?'),
             answer:
-                'Posts are intended for students in your residence. '
-                'Make sure your account is associated with the '
-                'correct residence.',
+                text(
+                  context,
+                  'Posts are intended for students in your residence. ',
+                ) +
+                text(
+                  context,
+                  'Make sure your account is associated with the ',
+                ) +
+                text(context, 'correct residence.'),
           ),
 
           _buildFaq(
-            question: 'How can I publish a post?',
+            question: text(context, 'How can I publish a post?'),
             answer:
-                'Open the create-post screen, add your service '
-                'details and media, then follow the instructions '
-                'to publish. Posting allowances and any applicable '
-                'credit requirements are shown in the app.',
+                text(
+                  context,
+                  'Open the create-post screen, add your service ',
+                ) +
+                text(
+                  context,
+                  'details and media, then follow the instructions ',
+                ) +
+                text(
+                  context,
+                  'to publish. Posting allowances and any applicable ',
+                ) +
+                text(context, 'credit requirements are shown in the app.'),
           ),
 
           _buildFaq(
-            question: 'Why can’t I publish another post?',
+            question: text(context, 'Why can’t I publish another post?'),
             answer:
-                'You may have used your free posting allowance '
-                'and may need additional post credits. Check the '
-                'credits section in your profile.',
+                text(
+                  context,
+                  'You may have used your free posting allowance ',
+                ) +
+                text(
+                  context,
+                  'and may need additional post credits. Check the ',
+                ) +
+                text(context, 'credits section in your profile.'),
           ),
 
           _buildFaq(
-            question: 'How do I block or report someone?',
+            question: text(context, 'How do I block or report someone?'),
             answer:
-                'Open the relevant profile or post and use the '
-                'available block or report option. If someone '
-                'makes you feel unsafe, avoid sharing personal '
-                'information and contact support.',
+                text(
+                  context,
+                  'Open the relevant profile or post and use the ',
+                ) +
+                text(context, 'available block or report option. If someone ') +
+                text(
+                  context,
+                  'makes you feel unsafe, avoid sharing personal ',
+                ) +
+                text(context, 'information and contact support.'),
           ),
 
           _buildFaq(
-            question: 'How can I edit my profile?',
+            question: text(context, 'How can I edit my profile?'),
             answer:
-                'Open your profile and use the available profile '
-                'editing option to update your username, bio, '
-                'or profile picture.',
+                text(
+                  context,
+                  'Open your profile and use the available profile ',
+                ) +
+                text(context, 'editing option to update your username, bio, ') +
+                text(context, 'or profile picture.'),
           ),
 
-          const Text(
-            'Still need help?',
+          Text(
+            text(context, 'Still need help?'),
             style: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.bold,
@@ -266,17 +315,14 @@ class HelpSupportPage extends StatelessWidget {
 
           _buildContactTile(
             icon: Icons.email_outlined,
-            title: 'Email support',
-            subtitle: 'Get help with an account or a problem',
-            onTap: () {
-              _showMessage(context, '@@@@@@@@@@@@@');
-            },
+            title: textRead(context, 'Email support'),
+            subtitle: '@@@@@@@@@@2@@',
           ),
 
           Center(
             child: Text(
-              text(context, 'Hands • We are here to help'),
-              style: TextStyle(fontSize: 12, color: Colors.black45),
+              text(context, 'Hands - To survive in your residence.'),
+              style: TextStyle(fontSize: 14, color: Colors.black45),
             ),
           ),
         ],

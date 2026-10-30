@@ -113,24 +113,36 @@ class _FollowersFollowingPageState extends State<FollowersFollowingPage>
 
     final username = _usernameOf(user);
     final action = isFollower
-        ? 'remove $username from your followers'
-        : 'unfollow $username';
+        ? textRead(context, 'remove') +
+              ' $username ' +
+              textRead(context, 'from your followers?')
+        : textRead(context, 'unfollow') + ' $username ';
 
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text(isFollower ? 'Remove follower?' : 'Unfollow user?'),
-        content: Text('Are you sure you want to $action?'),
+        title: Text(
+          isFollower
+              ? textRead(context, 'Remove follower?')
+              : textRead(context, 'Unfollow user?'),
+        ),
+        content: Text(
+          textRead(context, 'Are you sure you want to') +
+              textRead(context, '$action'),
+        ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel', style: TextStyle(color: _textColor)),
+            child: Text(
+              textRead(context, 'Cancel'),
+              style: TextStyle(color: _textColor),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text(
-              'Remove',
+            child: Text(
+              textRead(context, 'Remove'),
               style: TextStyle(color: _red, fontWeight: FontWeight.w700),
             ),
           ),
@@ -157,7 +169,11 @@ class _FollowersFollowingPageState extends State<FollowersFollowingPage>
         }
       });
 
-      _showMessage(isFollower ? 'Follower removed.' : 'User unfollowed.');
+      _showMessage(
+        isFollower
+            ? textRead(context, 'Follower removed.')
+            : textRead(context, 'User unfollowed.'),
+      );
     } catch (e) {
       if (!mounted) return;
       _showMessage(e.toString().replaceFirst('Exception: ', ''));
@@ -167,7 +183,7 @@ class _FollowersFollowingPageState extends State<FollowersFollowingPage>
   void _showMessage(String message) {
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    ).showSnackBar(SnackBar(content: Text(textRead(context, message))));
   }
 
   Widget _buildUserCard(dynamic user, {required bool isFollower}) {
@@ -200,7 +216,7 @@ class _FollowersFollowingPageState extends State<FollowersFollowingPage>
               : const AssetImage('assets/default_pfp.jpg') as ImageProvider,
         ),
         title: Text(
-          username,
+          text(context, username),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: const TextStyle(
@@ -209,7 +225,11 @@ class _FollowersFollowingPageState extends State<FollowersFollowingPage>
           ),
         ),
         subtitle: bio.isNotEmpty
-            ? Text(bio, maxLines: 2, overflow: TextOverflow.ellipsis)
+            ? Text(
+                text(context, bio),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              )
             : null,
         trailing: IconButton(
           tooltip: isFollower ? 'Remove follower' : 'Unfollow',
@@ -258,11 +278,11 @@ class _FollowersFollowingPageState extends State<FollowersFollowingPage>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(_error!, textAlign: TextAlign.center),
+              Text(text(context, _error!), textAlign: TextAlign.center),
               const SizedBox(height: 12),
               OutlinedButton(
                 onPressed: _loadUsers,
-                child: const Text('Try again'),
+                child: Text(text(context, 'Try again')),
               ),
             ],
           ),
@@ -278,8 +298,8 @@ class _FollowersFollowingPageState extends State<FollowersFollowingPage>
             const SizedBox(height: 10),
             Text(
               isFollower
-                  ? 'You don’t have any followers yet.'
-                  : 'You aren’t following anyone yet.',
+                  ? text(context, 'You don’t have any followers yet.')
+                  : text(context, 'You aren’t following anyone yet.'),
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.grey.shade600),
             ),
@@ -317,8 +337,8 @@ class _FollowersFollowingPageState extends State<FollowersFollowingPage>
           ),
         ),
 
-        title: const Text(
-          'Followers & following',
+        title: Text(
+          text(context, 'Followers & Following'),
           style: TextStyle(
             color: _textColor,
             fontSize: 18,
@@ -337,8 +357,8 @@ class _FollowersFollowingPageState extends State<FollowersFollowingPage>
             fontSize: 14,
           ),
           tabs: [
-            Tab(text: 'Followers (${_followers.length})'),
-            Tab(text: 'Followings (${_following.length})'),
+            Tab(text: text(context, 'Followers') + '(${_followers.length})'),
+            Tab(text: text(context, 'Following') + '(${_following.length})'),
           ],
         ),
       ),

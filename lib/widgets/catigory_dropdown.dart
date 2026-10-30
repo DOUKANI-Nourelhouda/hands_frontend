@@ -46,7 +46,7 @@ class _CategoryDropdownState extends State<CategoryDropdown> {
           child: SizedBox(
             width: renderBox.size.width - 30,
             child: Text(
-              category,
+              textRead(context, category),
               style: const TextStyle(fontSize: 16, color: Colors.black),
             ),
           ),
@@ -85,7 +85,7 @@ class _CategoryDropdownState extends State<CategoryDropdown> {
 
             Expanded(
               child: Text(
-                widget.selectedCategory ?? 'Category',
+                textRead(context, widget.selectedCategory ?? 'Category'),
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: 16,

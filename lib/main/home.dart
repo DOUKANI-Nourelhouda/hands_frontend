@@ -8,8 +8,12 @@ import 'package:hands/utils/langs.dart';
 
 class HomePage extends StatefulWidget {
   final PostService postService;
-
-  const HomePage({super.key, required this.postService});
+  final Future<void> Function(String recipientId) onMessageTap;
+  const HomePage({
+    super.key,
+    required this.postService,
+    required this.onMessageTap,
+  });
 
   @override
   State<HomePage> createState() => HomePageState();
@@ -200,7 +204,9 @@ class HomePageState extends State<HomePage> {
 
       final message = category == null || category == 'All'
           ? 'No posts yet. Be the first who post!'
-          : 'No posts about $category yet.';
+          : textRead(context, 'No posts about') +
+                ' $category ' +
+                textRead(context, 'yet.');
 
       return ListView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -212,7 +218,7 @@ class HomePageState extends State<HomePage> {
               child: Column(
                 children: [
                   Text(
-                    message,
+                    text(context, message),
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       fontSize: 16,
@@ -254,6 +260,29 @@ class HomePageState extends State<HomePage> {
             });
           },
           currentUserId: _currentUserId,
+          onOpenChat: (post) async {
+            debugPrint('[POST CHAT] Post: $post');
+            debugPrint('[POST CHAT] Current user: $_currentUserId');
+
+            final owner = post['user'] ?? post['owner'] ?? post['author'];
+
+            String ownerId = '';
+
+            if (owner is Map) {
+              ownerId = (owner['_id'] ?? owner['id'] ?? '').toString();
+            } else {
+              ownerId = (owner ?? post['userId'] ?? '').toString();
+            }
+
+            debugPrint('[POST CHAT] Owner ID: $ownerId');
+
+            if (ownerId.isEmpty) {
+              debugPrint('[POST CHAT] ERROR: Owner ID not found');
+              return;
+            }
+
+            await widget.onMessageTap(ownerId);
+          },
         );
       },
     );

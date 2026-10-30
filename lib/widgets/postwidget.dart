@@ -13,6 +13,7 @@ class PostWidget extends StatefulWidget {
   final void Function(String postId)? onPostReported;
   final void Function(Map<String, dynamic> post)? onPostUpdated;
   final void Function(String userId)? onUserBlocked;
+  final Future<void> Function(Map<String, dynamic> post)? onOpenChat;
   const PostWidget({
     super.key,
     required this.post,
@@ -21,6 +22,7 @@ class PostWidget extends StatefulWidget {
     this.onPostReported,
     this.onPostUpdated,
     this.onUserBlocked,
+    this.onOpenChat,
   });
 
   @override
@@ -29,7 +31,7 @@ class PostWidget extends StatefulWidget {
 
 class _PostWidgetState extends State<PostWidget> {
   static const Color accent = Color(0xfffcc001);
-
+  late final TextEditingController _commentController = TextEditingController();
   Map<String, dynamic> get post => widget.post;
 
   bool _isLiked = false;
@@ -47,6 +49,11 @@ class _PostWidgetState extends State<PostWidget> {
   }
 
   final UserService userService = UserService();
+  @override
+  void dispose() {
+    _commentController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -71,19 +78,22 @@ class _PostWidgetState extends State<PostWidget> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          title: const Text(
-            'Block user?',
+          title: Text(
+            textRead(context, 'Block user?'),
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
           content: Text(
-            'Are you sure you want to block $username? '
-            'Their posts will no longer appear in your feed.',
+            textRead(
+              context,
+              'Are you sure you want to block $username? '
+              'Their posts will no longer appear in your feed.',
+            ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text(
-                'Cancel',
+              child: Text(
+                textRead(context, 'Cancel'),
                 style: TextStyle(color: Colors.black54),
               ),
             ),
@@ -93,7 +103,7 @@ class _PostWidgetState extends State<PostWidget> {
                 foregroundColor: Colors.white,
               ),
               onPressed: () => Navigator.pop(dialogContext, true),
-              child: const Text('Block'),
+              child: Text(textRead(context, 'Block')),
             ),
           ],
         );
@@ -124,9 +134,9 @@ class _PostWidgetState extends State<PostWidget> {
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Could not update like: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(textRead(context, 'Could not update like: $e'))),
+      );
     } finally {
       if (mounted) setState(() => _isLiking = false);
     }
@@ -142,22 +152,25 @@ class _PostWidgetState extends State<PostWidget> {
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Could not load comments: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(textRead(context, 'Could not load comments: $e')),
+        ),
+      );
       return;
     }
 
     if (!mounted) return;
 
-    final controller = TextEditingController();
     var comments = loadedComments;
     var sending = false;
 
+    bool isSheetClosing = false;
     try {
       await showModalBottomSheet<void>(
         context: context,
         useRootNavigator: true,
+        useSafeArea: true,
         isScrollControlled: true,
         isDismissible: true,
         enableDrag: true,
@@ -166,1070 +179,1255 @@ class _PostWidgetState extends State<PostWidget> {
           borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
         ),
         builder: (sheetContext) {
-          return StatefulBuilder(
-            builder: (sheetContext, setSheetState) {
-              return Padding(
-                padding: EdgeInsets.only(
-                  bottom: MediaQuery.of(context).viewInsets.bottom,
-                ),
-                child: SizedBox(
-                  height: MediaQuery.of(context).size.height * 0.7,
-                  child: Column(
-                    children: [
-                      // HEADER
-                      const Padding(
-                        padding: EdgeInsets.fromLTRB(16, 20, 16, 16),
-                        child: Text(
-                          'Comments',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF202124),
+          return PopScope(
+            onPopInvokedWithResult: (didPop, result) {
+              if (didPop) {
+                isSheetClosing = true;
+              }
+            },
+            child: StatefulBuilder(
+              builder: (sheetContext, setSheetState) {
+                final keyboardHeight = MediaQuery.of(
+                  sheetContext,
+                ).viewInsets.bottom;
+                final screenHeight = MediaQuery.of(sheetContext).size.height;
+
+                return AnimatedPadding(
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeOut,
+                  padding: EdgeInsets.only(bottom: keyboardHeight),
+                  child: SizedBox(
+                    height: screenHeight * 0.7,
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(top: 10, bottom: 0),
+                          child: Container(
+                            width: 40,
+                            height: 5,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFD0D0D0),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
                           ),
                         ),
-                      ),
+                        // HEADER
+                        Padding(
+                          padding: EdgeInsets.fromLTRB(16, 12, 16, 16),
+                          child: Text(
+                            textRead(context, 'Comments'),
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF202124),
+                            ),
+                          ),
+                        ),
 
-                      const Divider(height: 1, color: Color(0xFFEEEEEE)),
+                        const Divider(height: 1, color: Color(0xFFEEEEEE)),
 
-                      // WHITE COMMENTS LIST BACKGROUND
-                      Expanded(
-                        child: Container(
-                          color: Colors.white,
-                          child: comments.isEmpty
-                              ? const Center(
-                                  child: Text(
-                                    'No comments yet. Be the first !',
-                                    style: TextStyle(
-                                      color: Colors.grey,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                )
-                              : ListView.builder(
-                                  padding: const EdgeInsets.all(16),
-                                  itemCount: comments.length,
-                                  itemBuilder: (context, index) {
-                                    final comment = comments[index];
-
-                                    final userData = comment['user'];
-
-                                    final replies =
-                                        (comment['replies'] as List? ?? [])
-                                            .whereType<Map>()
-                                            .map(
-                                              (reply) =>
-                                                  Map<String, dynamic>.from(
-                                                    reply,
-                                                  ),
-                                            )
-                                            .toList();
-
-                                    final user = userData is Map
-                                        ? Map<String, dynamic>.from(userData)
-                                        : <String, dynamic>{};
-
-                                    final commentId = _idOf(
-                                      comment['_id'] ?? comment['id'],
-                                    );
-
-                                    final commentUserId = _idOf(
-                                      user['_id'] ?? user['id'],
-                                    );
-
-                                    final isMyComment =
-                                        commentUserId == widget.currentUserId;
-
-                                    final profilePicture =
-                                        (user['profilePicture'] ?? '')
-                                            .toString()
-                                            .trim();
-
-                                    final username =
-                                        user['username']?.toString() ??
-                                        'Student';
-
-                                    return Container(
-                                      margin: const EdgeInsets.only(bottom: 12),
-                                      padding: const EdgeInsets.all(12),
-                                      decoration: BoxDecoration(
-                                        // GRAY BACKGROUND FOR EACH COMMENT
-                                        color: const Color(0xFFF2F2F2),
-                                        borderRadius: BorderRadius.circular(14),
+                        // WHITE COMMENTS LIST BACKGROUND
+                        Expanded(
+                          child: Container(
+                            color: Colors.white,
+                            child: comments.isEmpty
+                                ? Center(
+                                    child: Text(
+                                      textRead(
+                                        context,
+                                        'No comments yet. Be the first !',
                                       ),
+                                      style: TextStyle(
+                                        color: Colors.grey,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  )
+                                : ListView.builder(
+                                    padding: const EdgeInsets.all(16),
+                                    itemCount: comments.length,
+                                    itemBuilder: (context, index) {
+                                      final comment = comments[index];
 
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              // CIRCULAR PROFILE PICTURE
-                                              ClipOval(
-                                                child: SizedBox(
-                                                  width: 44,
-                                                  height: 44,
-                                                  child:
-                                                      profilePicture.isNotEmpty
-                                                      ? Image.network(
-                                                          profilePicture,
-                                                          fit: BoxFit.cover,
-                                                          width: 44,
-                                                          height: 44,
-                                                          errorBuilder:
-                                                              (
-                                                                context,
-                                                                error,
-                                                                stackTrace,
-                                                              ) {
-                                                                return Image.asset(
-                                                                  'assets/default_pfp.jpg',
-                                                                  width: 44,
-                                                                  height: 44,
-                                                                  fit: BoxFit
-                                                                      .cover,
-                                                                );
-                                                              },
-                                                        )
-                                                      : Image.asset(
-                                                          'assets/default_pfp.jpg',
-                                                          width: 44,
-                                                          height: 44,
-                                                          fit: BoxFit.cover,
-                                                        ),
-                                                ),
-                                              ),
+                                      final userData = comment['user'];
 
-                                              const SizedBox(width: 12),
-
-                                              // USERNAME AND COMMENT
-                                              Expanded(
-                                                child: Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    Text(
-                                                      username,
-                                                      maxLines: 1,
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
-                                                      style: const TextStyle(
-                                                        fontSize: 14,
-                                                        fontWeight:
-                                                            FontWeight.w700,
-                                                        color: Color(
-                                                          0xFF202124,
-                                                        ),
-                                                      ),
+                                      final replies =
+                                          (comment['replies'] as List? ?? [])
+                                              .whereType<Map>()
+                                              .map(
+                                                (reply) =>
+                                                    Map<String, dynamic>.from(
+                                                      reply,
                                                     ),
+                                              )
+                                              .toList();
 
-                                                    const SizedBox(height: 6),
+                                      final user = userData is Map
+                                          ? Map<String, dynamic>.from(userData)
+                                          : <String, dynamic>{};
 
-                                                    Text(
-                                                      comment['content']
-                                                              ?.toString() ??
-                                                          '',
-                                                      style: const TextStyle(
-                                                        fontSize: 14,
-                                                        height: 1.4,
-                                                        color: Color(
-                                                          0xFF444444,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
+                                      final commentId = _idOf(
+                                        comment['_id'] ?? comment['id'],
+                                      );
 
-                                              // DELETE ICON AT TOP-RIGHT
-                                              // THREE-DOT COMMENT MENU
-                                              PopupMenuButton<String>(
-                                                tooltip: 'Comment options',
-                                                icon: const Icon(
-                                                  Icons.more_horiz,
-                                                  size: 23,
-                                                  color: Color(0xFF777777),
-                                                ),
-                                                color: Colors.white,
-                                                elevation: 8,
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(12),
-                                                ),
-                                                onSelected: (action) async {
-                                                  if (action == 'edit') {
-                                                    final editedText =
-                                                        await showDialog<
-                                                          String
-                                                        >(
-                                                          context: context,
-                                                          builder: (_) => CommentTextDialog(
-                                                            title:
-                                                                'Edit comment',
-                                                            initialText:
-                                                                comment['content']
-                                                                    ?.toString() ??
-                                                                '',
-                                                            hintText:
-                                                                'Edit your comment...',
-                                                            actionLabel: 'Save',
-                                                          ),
-                                                        );
+                                      final commentUserId = _idOf(
+                                        user['_id'] ?? user['id'],
+                                      );
 
-                                                    if (!context.mounted)
-                                                      return;
-                                                    if (editedText == null ||
-                                                        editedText
-                                                            .trim()
-                                                            .isEmpty ||
-                                                        editedText.trim() ==
-                                                            (comment['content']
-                                                                        ?.toString() ??
-                                                                    '')
-                                                                .trim()) {
-                                                      return;
-                                                    }
+                                      final isMyComment =
+                                          commentUserId == widget.currentUserId;
 
-                                                    try {
-                                                      final result =
-                                                          await widget
-                                                              .postService
-                                                              .editComment(
-                                                                postId: _postId,
-                                                                commentId:
-                                                                    commentId,
-                                                                text: editedText
-                                                                    .trim(),
-                                                              );
+                                      final profilePicture =
+                                          (user['profilePicture'] ?? '')
+                                              .toString()
+                                              .trim();
 
-                                                      if (!context.mounted)
-                                                        return;
+                                      final username =
+                                          user['username']?.toString() ??
+                                          'Student';
 
-                                                      final updated =
-                                                          result['comment'];
-
-                                                      if (updated is Map) {
-                                                        setSheetState(() {
-                                                          final updatedComment =
-                                                              Map<
-                                                                String,
-                                                                dynamic
-                                                              >.from(updated);
-
-                                                          // Keep replies if the edit response doesn't include them.
-                                                          if (!updatedComment
-                                                              .containsKey(
-                                                                'replies',
-                                                              )) {
-                                                            updatedComment['replies'] =
-                                                                comments[index]['replies'] ??
-                                                                [];
-                                                          }
-
-                                                          comments[index] =
-                                                              updatedComment;
-                                                        });
-                                                      }
-                                                    } catch (e) {
-                                                      if (!context.mounted)
-                                                        return;
-                                                      ScaffoldMessenger.of(
-                                                        context,
-                                                      ).showSnackBar(
-                                                        SnackBar(
-                                                          content: Text(
-                                                            'Could not edit comment: $e',
-                                                          ),
-                                                        ),
-                                                      );
-                                                    }
-                                                  } else if (action ==
-                                                      'reply') {
-                                                    final replyText =
-                                                        await showDialog<
-                                                          String
-                                                        >(
-                                                          context: context,
-                                                          builder: (_) =>
-                                                              CommentTextDialog(
-                                                                title:
-                                                                    'Reply to $username',
-                                                                hintText:
-                                                                    'Write a reply...',
-                                                                actionLabel:
-                                                                    'Reply',
-                                                              ),
-                                                        );
-
-                                                    if (!context.mounted)
-                                                      return;
-                                                    if (replyText == null ||
-                                                        replyText
-                                                            .trim()
-                                                            .isEmpty)
-                                                      return;
-
-                                                    try {
-                                                      final result =
-                                                          await widget
-                                                              .postService
-                                                              .replyToComment(
-                                                                postId: _postId,
-                                                                commentId:
-                                                                    commentId,
-                                                                text: replyText
-                                                                    .trim(),
-                                                              );
-
-                                                      final refreshedComments =
-                                                          await widget
-                                                              .postService
-                                                              .getComments(
-                                                                _postId,
-                                                              );
-
-                                                      if (!context.mounted)
-                                                        return;
-
-                                                      setSheetState(() {
-                                                        comments =
-                                                            refreshedComments;
-                                                      });
-
-                                                      ScaffoldMessenger.of(
-                                                        context,
-                                                      ).showSnackBar(
-                                                        SnackBar(
-                                                          content: Text(
-                                                            result['message']
-                                                                    ?.toString() ??
-                                                                'Reply added successfully',
-                                                          ),
-                                                        ),
-                                                      );
-                                                    } catch (e) {
-                                                      if (!context.mounted)
-                                                        return;
-                                                      ScaffoldMessenger.of(
-                                                        context,
-                                                      ).showSnackBar(
-                                                        SnackBar(
-                                                          content: Text(
-                                                            'Could not reply: $e',
-                                                          ),
-                                                        ),
-                                                      );
-                                                    }
-                                                  } else if (action ==
-                                                      'delete') {
-                                                    final confirmed = await showDialog<bool>(
-                                                      context: context,
-                                                      builder: (dialogContext) => AlertDialog(
-                                                        backgroundColor:
-                                                            Colors.white,
-                                                        title: const Text(
-                                                          'Delete comment?',
-                                                        ),
-                                                        content: const Text(
-                                                          'This action cannot be undone.',
-                                                        ),
-                                                        actions: [
-                                                          TextButton(
-                                                            onPressed: () =>
-                                                                Navigator.pop(
-                                                                  dialogContext,
-                                                                  false,
-                                                                ),
-                                                            child: const Text(
-                                                              'Cancel',
-                                                            ),
-                                                          ),
-                                                          TextButton(
-                                                            onPressed: () =>
-                                                                Navigator.pop(
-                                                                  dialogContext,
-                                                                  true,
-                                                                ),
-                                                            child: const Text(
-                                                              'Delete',
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    );
-
-                                                    if (confirmed != true ||
-                                                        !context.mounted)
-                                                      return;
-
-                                                    try {
-                                                      await widget.postService
-                                                          .deleteComment(
-                                                            postId: _postId,
-                                                            commentId:
-                                                                commentId,
-                                                          );
-
-                                                      if (!context.mounted)
-                                                        return;
-
-                                                      setSheetState(() {
-                                                        comments.removeAt(
-                                                          index,
-                                                        );
-                                                      });
-
-                                                      if (mounted) {
-                                                        setState(() {
-                                                          _commentCount =
-                                                              comments.length;
-                                                        });
-                                                      }
-                                                    } catch (e) {
-                                                      if (!context.mounted)
-                                                        return;
-                                                      ScaffoldMessenger.of(
-                                                        context,
-                                                      ).showSnackBar(
-                                                        SnackBar(
-                                                          content: Text(
-                                                            'Could not delete comment: $e',
-                                                          ),
-                                                        ),
-                                                      );
-                                                    }
-                                                  }
-                                                },
-                                                itemBuilder: (context) => [
-                                                  if (isMyComment) ...[
-                                                    PopupMenuItem<String>(
-                                                      value: 'edit',
-                                                      child: Row(
-                                                        children: [
-                                                          SvgPicture.asset(
-                                                            'assets/icons/edit.svg',
-                                                            width: 19,
-                                                            height: 19,
-                                                          ),
-                                                          SizedBox(width: 10),
-                                                          Text('Edit'),
-                                                        ],
-                                                      ),
-                                                    ),
-                                                    PopupMenuItem<String>(
-                                                      value: 'delete',
-                                                      child: Row(
-                                                        children: [
-                                                          SvgPicture.asset(
-                                                            'assets/icons/delete.svg',
-                                                            width: 19,
-                                                            height: 19,
-                                                          ),
-                                                          SizedBox(width: 10),
-                                                          Text('Delete  '),
-                                                        ],
-                                                      ),
-                                                    ),
-                                                  ],
-                                                  PopupMenuItem<String>(
-                                                    value: 'reply',
-                                                    child: Row(
-                                                      children: [
-                                                        SvgPicture.asset(
-                                                          'assets/icons/reply.svg',
-                                                          width: 19,
-                                                          height: 19,
-                                                        ),
-                                                        SizedBox(width: 10),
-                                                        Text('Reply'),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ],
+                                      return Container(
+                                        margin: const EdgeInsets.only(
+                                          bottom: 12,
+                                        ),
+                                        padding: const EdgeInsets.all(12),
+                                        decoration: BoxDecoration(
+                                          // GRAY BACKGROUND FOR EACH COMMENT
+                                          color: const Color(0xFFF2F2F2),
+                                          borderRadius: BorderRadius.circular(
+                                            14,
                                           ),
+                                        ),
 
-                                          if (replies.isNotEmpty)
-                                            Padding(
-                                              padding: const EdgeInsets.only(
-                                                left: 16,
-                                                top: 12,
-                                              ),
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  // REPLIES HEADER
-                                                  Row(
-                                                    mainAxisSize:
-                                                        MainAxisSize.min,
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                // CIRCULAR PROFILE PICTURE
+                                                ClipOval(
+                                                  child: SizedBox(
+                                                    width: 44,
+                                                    height: 44,
+                                                    child:
+                                                        profilePicture
+                                                            .isNotEmpty
+                                                        ? Image.network(
+                                                            profilePicture,
+                                                            fit: BoxFit.cover,
+                                                            width: 44,
+                                                            height: 44,
+                                                            errorBuilder:
+                                                                (
+                                                                  context,
+                                                                  error,
+                                                                  stackTrace,
+                                                                ) {
+                                                                  return Image.asset(
+                                                                    'assets/default_pfp.jpg',
+                                                                    width: 44,
+                                                                    height: 44,
+                                                                    fit: BoxFit
+                                                                        .cover,
+                                                                  );
+                                                                },
+                                                          )
+                                                        : Image.asset(
+                                                            'assets/default_pfp.jpg',
+                                                            width: 44,
+                                                            height: 44,
+                                                            fit: BoxFit.cover,
+                                                          ),
+                                                  ),
+                                                ),
+
+                                                const SizedBox(width: 12),
+
+                                                // USERNAME AND COMMENT
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
                                                     children: [
-                                                      SvgPicture.asset(
-                                                        'assets/icons/reply.svg',
-                                                        width: 17,
-                                                        height: 17,
-                                                      ),
-                                                      const SizedBox(width: 6),
-                                                      const Text(
-                                                        'Replies',
-                                                        style: TextStyle(
-                                                          fontSize: 12,
+                                                      Text(
+                                                        textRead(
+                                                          context,
+                                                          username,
+                                                        ),
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        style: const TextStyle(
+                                                          fontSize: 14,
                                                           fontWeight:
-                                                              FontWeight.w600,
+                                                              FontWeight.w700,
                                                           color: Color(
-                                                            0xFF777777,
+                                                            0xFF202124,
+                                                          ),
+                                                        ),
+                                                      ),
+
+                                                      const SizedBox(height: 6),
+
+                                                      Text(
+                                                        textRead(
+                                                          context,
+                                                          comment['content']
+                                                                  ?.toString() ??
+                                                              '',
+                                                        ),
+                                                        style: const TextStyle(
+                                                          fontSize: 14,
+                                                          height: 1.4,
+                                                          color: Color(
+                                                            0xFF444444,
                                                           ),
                                                         ),
                                                       ),
                                                     ],
                                                   ),
-                                                  const SizedBox(height: 8),
+                                                ),
 
-                                                  ...replies.map((reply) {
-                                                    final replyUserData =
-                                                        reply['user'];
-
-                                                    final replyUser =
-                                                        replyUserData is Map
-                                                        ? Map<
-                                                            String,
-                                                            dynamic
-                                                          >.from(replyUserData)
-                                                        : <String, dynamic>{};
-
-                                                    final replyId = _idOf(
-                                                      reply['_id'] ??
-                                                          reply['id'],
-                                                    );
-
-                                                    final replyUserId = _idOf(
-                                                      replyUser['_id'] ??
-                                                          replyUser['id'],
-                                                    );
-
-                                                    final isMyReply =
-                                                        replyUserId ==
-                                                        widget.currentUserId;
-
-                                                    final replyUsername =
-                                                        replyUser['username']
-                                                            ?.toString() ??
-                                                        'Student';
-
-                                                    final replyPicture =
-                                                        (replyUser['profilePicture'] ??
-                                                                '')
-                                                            .toString()
-                                                            .trim();
-
-                                                    return Container(
-                                                      width: double.infinity,
-                                                      margin:
-                                                          const EdgeInsets.only(
-                                                            bottom: 8,
-                                                          ),
-                                                      padding:
-                                                          const EdgeInsets.all(
-                                                            10,
-                                                          ),
-                                                      decoration: BoxDecoration(
-                                                        color: Colors.white,
-                                                        borderRadius:
-                                                            BorderRadius.circular(
-                                                              12,
-                                                            ),
-                                                      ),
-                                                      child: Row(
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .start,
-                                                        children: [
-                                                          // REPLY PROFILE PICTURE
-                                                          // CIRCULAR PROFILE PICTURE
-                                                          ClipOval(
-                                                            child: SizedBox(
-                                                              width: 44,
-                                                              height: 44,
-                                                              child:
-                                                                  profilePicture
-                                                                      .isNotEmpty
-                                                                  ? Image.network(
-                                                                      profilePicture,
-                                                                      fit: BoxFit
-                                                                          .cover,
-                                                                      width: 44,
-                                                                      height:
-                                                                          44,
-                                                                      errorBuilder:
-                                                                          (
-                                                                            context,
-                                                                            error,
-                                                                            stackTrace,
-                                                                          ) {
-                                                                            return Image.asset(
-                                                                              'assets/default_pfp.jpg',
-                                                                              width: 44,
-                                                                              height: 44,
-                                                                              fit: BoxFit.cover,
-                                                                            );
-                                                                          },
-                                                                    )
-                                                                  : Image.asset(
-                                                                      'assets/default_pfp.jpg',
-                                                                      width: 44,
-                                                                      height:
-                                                                          44,
-                                                                      fit: BoxFit
-                                                                          .cover,
-                                                                    ),
-                                                            ),
-                                                          ),
-
-                                                          const SizedBox(
-                                                            width: 10,
-                                                          ),
-
-                                                          // REPLY USERNAME AND TEXT
-                                                          Expanded(
-                                                            child: Column(
-                                                              crossAxisAlignment:
-                                                                  CrossAxisAlignment
-                                                                      .start,
-                                                              children: [
-                                                                Text(
-                                                                  replyUsername,
-                                                                  maxLines: 1,
-                                                                  overflow:
-                                                                      TextOverflow
-                                                                          .ellipsis,
-                                                                  style: const TextStyle(
-                                                                    fontSize:
-                                                                        12,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .w700,
-                                                                    color: Color(
-                                                                      0xFF202124,
-                                                                    ),
+                                                // DELETE ICON AT TOP-RIGHT
+                                                // THREE-DOT COMMENT MENU
+                                                PopupMenuButton<String>(
+                                                  tooltip: 'Comment options',
+                                                  icon: const Icon(
+                                                    Icons.more_horiz,
+                                                    size: 23,
+                                                    color: Color(0xFF777777),
+                                                  ),
+                                                  color: Colors.white,
+                                                  elevation: 8,
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          12,
+                                                        ),
+                                                  ),
+                                                  onSelected: (action) async {
+                                                    if (action == 'edit') {
+                                                      final editedText =
+                                                          await showDialog<
+                                                            String
+                                                          >(
+                                                            context: context,
+                                                            builder: (_) => CommentTextDialog(
+                                                              title: textRead(
+                                                                context,
+                                                                'Edit comment',
+                                                              ),
+                                                              initialText:
+                                                                  comment['content']
+                                                                      ?.toString() ??
+                                                                  '',
+                                                              hintText: textRead(
+                                                                context,
+                                                                'Edit your comment...',
+                                                              ),
+                                                              actionLabel:
+                                                                  textRead(
+                                                                    context,
+                                                                    'Save',
                                                                   ),
-                                                                ),
-                                                                const SizedBox(
-                                                                  height: 5,
-                                                                ),
-                                                                Text(
-                                                                  reply['content']
+                                                            ),
+                                                          );
+
+                                                      if (!sheetContext
+                                                              .mounted ||
+                                                          isSheetClosing)
+                                                        return;
+
+                                                      if (editedText == null ||
+                                                          editedText
+                                                              .trim()
+                                                              .isEmpty ||
+                                                          editedText.trim() ==
+                                                              (comment['content']
                                                                           ?.toString() ??
-                                                                      '',
-                                                                  style: const TextStyle(
-                                                                    fontSize:
-                                                                        13,
-                                                                    height: 1.4,
-                                                                    color: Color(
-                                                                      0xFF444444,
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                              ],
+                                                                      '')
+                                                                  .trim()) {
+                                                        return;
+                                                      }
+
+                                                      try {
+                                                        final result =
+                                                            await widget
+                                                                .postService
+                                                                .editComment(
+                                                                  postId:
+                                                                      _postId,
+                                                                  commentId:
+                                                                      commentId,
+                                                                  text: editedText
+                                                                      .trim(),
+                                                                );
+
+                                                        if (!sheetContext
+                                                                .mounted ||
+                                                            isSheetClosing)
+                                                          return;
+
+                                                        final updated =
+                                                            result['comment'];
+
+                                                        if (updated is Map) {
+                                                          setSheetState(() {
+                                                            final updatedComment =
+                                                                Map<
+                                                                  String,
+                                                                  dynamic
+                                                                >.from(updated);
+
+                                                            if (!updatedComment
+                                                                .containsKey(
+                                                                  'replies',
+                                                                )) {
+                                                              updatedComment['replies'] =
+                                                                  comments[index]['replies'] ??
+                                                                  [];
+                                                            }
+
+                                                            comments[index] =
+                                                                updatedComment;
+                                                          });
+                                                        }
+                                                      } catch (e) {
+                                                        if (!sheetContext
+                                                                .mounted ||
+                                                            isSheetClosing)
+                                                          return;
+                                                        ScaffoldMessenger.of(
+                                                          context,
+                                                        ).showSnackBar(
+                                                          SnackBar(
+                                                            content: Text(
+                                                              textRead(
+                                                                context,
+                                                                'Could not edit comment: $e',
+                                                              ),
                                                             ),
                                                           ),
+                                                        );
+                                                      }
+                                                    } else if (action ==
+                                                        'reply') {
+                                                      final replyText =
+                                                          await showDialog<
+                                                            String
+                                                          >(
+                                                            context: context,
+                                                            builder: (_) => CommentTextDialog(
+                                                              title:
+                                                                  textRead(
+                                                                    context,
+                                                                    'Reply to ',
+                                                                  ) +
+                                                                  '$username',
 
-                                                          // REPLY OPTIONS
-                                                          if (isMyReply)
-                                                            PopupMenuButton<
-                                                              String
-                                                            >(
-                                                              tooltip:
-                                                                  'Reply options',
-                                                              padding:
-                                                                  EdgeInsets
-                                                                      .zero,
-                                                              shape: RoundedRectangleBorder(
-                                                                borderRadius:
-                                                                    BorderRadius.circular(
-                                                                      12,
-                                                                    ),
+                                                              hintText: textRead(
+                                                                context,
+                                                                'Write a reply...',
                                                               ),
-                                                              constraints:
-                                                                  const BoxConstraints(
-                                                                    minWidth:
-                                                                        40,
-                                                                    minHeight:
-                                                                        40,
+                                                              actionLabel:
+                                                                  textRead(
+                                                                    context,
+                                                                    'Reply',
                                                                   ),
-                                                              icon: const Icon(
-                                                                Icons
-                                                                    .more_horiz,
-                                                                size: 21,
-                                                                color: Color(
-                                                                  0xFF777777,
-                                                                ),
-                                                              ),
-                                                              color:
-                                                                  Colors.white,
-                                                              onSelected: (action) async {
-                                                                if (action ==
-                                                                    'edit') {
-                                                                  final editedText = await showDialog<String>(
-                                                                    context:
-                                                                        context,
-                                                                    builder: (_) => CommentTextDialog(
-                                                                      title:
-                                                                          'Edit reply',
-                                                                      initialText:
-                                                                          reply['content']
-                                                                              ?.toString() ??
-                                                                          '',
-                                                                      hintText:
-                                                                          'Edit your reply...',
-                                                                      actionLabel:
-                                                                          'Save',
-                                                                    ),
-                                                                  );
-
-                                                                  if (!context
-                                                                          .mounted ||
-                                                                      editedText ==
-                                                                          null ||
-                                                                      editedText
-                                                                          .trim()
-                                                                          .isEmpty) {
-                                                                    return;
-                                                                  }
-
-                                                                  try {
-                                                                    await widget.postService.editReply(
-                                                                      postId:
-                                                                          _postId,
-                                                                      commentId:
-                                                                          commentId,
-                                                                      replyId:
-                                                                          replyId,
-                                                                      text: editedText
-                                                                          .trim(),
-                                                                    );
-
-                                                                    final refreshed = await widget
-                                                                        .postService
-                                                                        .getComments(
-                                                                          _postId,
-                                                                        );
-
-                                                                    if (!context
-                                                                        .mounted)
-                                                                      return;
-
-                                                                    setSheetState(() {
-                                                                      comments =
-                                                                          refreshed;
-                                                                    });
-                                                                  } catch (e) {
-                                                                    if (!context
-                                                                        .mounted)
-                                                                      return;
-
-                                                                    ScaffoldMessenger.of(
-                                                                      context,
-                                                                    ).showSnackBar(
-                                                                      SnackBar(
-                                                                        content:
-                                                                            Text(
-                                                                              'Could not edit reply: $e',
-                                                                            ),
-                                                                      ),
-                                                                    );
-                                                                  }
-                                                                } else if (action ==
-                                                                    'delete') {
-                                                                  final confirmed = await showDialog<bool>(
-                                                                    context:
-                                                                        context,
-                                                                    builder:
-                                                                        (
-                                                                          dialogContext,
-                                                                        ) => AlertDialog(
-                                                                          backgroundColor:
-                                                                              Colors.white,
-                                                                          title: const Text(
-                                                                            'Delete reply?',
-                                                                          ),
-                                                                          content: const Text(
-                                                                            'This action cannot be undone.',
-                                                                          ),
-                                                                          actions: [
-                                                                            TextButton(
-                                                                              onPressed: () => Navigator.pop(
-                                                                                dialogContext,
-                                                                                false,
-                                                                              ),
-                                                                              child: const Text(
-                                                                                'Cancel',
-                                                                              ),
-                                                                            ),
-                                                                            TextButton(
-                                                                              onPressed: () => Navigator.pop(
-                                                                                dialogContext,
-                                                                                true,
-                                                                              ),
-                                                                              child: const Text(
-                                                                                'Delete   ',
-                                                                              ),
-                                                                            ),
-                                                                          ],
-                                                                        ),
-                                                                  );
-
-                                                                  if (confirmed !=
-                                                                          true ||
-                                                                      !context
-                                                                          .mounted) {
-                                                                    return;
-                                                                  }
-
-                                                                  try {
-                                                                    await widget.postService.deleteReply(
-                                                                      postId:
-                                                                          _postId,
-                                                                      commentId:
-                                                                          commentId,
-                                                                      replyId:
-                                                                          replyId,
-                                                                    );
-
-                                                                    final refreshed = await widget
-                                                                        .postService
-                                                                        .getComments(
-                                                                          _postId,
-                                                                        );
-
-                                                                    if (!context
-                                                                        .mounted)
-                                                                      return;
-
-                                                                    setSheetState(() {
-                                                                      comments =
-                                                                          refreshed;
-                                                                    });
-                                                                  } catch (e) {
-                                                                    if (!context
-                                                                        .mounted)
-                                                                      return;
-
-                                                                    ScaffoldMessenger.of(
-                                                                      context,
-                                                                    ).showSnackBar(
-                                                                      SnackBar(
-                                                                        content:
-                                                                            Text(
-                                                                              'Could not delete reply: $e',
-                                                                            ),
-                                                                      ),
-                                                                    );
-                                                                  }
-                                                                }
-                                                              },
-                                                              itemBuilder: (_) => [
-                                                                PopupMenuItem<
-                                                                  String
-                                                                >(
-                                                                  value: 'edit',
-                                                                  child: Row(
-                                                                    children: [
-                                                                      SvgPicture.asset(
-                                                                        'assets/icons/edit.svg',
-                                                                        width:
-                                                                            19,
-                                                                        height:
-                                                                            19,
-                                                                      ),
-                                                                      SizedBox(
-                                                                        width:
-                                                                            10,
-                                                                      ),
-                                                                      Text(
-                                                                        'Edit   ',
-                                                                      ),
-                                                                    ],
-                                                                  ),
-                                                                ),
-                                                                PopupMenuItem<
-                                                                  String
-                                                                >(
-                                                                  value:
-                                                                      'delete',
-                                                                  child: Row(
-                                                                    children: [
-                                                                      SvgPicture.asset(
-                                                                        'assets/icons/delete.svg',
-                                                                        width:
-                                                                            19,
-                                                                        height:
-                                                                            19,
-                                                                      ),
-                                                                      SizedBox(
-                                                                        width:
-                                                                            10,
-                                                                      ),
-                                                                      Text(
-                                                                        'Delete',
-                                                                      ),
-                                                                    ],
-                                                                  ),
-                                                                ),
-                                                              ],
                                                             ),
+                                                          );
+
+                                                      if (!sheetContext
+                                                              .mounted ||
+                                                          isSheetClosing)
+                                                        return;
+                                                      if (replyText == null ||
+                                                          replyText
+                                                              .trim()
+                                                              .isEmpty)
+                                                        return;
+
+                                                      try {
+                                                        final result =
+                                                            await widget
+                                                                .postService
+                                                                .replyToComment(
+                                                                  postId:
+                                                                      _postId,
+                                                                  commentId:
+                                                                      commentId,
+                                                                  text: replyText
+                                                                      .trim(),
+                                                                );
+
+                                                        final refreshedComments =
+                                                            await widget
+                                                                .postService
+                                                                .getComments(
+                                                                  _postId,
+                                                                );
+
+                                                        if (!sheetContext
+                                                                .mounted ||
+                                                            isSheetClosing)
+                                                          return;
+
+                                                        setSheetState(() {
+                                                          comments =
+                                                              refreshedComments;
+                                                        });
+
+                                                        ScaffoldMessenger.of(
+                                                          context,
+                                                        ).showSnackBar(
+                                                          SnackBar(
+                                                            content: Text(
+                                                              textRead(
+                                                                context,
+                                                                result['message']
+                                                                        ?.toString() ??
+                                                                    'Reply added successfully',
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        );
+                                                      } catch (e) {
+                                                        if (!sheetContext
+                                                                .mounted ||
+                                                            isSheetClosing)
+                                                          return;
+                                                        ScaffoldMessenger.of(
+                                                          context,
+                                                        ).showSnackBar(
+                                                          SnackBar(
+                                                            content: Text(
+                                                              textRead(
+                                                                context,
+                                                                'Could not reply: $e',
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        );
+                                                      }
+                                                    } else if (action ==
+                                                        'delete') {
+                                                      final confirmed = await showDialog<bool>(
+                                                        context: context,
+                                                        builder: (dialogContext) => AlertDialog(
+                                                          backgroundColor:
+                                                              Colors.white,
+                                                          title: Text(
+                                                            textRead(
+                                                              context,
+                                                              'Delete comment?',
+                                                            ),
+                                                          ),
+                                                          content: Text(
+                                                            textRead(
+                                                              context,
+                                                              'This action cannot be undone.',
+                                                            ),
+                                                          ),
+                                                          actions: [
+                                                            TextButton(
+                                                              onPressed: () =>
+                                                                  Navigator.pop(
+                                                                    dialogContext,
+                                                                    false,
+                                                                  ),
+                                                              child: Text(
+                                                                textRead(
+                                                                  context,
+                                                                  'Cancel',
+                                                                ),
+                                                                style: TextStyle(
+                                                                  color: Colors
+                                                                      .black,
+                                                                ),
+                                                              ),
+                                                            ),
+                                                            TextButton(
+                                                              onPressed: () =>
+                                                                  Navigator.pop(
+                                                                    dialogContext,
+                                                                    true,
+                                                                  ),
+                                                              child: Text(
+                                                                textRead(
+                                                                  context,
+                                                                  'Delete',
+                                                                ),
+                                                                style: TextStyle(
+                                                                  color: Color(
+                                                                    0xfffcc001,
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      );
+
+                                                      if (confirmed != true ||
+                                                          !sheetContext.mounted)
+                                                        return;
+
+                                                      try {
+                                                        await widget.postService
+                                                            .deleteComment(
+                                                              postId: _postId,
+                                                              commentId:
+                                                                  commentId,
+                                                            );
+
+                                                        if (!sheetContext
+                                                                .mounted ||
+                                                            isSheetClosing)
+                                                          return;
+
+                                                        setSheetState(() {
+                                                          comments.removeAt(
+                                                            index,
+                                                          );
+                                                        });
+
+                                                        if (mounted) {
+                                                          setState(() {
+                                                            _commentCount =
+                                                                comments.length;
+                                                          });
+                                                        }
+                                                      } catch (e) {
+                                                        if (!sheetContext
+                                                                .mounted ||
+                                                            isSheetClosing)
+                                                          return;
+                                                        ScaffoldMessenger.of(
+                                                          context,
+                                                        ).showSnackBar(
+                                                          SnackBar(
+                                                            content: Text(
+                                                              textRead(
+                                                                context,
+                                                                'Could not delete comment: $e',
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        );
+                                                      }
+                                                    }
+                                                  },
+                                                  itemBuilder: (context) => [
+                                                    if (isMyComment) ...[
+                                                      PopupMenuItem<String>(
+                                                        value: 'edit',
+                                                        child: Row(
+                                                          children: [
+                                                            SvgPicture.asset(
+                                                              'assets/icons/edit.svg',
+                                                              width: 19,
+                                                              height: 19,
+                                                            ),
+                                                            SizedBox(width: 10),
+                                                            Text(
+                                                              textRead(
+                                                                context,
+                                                                'Edit',
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                      PopupMenuItem<String>(
+                                                        value: 'delete',
+                                                        child: Row(
+                                                          children: [
+                                                            SvgPicture.asset(
+                                                              'assets/icons/delete.svg',
+                                                              width: 19,
+                                                              height: 19,
+                                                            ),
+                                                            SizedBox(width: 10),
+                                                            Text(
+                                                              textRead(
+                                                                context,
+                                                                'Delete',
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ],
+                                                    PopupMenuItem<String>(
+                                                      value: 'reply',
+                                                      child: Row(
+                                                        children: [
+                                                          SvgPicture.asset(
+                                                            'assets/icons/reply.svg',
+                                                            width: 19,
+                                                            height: 19,
+                                                          ),
+                                                          SizedBox(width: 10),
+                                                          Text(
+                                                            textRead(
+                                                              context,
+                                                              'Reply',
+                                                            ),
+                                                          ),
                                                         ],
                                                       ),
-                                                    );
-                                                  }),
-                                                ],
-                                              ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
                                             ),
-                                        ],
-                                      ),
-                                    );
-                                  },
-                                ),
-                        ),
-                      ),
 
-                      const Divider(height: 1, color: Color(0xFFEEEEEE)),
+                                            if (replies.isNotEmpty)
+                                              Padding(
+                                                padding: const EdgeInsets.only(
+                                                  left: 16,
+                                                  top: 12,
+                                                ),
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    // REPLIES HEADER
+                                                    Row(
+                                                      mainAxisSize:
+                                                          MainAxisSize.min,
+                                                      children: [
+                                                        SvgPicture.asset(
+                                                          'assets/icons/reply.svg',
+                                                          width: 17,
+                                                          height: 17,
+                                                        ),
+                                                        const SizedBox(
+                                                          width: 6,
+                                                        ),
+                                                        Text(
+                                                          textRead(
+                                                            context,
+                                                            'Replies',
+                                                          ),
+                                                          style: TextStyle(
+                                                            fontSize: 12,
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                            color: Color(
+                                                              0xFF777777,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    const SizedBox(height: 8),
 
-                      // WRITE COMMENT FIELD
-                      Padding(
-                        padding: EdgeInsets.fromLTRB(
-                          12,
-                          10,
-                          12,
-                          16 + MediaQuery.of(context).padding.bottom,
+                                                    ...replies.map((reply) {
+                                                      final replyUserData =
+                                                          reply['user'];
+
+                                                      final replyUser =
+                                                          replyUserData is Map
+                                                          ? Map<
+                                                              String,
+                                                              dynamic
+                                                            >.from(
+                                                              replyUserData,
+                                                            )
+                                                          : <String, dynamic>{};
+
+                                                      final replyId = _idOf(
+                                                        reply['_id'] ??
+                                                            reply['id'],
+                                                      );
+
+                                                      final replyUserId = _idOf(
+                                                        replyUser['_id'] ??
+                                                            replyUser['id'],
+                                                      );
+
+                                                      final isMyReply =
+                                                          replyUserId ==
+                                                          widget.currentUserId;
+
+                                                      final replyUsername =
+                                                          replyUser['username']
+                                                              ?.toString() ??
+                                                          'Student';
+
+                                                      final replyPicture =
+                                                          (replyUser['profilePicture'] ??
+                                                                  '')
+                                                              .toString()
+                                                              .trim();
+
+                                                      return Container(
+                                                        width: double.infinity,
+                                                        margin:
+                                                            const EdgeInsets.only(
+                                                              bottom: 8,
+                                                            ),
+                                                        padding:
+                                                            const EdgeInsets.all(
+                                                              10,
+                                                            ),
+                                                        decoration: BoxDecoration(
+                                                          color: Colors.white,
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                12,
+                                                              ),
+                                                        ),
+                                                        child: Row(
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment
+                                                                  .start,
+                                                          children: [
+                                                            // REPLY PROFILE PICTURE
+                                                            // CIRCULAR PROFILE PICTURE
+                                                            ClipOval(
+                                                              child: SizedBox(
+                                                                width: 44,
+                                                                height: 44,
+                                                                child:
+                                                                    profilePicture
+                                                                        .isNotEmpty
+                                                                    ? Image.network(
+                                                                        profilePicture,
+                                                                        fit: BoxFit
+                                                                            .cover,
+                                                                        width:
+                                                                            44,
+                                                                        height:
+                                                                            44,
+                                                                        errorBuilder:
+                                                                            (
+                                                                              context,
+                                                                              error,
+                                                                              stackTrace,
+                                                                            ) {
+                                                                              return Image.asset(
+                                                                                'assets/default_pfp.jpg',
+                                                                                width: 44,
+                                                                                height: 44,
+                                                                                fit: BoxFit.cover,
+                                                                              );
+                                                                            },
+                                                                      )
+                                                                    : Image.asset(
+                                                                        'assets/default_pfp.jpg',
+                                                                        width:
+                                                                            44,
+                                                                        height:
+                                                                            44,
+                                                                        fit: BoxFit
+                                                                            .cover,
+                                                                      ),
+                                                              ),
+                                                            ),
+
+                                                            const SizedBox(
+                                                              width: 10,
+                                                            ),
+
+                                                            // REPLY USERNAME AND TEXT
+                                                            Expanded(
+                                                              child: Column(
+                                                                crossAxisAlignment:
+                                                                    CrossAxisAlignment
+                                                                        .start,
+                                                                children: [
+                                                                  Text(
+                                                                    textRead(
+                                                                      context,
+                                                                      replyUsername,
+                                                                    ),
+                                                                    maxLines: 1,
+                                                                    overflow:
+                                                                        TextOverflow
+                                                                            .ellipsis,
+                                                                    style: const TextStyle(
+                                                                      fontSize:
+                                                                          12,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .w700,
+                                                                      color: Color(
+                                                                        0xFF202124,
+                                                                      ),
+                                                                    ),
+                                                                  ),
+                                                                  const SizedBox(
+                                                                    height: 5,
+                                                                  ),
+                                                                  Text(
+                                                                    reply['content']
+                                                                            ?.toString() ??
+                                                                        '',
+                                                                    style: const TextStyle(
+                                                                      fontSize:
+                                                                          13,
+                                                                      height:
+                                                                          1.4,
+                                                                      color: Color(
+                                                                        0xFF444444,
+                                                                      ),
+                                                                    ),
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                            ),
+
+                                                            // REPLY OPTIONS
+                                                            if (isMyReply)
+                                                              PopupMenuButton<
+                                                                String
+                                                              >(
+                                                                tooltip:
+                                                                    'Reply options',
+                                                                padding:
+                                                                    EdgeInsets
+                                                                        .zero,
+                                                                shape: RoundedRectangleBorder(
+                                                                  borderRadius:
+                                                                      BorderRadius.circular(
+                                                                        12,
+                                                                      ),
+                                                                ),
+                                                                constraints:
+                                                                    const BoxConstraints(
+                                                                      minWidth:
+                                                                          40,
+                                                                      minHeight:
+                                                                          40,
+                                                                    ),
+                                                                icon: const Icon(
+                                                                  Icons
+                                                                      .more_horiz,
+                                                                  size: 21,
+                                                                  color: Color(
+                                                                    0xFF777777,
+                                                                  ),
+                                                                ),
+                                                                color: Colors
+                                                                    .white,
+                                                                onSelected: (action) async {
+                                                                  if (action ==
+                                                                      'edit') {
+                                                                    final editedText = await showDialog<String>(
+                                                                      context:
+                                                                          context,
+                                                                      builder: (_) => CommentTextDialog(
+                                                                        title: text(
+                                                                          context,
+                                                                          'Edit reply',
+                                                                        ),
+                                                                        initialText:
+                                                                            reply['content']?.toString() ??
+                                                                            '',
+                                                                        hintText:
+                                                                            'Edit your reply...',
+                                                                        actionLabel:
+                                                                            'Save',
+                                                                      ),
+                                                                    );
+
+                                                                    if (!context
+                                                                            .mounted ||
+                                                                        editedText ==
+                                                                            null ||
+                                                                        editedText
+                                                                            .trim()
+                                                                            .isEmpty) {
+                                                                      return;
+                                                                    }
+
+                                                                    try {
+                                                                      await widget.postService.editReply(
+                                                                        postId:
+                                                                            _postId,
+                                                                        commentId:
+                                                                            commentId,
+                                                                        replyId:
+                                                                            replyId,
+                                                                        text: editedText
+                                                                            .trim(),
+                                                                      );
+
+                                                                      final refreshed = await widget
+                                                                          .postService
+                                                                          .getComments(
+                                                                            _postId,
+                                                                          );
+
+                                                                      if (!context
+                                                                          .mounted)
+                                                                        return;
+
+                                                                      setSheetState(() {
+                                                                        comments =
+                                                                            refreshed;
+                                                                      });
+                                                                    } catch (
+                                                                      e
+                                                                    ) {
+                                                                      if (!context
+                                                                          .mounted)
+                                                                        return;
+
+                                                                      ScaffoldMessenger.of(
+                                                                        context,
+                                                                      ).showSnackBar(
+                                                                        SnackBar(
+                                                                          content: Text(
+                                                                            textRead(
+                                                                              context,
+                                                                              'Could not edit reply: $e',
+                                                                            ),
+                                                                          ),
+                                                                        ),
+                                                                      );
+                                                                    }
+                                                                  } else if (action ==
+                                                                      'delete') {
+                                                                    final confirmed = await showDialog<bool>(
+                                                                      context:
+                                                                          context,
+                                                                      builder:
+                                                                          (
+                                                                            dialogContext,
+                                                                          ) => AlertDialog(
+                                                                            backgroundColor:
+                                                                                Colors.white,
+                                                                            title: Text(
+                                                                              text(
+                                                                                context,
+                                                                                'Delete reply?',
+                                                                              ),
+                                                                            ),
+                                                                            content: Text(
+                                                                              text(
+                                                                                context,
+                                                                                'This action cannot be undone.',
+                                                                              ),
+                                                                            ),
+                                                                            actions: [
+                                                                              TextButton(
+                                                                                onPressed: () => Navigator.pop(
+                                                                                  dialogContext,
+                                                                                  false,
+                                                                                ),
+                                                                                child: Text(
+                                                                                  text(
+                                                                                    context,
+                                                                                    'Cancel',
+                                                                                  ),
+                                                                                  style: TextStyle(
+                                                                                    color: Colors.black,
+                                                                                  ),
+                                                                                ),
+                                                                              ),
+                                                                              TextButton(
+                                                                                onPressed: () => Navigator.pop(
+                                                                                  dialogContext,
+                                                                                  true,
+                                                                                ),
+                                                                                child: Text(
+                                                                                  text(
+                                                                                    context,
+                                                                                    'Delete',
+                                                                                  ),
+                                                                                  style: TextStyle(
+                                                                                    color: Color(
+                                                                                      0xfffcc001,
+                                                                                    ),
+                                                                                  ),
+                                                                                ),
+                                                                              ),
+                                                                            ],
+                                                                          ),
+                                                                    );
+
+                                                                    if (confirmed !=
+                                                                            true ||
+                                                                        !context
+                                                                            .mounted) {
+                                                                      return;
+                                                                    }
+
+                                                                    try {
+                                                                      await widget.postService.deleteReply(
+                                                                        postId:
+                                                                            _postId,
+                                                                        commentId:
+                                                                            commentId,
+                                                                        replyId:
+                                                                            replyId,
+                                                                      );
+
+                                                                      final refreshed = await widget
+                                                                          .postService
+                                                                          .getComments(
+                                                                            _postId,
+                                                                          );
+
+                                                                      if (!context
+                                                                          .mounted)
+                                                                        return;
+
+                                                                      setSheetState(() {
+                                                                        comments =
+                                                                            refreshed;
+                                                                      });
+                                                                    } catch (
+                                                                      e
+                                                                    ) {
+                                                                      if (!context
+                                                                          .mounted)
+                                                                        return;
+
+                                                                      ScaffoldMessenger.of(
+                                                                        context,
+                                                                      ).showSnackBar(
+                                                                        SnackBar(
+                                                                          content: Text(
+                                                                            text(
+                                                                              context,
+                                                                              'Could not delete reply: $e',
+                                                                            ),
+                                                                          ),
+                                                                        ),
+                                                                      );
+                                                                    }
+                                                                  }
+                                                                },
+                                                                itemBuilder: (_) => [
+                                                                  PopupMenuItem<
+                                                                    String
+                                                                  >(
+                                                                    value:
+                                                                        'edit',
+                                                                    child: Row(
+                                                                      children: [
+                                                                        SvgPicture.asset(
+                                                                          'assets/icons/edit.svg',
+                                                                          width:
+                                                                              19,
+                                                                          height:
+                                                                              19,
+                                                                        ),
+                                                                        SizedBox(
+                                                                          width:
+                                                                              10,
+                                                                        ),
+                                                                        Text(
+                                                                          textRead(
+                                                                            context,
+                                                                            'Edit',
+                                                                          ),
+                                                                        ),
+                                                                      ],
+                                                                    ),
+                                                                  ),
+                                                                  PopupMenuItem<
+                                                                    String
+                                                                  >(
+                                                                    value:
+                                                                        'delete',
+                                                                    child: Row(
+                                                                      children: [
+                                                                        SvgPicture.asset(
+                                                                          'assets/icons/delete.svg',
+                                                                          width:
+                                                                              19,
+                                                                          height:
+                                                                              19,
+                                                                        ),
+                                                                        SizedBox(
+                                                                          width:
+                                                                              10,
+                                                                        ),
+                                                                        Text(
+                                                                          textRead(
+                                                                            context,
+                                                                            'Delete',
+                                                                          ),
+                                                                        ),
+                                                                      ],
+                                                                    ),
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                          ],
+                                                        ),
+                                                      );
+                                                    }),
+                                                  ],
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  ),
+                          ),
                         ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: TextField(
-                                controller: controller,
-                                textCapitalization:
-                                    TextCapitalization.sentences,
-                                minLines: 1,
-                                maxLines: 4,
-                                decoration: InputDecoration(
-                                  hintText: 'Write a comment...',
-                                  hintStyle: const TextStyle(
-                                    color: Colors.grey,
-                                    fontSize: 14,
-                                  ),
-                                  filled: true,
-                                  fillColor: const Color(0xFFF2F2F2),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(24),
-                                    borderSide: BorderSide.none,
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(24),
-                                    borderSide: BorderSide.none,
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(24),
-                                    borderSide: const BorderSide(
-                                      color: Color(0xFFFCC001),
-                                      width: 1.5,
+
+                        const Divider(height: 1, color: Color(0xFFEEEEEE)),
+
+                        // WRITE COMMENT FIELD
+                        Padding(
+                          padding: EdgeInsets.fromLTRB(
+                            12,
+                            10,
+                            12,
+                            16 + MediaQuery.of(sheetContext).padding.bottom,
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: TextField(
+                                  controller: _commentController,
+                                  textCapitalization:
+                                      TextCapitalization.sentences,
+                                  minLines: 1,
+                                  maxLines: 4,
+                                  decoration: InputDecoration(
+                                    hintText: text(
+                                      context,
+                                      'Write a comment...',
                                     ),
-                                  ),
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 11,
+                                    hintStyle: const TextStyle(
+                                      color: Colors.grey,
+                                      fontSize: 14,
+                                    ),
+                                    filled: true,
+                                    fillColor: const Color(0xFFF2F2F2),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(24),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(24),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(24),
+                                      borderSide: const BorderSide(
+                                        color: Color(0xFFFCC001),
+                                        width: 1.5,
+                                      ),
+                                    ),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 11,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
 
-                            const SizedBox(width: 8),
+                              const SizedBox(width: 8),
 
-                            // SEND BUTTON
-                            IconButton(
-                              onPressed: sending
-                                  ? null
-                                  : () async {
-                                      final text = controller.text.trim();
+                              // SEND BUTTON
+                              IconButton(
+                                onPressed: sending || isSheetClosing
+                                    ? null
+                                    : () async {
+                                        if (!sheetContext.mounted ||
+                                            isSheetClosing)
+                                          return;
 
-                                      if (text.isEmpty) return;
+                                        final commentText = _commentController
+                                            .text
+                                            .trim();
+                                        if (commentText.isEmpty) return;
 
-                                      setSheetState(() {
-                                        sending = true;
-                                      });
+                                        setSheetState(() {
+                                          sending = true;
+                                        });
 
-                                      try {
-                                        final result = await widget.postService
-                                            .addComment(
-                                              postId: _postId,
-                                              text: text,
-                                            );
+                                        try {
+                                          final result = await widget
+                                              .postService
+                                              .addComment(
+                                                postId: _postId,
+                                                text: commentText,
+                                              );
 
-                                        final newComment = result['comment'];
+                                          if (!sheetContext.mounted ||
+                                              isSheetClosing)
+                                            return;
 
-                                        if (newComment is Map &&
-                                            context.mounted) {
-                                          setSheetState(() {
-                                            comments.insert(
-                                              0,
-                                              Map<String, dynamic>.from(
-                                                newComment,
+                                          final newComment = result['comment'];
+
+                                          if (newComment is Map) {
+                                            setSheetState(() {
+                                              comments.insert(
+                                                0,
+                                                Map<String, dynamic>.from(
+                                                  newComment,
+                                                ),
+                                              );
+                                            });
+
+                                            _commentController.clear();
+
+                                            if (mounted) {
+                                              setState(() {
+                                                _commentCount =
+                                                    result['commentsCount']
+                                                        as int? ??
+                                                    comments.length;
+                                              });
+                                            }
+                                          }
+                                        } catch (e) {
+                                          if (!sheetContext.mounted ||
+                                              isSheetClosing)
+                                            return;
+
+                                          ScaffoldMessenger.of(
+                                            sheetContext,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                'Could not add comment: $e',
                                               ),
-                                            );
-                                          });
-
-                                          controller.clear();
-
-                                          if (mounted) {
-                                            setState(() {
-                                              _commentCount =
-                                                  result['commentsCount']
-                                                      as int? ??
-                                                  comments.length;
+                                            ),
+                                          );
+                                        } finally {
+                                          if (sheetContext.mounted &&
+                                              !isSheetClosing) {
+                                            setSheetState(() {
+                                              sending = false;
                                             });
                                           }
                                         }
-                                      } catch (e) {
-                                        if (!context.mounted) return;
-
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              'Could not add comment: $e',
-                                            ),
-                                          ),
-                                        );
-                                      } finally {
-                                        if (context.mounted) {
-                                          setSheetState(() {
-                                            sending = false;
-                                          });
-                                        }
-                                      }
-                                    },
-                              icon: const Icon(
-                                Icons.send_rounded,
-                                color: Color(0xFFFCC001),
-                                size: 25,
+                                      },
+                                icon: const Icon(
+                                  Icons.send_rounded,
+                                  color: Color(0xFFFCC001),
+                                  size: 25,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           );
         },
       );
-    } finally {
-      controller.dispose();
-    }
+    } finally {}
   }
 
   Future<bool?> _showReportPostDialog() async {
@@ -1247,161 +1445,174 @@ class _PostWidgetState extends State<PostWidget> {
     String selectedReason = 'inappropriate';
     bool isSubmitting = false;
     String? errorMessage;
+    bool? submitted;
+    try {
+      submitted = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) {
+          return StatefulBuilder(
+            builder: (context, setDialogState) {
+              return AlertDialog(
+                backgroundColor: Colors.white,
 
-    final submitted = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              backgroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
 
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15),
-              ),
+                title: Text(
+                  textRead(context, 'Report post'),
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+                content: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        textRead(context, 'Why are you reporting this post?'),
+                        style: TextStyle(color: Colors.black54),
+                      ),
+                      const SizedBox(height: 12),
 
-              title: const Text(
-                'Report post',
-                style: TextStyle(fontWeight: FontWeight.w700),
-              ),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Why are you reporting this post?',
+                      ...reasons.entries.map((entry) {
+                        return RadioListTile<String>(
+                          value: entry.key,
+                          groupValue: selectedReason,
+                          activeColor: const Color(0xfffcc001),
+                          contentPadding: EdgeInsets.zero,
+                          dense: true,
+                          title: Text(
+                            text(context, entry.value),
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                          onChanged: isSubmitting
+                              ? null
+                              : (value) {
+                                  if (value == null) return;
+
+                                  setDialogState(() {
+                                    selectedReason = value;
+                                    errorMessage = null;
+                                  });
+                                },
+                        );
+                      }),
+
+                      const SizedBox(height: 12),
+
+                      TextField(
+                        controller: detailsController,
+                        maxLength: 500,
+                        maxLines: 4,
+                        enabled: !isSubmitting,
+                        decoration: InputDecoration(
+                          hintText: textRead(
+                            context,
+                            'Additional details (optional)',
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: Color(0xfffcc001),
+                              width: 2,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      if (errorMessage != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          textRead(context, errorMessage!),
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: isSubmitting
+                        ? null
+                        : () => Navigator.pop(dialogContext, false),
+                    child: Text(
+                      textRead(context, 'Cancel'),
                       style: TextStyle(color: Colors.black54),
                     ),
-                    const SizedBox(height: 12),
-
-                    ...reasons.entries.map((entry) {
-                      return RadioListTile<String>(
-                        value: entry.key,
-                        groupValue: selectedReason,
-                        activeColor: const Color(0xfffcc001),
-                        contentPadding: EdgeInsets.zero,
-                        dense: true,
-                        title: Text(
-                          entry.value,
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                        onChanged: isSubmitting
-                            ? null
-                            : (value) {
-                                if (value == null) return;
-
-                                setDialogState(() {
-                                  selectedReason = value;
-                                  errorMessage = null;
-                                });
-                              },
-                      );
-                    }),
-
-                    const SizedBox(height: 12),
-
-                    TextField(
-                      controller: detailsController,
-                      maxLength: 500,
-                      maxLines: 6,
-                      enabled: !isSubmitting,
-                      decoration: InputDecoration(
-                        hintText: 'Additional details (optional)',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: Color(0xfffcc001),
-                            width: 2,
-                          ),
-                        ),
-                      ),
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xfffcc001),
+                      foregroundColor: Colors.black,
+                      disabledBackgroundColor: Colors.amber.shade200,
                     ),
-
-                    if (errorMessage != null) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        errorMessage!,
-                        style: const TextStyle(color: Colors.red, fontSize: 13),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: isSubmitting
-                      ? null
-                      : () => Navigator.pop(dialogContext, false),
-                  child: const Text(
-                    'Cancel',
-                    style: TextStyle(color: Colors.black54),
-                  ),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xfffcc001),
-                    foregroundColor: Colors.black,
-                    disabledBackgroundColor: Colors.amber.shade200,
-                  ),
-                  onPressed: isSubmitting
-                      ? null
-                      : () async {
-                          setDialogState(() {
-                            isSubmitting = true;
-                            errorMessage = null;
-                          });
-
-                          try {
-                            await widget.postService.reportPost(
-                              postId: _postId,
-                              reason: selectedReason,
-                              details: detailsController.text,
-                            );
-
-                            if (!dialogContext.mounted) return;
-
-                            Navigator.pop(dialogContext, true);
-                          } catch (e) {
-                            if (!dialogContext.mounted) return;
-
+                    onPressed: isSubmitting
+                        ? null
+                        : () async {
                             setDialogState(() {
-                              isSubmitting = false;
-                              errorMessage = e is PostException
-                                  ? e.message
-                                  : 'Could not submit report. Please try again.';
+                              isSubmitting = true;
+                              errorMessage = null;
                             });
-                          }
-                        },
-                  child: isSubmitting
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.black,
-                          ),
-                        )
-                      : const Text('Submit report'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
 
-    detailsController.dispose();
+                            try {
+                              await widget.postService.reportPost(
+                                postId: _postId,
+                                reason: selectedReason,
+                                details: detailsController.text,
+                              );
 
+                              if (!dialogContext.mounted) return;
+
+                              Navigator.pop(dialogContext, true);
+                            } catch (e) {
+                              if (!dialogContext.mounted) return;
+
+                              setDialogState(() {
+                                isSubmitting = false;
+                                errorMessage = e is PostException
+                                    ? e.message
+                                    : textRead(
+                                        context,
+                                        'Could not submit report. Please try again.',
+                                      );
+                              });
+                            }
+                          },
+                    child: isSubmitting
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.black,
+                            ),
+                          )
+                        : Text(textRead(context, 'Submit report')),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      );
+    } finally {
+      detailsController.dispose();
+    }
     if (!mounted || submitted != true) return false;
 
     ScaffoldMessenger.of(this.context).showSnackBar(
-      const SnackBar(content: Text('Report submitted successfully.')),
+      SnackBar(
+        content: Text(textRead(context, 'Report submitted successfully.')),
+      ),
     );
+    return true;
   }
 
   @override
@@ -1457,7 +1668,7 @@ class _PostWidgetState extends State<PostWidget> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        username,
+                        text(context, username),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
@@ -1479,7 +1690,7 @@ class _PostWidgetState extends State<PostWidget> {
                           borderRadius: BorderRadius.circular(7),
                         ),
                         child: Text(
-                          category,
+                          text(context, category),
                           style: const TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w500,
@@ -1517,7 +1728,7 @@ class _PostWidgetState extends State<PostWidget> {
                               height: 20,
                             ),
                             const SizedBox(width: 12),
-                            const Text('Edit post'),
+                            Text(textRead(context, 'Edit post')),
                           ],
                         ),
                       ),
@@ -1531,7 +1742,7 @@ class _PostWidgetState extends State<PostWidget> {
                               height: 20,
                             ),
                             const SizedBox(width: 12),
-                            const Text('Delete post'),
+                            Text(textRead(context, 'Delete post')),
                           ],
                         ),
                       ),
@@ -1561,24 +1772,27 @@ class _PostWidgetState extends State<PostWidget> {
                           context: context,
                           builder: (dialogContext) => AlertDialog(
                             backgroundColor: Colors.white,
-                            title: const Text('Delete post?'),
-                            content: const Text(
-                              'Are you sure you want to delete this post? This action cannot be undone.',
+                            title: Text(textRead(context, 'Delete post?')),
+                            content: Text(
+                              textRead(
+                                context,
+                                'Are you sure you want to delete this post? This action cannot be undone.',
+                              ),
                             ),
                             actions: [
                               TextButton(
                                 onPressed: () =>
                                     Navigator.pop(dialogContext, false),
-                                child: const Text(
-                                  'Cancel',
+                                child: Text(
+                                  textRead(context, 'Cancel'),
                                   style: TextStyle(color: Colors.black),
                                 ),
                               ),
                               TextButton(
                                 onPressed: () =>
                                     Navigator.pop(dialogContext, true),
-                                child: const Text(
-                                  'Delete',
+                                child: Text(
+                                  textRead(context, 'Delete'),
                                   style: TextStyle(color: Colors.red),
                                 ),
                               ),
@@ -1596,8 +1810,10 @@ class _PostWidgetState extends State<PostWidget> {
                           if (!context.mounted) break;
 
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Post deleted successfully.'),
+                            SnackBar(
+                              content: Text(
+                                textRead(context, 'Post deleted successfully.'),
+                              ),
                             ),
                           );
                         } catch (e) {
@@ -1605,14 +1821,15 @@ class _PostWidgetState extends State<PostWidget> {
 
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('Could not delete post: $e'),
+                              content: Text(
+                                textRead(context, 'Could not delete post: $e'),
+                              ),
                             ),
                           );
                         }
                         break;
 
                       case 'report':
-                        await _showReportPostDialog();
                         final reported = await _showReportPostDialog();
 
                         if (reported == true && mounted) {
@@ -1633,8 +1850,13 @@ class _PostWidgetState extends State<PostWidget> {
 
                         if (userId == null || userId.isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Could not identify this user.'),
+                            SnackBar(
+                              content: Text(
+                                textRead(
+                                  context,
+                                  'Could not identify this user.',
+                                ),
+                              ),
                             ),
                           );
                           break;
@@ -1649,14 +1871,24 @@ class _PostWidgetState extends State<PostWidget> {
 
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('$username has been blocked.'),
+                              content: Text(
+                                textRead(
+                                  context,
+                                  '$username' +
+                                      textRead(context, ' has been blocked.'),
+                                ),
+                              ),
                             ),
                           );
                         } catch (e) {
                           if (!mounted) break;
 
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Could not block user: $e')),
+                            SnackBar(
+                              content: Text(
+                                textRead(context, 'Could not block user: $e'),
+                              ),
+                            ),
                           );
                         }
 
@@ -1666,17 +1898,17 @@ class _PostWidgetState extends State<PostWidget> {
 
                   itemBuilder: (context) => [
                     if (isMyPost) ...[
-                      const PopupMenuItem<String>(
+                      PopupMenuItem<String>(
                         value: 'edit',
                         child: Row(
                           children: [
                             Icon(Icons.edit_outlined, size: 19),
                             SizedBox(width: 10),
-                            Text('Edit post'),
+                            Text(textRead(context, 'Edit post')),
                           ],
                         ),
                       ),
-                      const PopupMenuItem<String>(
+                      PopupMenuItem<String>(
                         value: 'delete',
                         child: Row(
                           children: [
@@ -1687,24 +1919,24 @@ class _PostWidgetState extends State<PostWidget> {
                             ),
                             SizedBox(width: 10),
                             Text(
-                              'Delete post',
+                              textRead(context, 'Delete post'),
                               style: TextStyle(color: Colors.red),
                             ),
                           ],
                         ),
                       ),
                     ] else ...[
-                      const PopupMenuItem<String>(
+                      PopupMenuItem<String>(
                         value: 'report',
                         child: Row(
                           children: [
                             Icon(Icons.flag_outlined, size: 19),
                             SizedBox(width: 10),
-                            Text('Report post'),
+                            Text(textRead(context, 'Report post')),
                           ],
                         ),
                       ),
-                      const PopupMenuItem<String>(
+                      PopupMenuItem<String>(
                         value: 'block',
                         child: Row(
                           children: [
@@ -1715,7 +1947,7 @@ class _PostWidgetState extends State<PostWidget> {
                             ),
                             SizedBox(width: 10),
                             Text(
-                              'Block user',
+                              textRead(context, 'Block user'),
                               style: TextStyle(color: Colors.red),
                             ),
                           ],
@@ -1733,7 +1965,7 @@ class _PostWidgetState extends State<PostWidget> {
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
               child: Text(
-                caption,
+                text(context, caption),
                 style: const TextStyle(
                   fontSize: 15,
                   height: 1.5,
@@ -1850,8 +2082,13 @@ class _PostWidgetState extends State<PostWidget> {
                 const Spacer(),
 
                 // share ICON
+                // DM ICON
                 GestureDetector(
-                  onTap: () {},
+                  onTap: () async {
+                    if (widget.onOpenChat != null) {
+                      await widget.onOpenChat!(widget.post);
+                    }
+                  },
                   child: SizedBox(
                     width: 28,
                     height: 28,
@@ -1995,6 +2232,7 @@ class _CommentTextDialogState extends State<CommentTextDialog> {
   @override
   void dispose() {
     _controller.dispose();
+
     super.dispose();
   }
 
@@ -2029,14 +2267,17 @@ class _CommentTextDialogState extends State<CommentTextDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel', style: TextStyle(color: Colors.black)),
+          child: Text(
+            textRead(context, 'Cancel'),
+            style: TextStyle(color: Colors.black),
+          ),
         ),
         TextButton(
           onPressed: () {
             Navigator.pop(context, _controller.text.trim());
           },
           child: Text(
-            widget.actionLabel,
+            textRead(context, widget.actionLabel),
             style: const TextStyle(color: Color(0xFFFCC001)),
           ),
         ),

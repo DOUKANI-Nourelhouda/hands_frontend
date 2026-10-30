@@ -1,5 +1,5 @@
 import 'dart:convert';
-
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 class MsgService {
@@ -134,5 +134,25 @@ class MsgService {
     }
 
     return Map<String, dynamic>.from(message);
+  }
+
+  Future<Map<String, dynamic>> deleteConversation(String conversationId) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/conversations/$conversationId'),
+        headers: {'Content-Type': 'application/json', 'token': token},
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return data;
+      } else {
+        throw Exception(data['message'] ?? 'Failed to delete conversation');
+      }
+    } catch (e) {
+      debugPrint('Delete conversation error: $e');
+      rethrow;
+    }
   }
 }

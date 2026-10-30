@@ -188,7 +188,7 @@ class _NavBarItem extends StatelessWidget {
             ),
             const SizedBox(height: 3),
             Text(
-              label,
+              text(context, label),
               style: TextStyle(
                 fontSize: 9,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,

@@ -43,7 +43,7 @@ class _PostCreditsPageState extends State<PostCreditsPage>
       'id': '20_posts',
       'posts': 20,
       'price': 170,
-      'description': 'For those who never stop creating.',
+      'description': 'For who never stop creating.',
     },
   ];
 
@@ -148,7 +148,11 @@ class _PostCreditsPageState extends State<PostCreditsPage>
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+          SnackBar(
+            content: Text(
+              text(context, e.toString().replaceFirst('Exception: ', '')),
+            ),
+          ),
         );
       }
     } finally {
@@ -177,8 +181,8 @@ class _PostCreditsPageState extends State<PostCreditsPage>
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Post Credits',
+        title: Text(
+          text(context, 'Post Credits'),
           style: TextStyle(
             color: Colors.black87,
             fontSize: 18,
@@ -193,7 +197,7 @@ class _PostCreditsPageState extends State<PostCreditsPage>
                 color: accent,
                 onRefresh: _loadCredits,
                 child: ListView(
-                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
+                  padding: const EdgeInsets.fromLTRB(22, 22, 22, 30),
                   children: [
                     _buildCreditsSection(),
                     const SizedBox(height: 30),
@@ -213,8 +217,8 @@ class _PostCreditsPageState extends State<PostCreditsPage>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Your balance',
+        Text(
+          text(context, 'Your balance'),
           style: TextStyle(
             fontSize: 21,
             fontWeight: FontWeight.bold,
@@ -222,10 +226,12 @@ class _PostCreditsPageState extends State<PostCreditsPage>
           ),
         ),
         const SizedBox(height: 6),
+
         Text(
-          'Keep track of the posts you can publish.',
+          text(context, 'Keep track of the posts you can publish.'),
           style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
         ),
+
         const SizedBox(height: 18),
         Row(
           children: [
@@ -265,7 +271,7 @@ class _PostCreditsPageState extends State<PostCreditsPage>
                 ),
                 TextButton(
                   onPressed: _loadCredits,
-                  child: const Text('Try again'),
+                  child: Text(text(context, 'Try again')),
                 ),
               ],
             ),
@@ -308,17 +314,20 @@ class _PostCreditsPageState extends State<PostCreditsPage>
             child: Icon(icon, color: Colors.black87, size: 23),
           ),
           const SizedBox(height: 15),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey.shade600,
-              fontWeight: FontWeight.w500,
+          Center(
+            child: Text(
+              text(context, title),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey.shade600,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
           const SizedBox(height: 5),
           Text(
-            '$value',
+            text(context, '$value'),
             style: const TextStyle(
               fontSize: 29,
               fontWeight: FontWeight.bold,
@@ -334,8 +343,8 @@ class _PostCreditsPageState extends State<PostCreditsPage>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Get more post credits',
+        Text(
+          text(context, 'Get more post credits'),
           style: TextStyle(
             fontSize: 21,
             fontWeight: FontWeight.bold,
@@ -344,7 +353,7 @@ class _PostCreditsPageState extends State<PostCreditsPage>
         ),
         const SizedBox(height: 6),
         Text(
-          'Choose the package that works for you !',
+          text(context, 'Choose the package that works for you !'),
           style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
         ),
       ],
@@ -390,7 +399,7 @@ class _PostCreditsPageState extends State<PostCreditsPage>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '$posts Post Credits',
+                        '$posts ' + text(context, 'Post Credits'),
                         style: const TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.bold,
@@ -398,7 +407,8 @@ class _PostCreditsPageState extends State<PostCreditsPage>
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        package['description'] as String,
+                        text(context, package['description'] as String),
+
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey.shade600,
@@ -411,14 +421,16 @@ class _PostCreditsPageState extends State<PostCreditsPage>
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      '$price DA',
+                      text(context, '$price ' + 'DA'),
                       style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     Text(
-                      '${(price / posts).toStringAsFixed(1)} DA / post',
+                      '${(price / posts).toStringAsFixed(1)} ' +
+                          text(context, 'DA / post'),
+
                       style: TextStyle(
                         fontSize: 10,
                         color: Colors.grey.shade600,
@@ -454,8 +466,8 @@ class _PostCreditsPageState extends State<PostCreditsPage>
                           color: Colors.black87,
                         ),
                       )
-                    : const Text(
-                        'Buy package',
+                    : Text(
+                        text(context, 'Buy package'),
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
@@ -476,14 +488,17 @@ class _PostCreditsPageState extends State<PostCreditsPage>
         color: accent.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(14),
       ),
-      child: const Row(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(Icons.info_outline_rounded, size: 21, color: Colors.black87),
           SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Your 3 free posts are used first. Purchased credits are available after your free posts have been used.',
+              text(
+                context,
+                'Your 3 free posts are used first. Purchased credits are available after your free posts have been used.',
+              ),
               style: TextStyle(
                 fontSize: 12,
                 height: 1.5,

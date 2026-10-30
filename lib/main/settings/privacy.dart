@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hands/utils/langs.dart';
+import 'package:hands/services/lang_manager.dart';
 
 class PrivacyPolicyPage extends StatelessWidget {
   const PrivacyPolicyPage({super.key});
@@ -65,8 +66,8 @@ class PrivacyPolicyPage extends StatelessWidget {
           icon: const Icon(Icons.arrow_back, color: Colors.black87),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Privacy policy',
+        title: Text(
+          text(context, 'Privacy Policy'),
           style: TextStyle(
             color: Colors.black87,
             fontSize: 18,
@@ -94,9 +95,9 @@ class PrivacyPolicyPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          const Center(
+          Center(
             child: Text(
-              'Your privacy matters',
+              text(context, 'Your privacy matters'),
               style: TextStyle(
                 fontSize: 21,
                 fontWeight: FontWeight.w700,
@@ -105,10 +106,11 @@ class PrivacyPolicyPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Learn how Hands handles your information when '
-            'you use the app to connect with students and '
-            'exchange services within your residence.',
+          Text(
+            text(context, 'Learn how Hands handles your information when ') +
+                text(context, 'you use the app to connect with students and ') +
+                text(context, 'exchange services within your residence.'),
+
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13,
@@ -120,127 +122,245 @@ class PrivacyPolicyPage extends StatelessWidget {
 
           _buildSection(
             icon: Icons.person_outline,
-            title: '1. Information we collect',
+            title: text(context, '1. Information we collect'),
             content:
-                'Hands may collect information you provide when creating '
-                'your account, such as your username, email address, '
-                'residence, profile picture, and bio. Content you publish, '
-                'including posts, comments, and media, may also be stored '
-                'to provide the app services.',
+                text(
+                  context,
+                  'Hands may collect information you provide when creating ',
+                ) +
+                text(
+                  context,
+                  'your account, such as your username, email address, ',
+                ) +
+                text(
+                  context,
+                  'residence, profile picture, and bio. Content you publish, ',
+                ) +
+                text(
+                  context,
+                  'including posts, comments, and media, may also be stored ',
+                ) +
+                text(context, 'to provide the app services.'),
           ),
 
           _buildSection(
             icon: Icons.home_outlined,
-            title: '2. Residence-based access',
+            title: text(context, '2. Residence-based access'),
             content:
-                'Hands is designed to connect students within their '
-                'residence. Your residence information is used to help '
-                'provide residence-based features. This does not mean '
-                'every piece of your personal information is visible '
-                'to every resident.',
+                text(
+                  context,
+                  'Hands is designed to connect students within their ',
+                ) +
+                text(
+                  context,
+                  'residence. Your residence information is used to help ',
+                ) +
+                text(
+                  context,
+                  'provide residence-based features. This does not mean ',
+                ) +
+                text(
+                  context,
+                  'every piece of your personal information is visible ',
+                ) +
+                text(context, 'to every resident.'),
           ),
 
           _buildSection(
             icon: Icons.chat_bubble_outline,
-            title: '3. Messages and communication',
+            title: text(context, '3. Messages and communication'),
             content:
-                'Hands allows users to communicate through messages. '
-                'Messages are intended for the relevant conversation '
-                'participants. Do not share passwords, financial details, '
-                'or other sensitive information in chats. Only describe '
-                'messages as private or encrypted if the app actually '
-                'provides those protections.',
+                text(
+                  context,
+                  'Hands allows users from the same residence to communicate through messages. ',
+                ) +
+                text(
+                  context,
+                  'Messages are intended for the relevant conversation ',
+                ) +
+                text(
+                  context,
+                  'participants. Do not share passwords, financial details, ',
+                ) +
+                text(
+                  context,
+                  'or other sensitive information in chats. Only describe ',
+                ) +
+                text(context, 'messages as private or encrypted.'),
           ),
 
           _buildSection(
             icon: Icons.photo_outlined,
-            title: '4. Posts and profile information',
+            title: text(context, '4. Posts and profile information'),
             content:
-                'Information you publish on your profile or in posts may '
-                'be visible to other users who are permitted to access it. '
-                'Think carefully before publishing personal details or '
-                'uploading photos and videos.',
+                text(
+                  context,
+                  'Information you publish on your profile or in posts may ',
+                ) +
+                text(
+                  context,
+                  'be visible to other users who are permitted to access it. ',
+                ) +
+                text(
+                  context,
+                  'Think carefully before publishing personal details or ',
+                ) +
+                text(context, 'uploading photos and videos.'),
           ),
 
           _buildSection(
             icon: Icons.block_outlined,
-            title: '5. Blocking and reporting',
+            title: text(context, '5. Blocking and reporting'),
             content:
-                'You can use available blocking features to limit '
-                'interactions with specific accounts. Reports may be '
-                'reviewed to help address inappropriate content or '
-                'behavior. Blocking should not be treated as a guarantee '
-                'that all previous interactions or content are erased.',
+                text(
+                  context,
+                  'You can use available blocking features to limit ',
+                ) +
+                text(
+                  context,
+                  'interactions with specific accounts. Reports may be ',
+                ) +
+                text(
+                  context,
+                  'reviewed to help address inappropriate content or ',
+                ) +
+                text(
+                  context,
+                  'behavior. Blocking should not be treated as a guarantee ',
+                ) +
+                text(
+                  context,
+                  'that all previous interactions or content are erased.',
+                ),
           ),
 
           _buildSection(
             icon: Icons.security_outlined,
-            title: '6. Data security',
+            title: text(context, '6. Data security'),
             content:
-                'We use technical and organizational measures intended '
-                'to protect account information. No online service can '
-                'guarantee absolute security. Keep your login credentials '
-                'safe and report suspicious activity.',
+                text(
+                  context,
+                  'We use technical and organizational measures intended ',
+                ) +
+                text(
+                  context,
+                  'to protect account information. No online service can ',
+                ) +
+                text(
+                  context,
+                  'guarantee absolute security. Keep your login credentials ',
+                ) +
+                text(context, 'safe and report suspicious activity.'),
           ),
 
           _buildSection(
             icon: Icons.cloud_outlined,
-            title: '7. Storage and service providers',
+            title: text(context, '7. Storage and service providers'),
             content:
-                'Information may be processed by the service providers '
-                'needed to operate Hands, such as database, media storage, '
-                'authentication, and payment providers, where applicable. '
-                'The final policy should identify the providers actually '
-                'used and explain their relevant roles.',
+                text(
+                  context,
+                  'Information may be processed by the service providers ',
+                ) +
+                text(
+                  context,
+                  'needed to operate Hands, such as database, media storage, ',
+                ) +
+                text(
+                  context,
+                  'authentication, and payment providers, where applicable. ',
+                ) +
+                text(
+                  context,
+                  'The final policy should identify the providers actually ',
+                ) +
+                text(context, 'used and explain their relevant roles.'),
           ),
 
           _buildSection(
             icon: Icons.delete_outline,
-            title: '8. Your choices and your data',
+            title: text(context, '8. Your choices and your data'),
             content:
-                'You can manage information through the settings and '
-                'features available in Hands. You may request access to, '
-                'correction of, or deletion of your personal information, '
-                'subject to applicable law and legitimate retention '
-                'requirements. Add your actual account-deletion process '
-                'and contact details before publishing this policy.',
+                text(
+                  context,
+                  'You can manage information through the settings and ',
+                ) +
+                text(
+                  context,
+                  'features available in Hands. You may request access to, ',
+                ) +
+                text(
+                  context,
+                  'correction of, or deletion of your personal information, ',
+                ) +
+                text(
+                  context,
+                  'subject to applicable law and legitimate retention ',
+                ) +
+                text(
+                  context,
+                  'requirements. Add your actual account-deletion process ',
+                ) +
+                text(
+                  context,
+                  'and contact details before publishing this policy.',
+                ),
           ),
 
           _buildSection(
             icon: Icons.child_care_outlined,
-            title: '9. Age requirements',
+            title: text(context, '9. Age requirements'),
             content:
-                'Hands is intended for its eligible student audience. '
-                'The app should apply and communicate its actual minimum '
-                'age requirements and comply with the laws applicable '
-                'to its users.',
+                text(
+                  context,
+                  'Hands is intended for its eligible student audience. ',
+                ) +
+                text(
+                  context,
+                  'The app should apply and communicate its actual minimum ',
+                ) +
+                text(
+                  context,
+                  'age requirements and comply with the laws applicable ',
+                ) +
+                text(context, 'to its users.'),
           ),
 
           _buildSection(
             icon: Icons.update_outlined,
-            title: '10. Changes to this policy',
+            title: text(context, '10. Changes to this policy'),
             content:
-                'This policy may be updated when Hands changes its '
-                'features or legal requirements change. When appropriate, '
-                'users will be informed of significant changes.',
+                text(
+                  context,
+                  'This policy may be updated when Hands changes its ',
+                ) +
+                text(
+                  context,
+                  'features or legal requirements change. When appropriate, ',
+                ) +
+                text(context, 'users will be informed of significant changes.'),
           ),
 
           _buildSection(
             icon: Icons.mail_outline,
-            title: '11. Contact us',
+            title: text(context, '11. Contact us'),
             content:
-                'For questions about this policy or your personal '
-                'information, contact the Hands team at the official '
-                'privacy email address published by the app developer.',
+                text(
+                  context,
+                  'For questions about this policy or your personal ',
+                ) +
+                text(
+                  context,
+                  'information, contact the Hands team at the official ',
+                ) +
+                text(context, 'privacy email address @@@@@@@@@2@@@@@@@.'),
           ),
 
           const SizedBox(height: 8),
-          const Center(
+          Center(
             child: Text(
-              'Draft for review — add the effective date and '
-              'verified contact details before publication.',
+              text(context, 'Hands - To survive in your residence.'),
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 11, color: Color(0xff999999)),
+              style: TextStyle(fontSize: 14, color: Color(0xff999999)),
             ),
           ),
           const SizedBox(height: 20),

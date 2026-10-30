@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hands/services/user_service.dart';
+import 'package:hands/utils/langs.dart';
 
 class BlockedUsersPage extends StatefulWidget {
   const BlockedUsersPage({super.key});
@@ -78,7 +79,10 @@ class _BlockedUsersPageState extends State<BlockedUsersPage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('${user['username'] ?? 'User'} has been unblocked.'),
+          content: Text(
+            '${user['username'] ?? 'User'}' +
+                textRead(context, 'has been unblocked.'),
+          ),
           backgroundColor: Colors.black87,
         ),
       );
@@ -88,8 +92,11 @@ class _BlockedUsersPageState extends State<BlockedUsersPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Could not unblock user: '
-            '${e.toString().replaceFirst('Exception: ', '')}',
+            text(
+              context,
+              'Could not unblock user: '
+              '${e.toString().replaceFirst('Exception: ', '')}',
+            ),
           ),
           backgroundColor: Colors.red,
         ),
@@ -143,23 +150,24 @@ class _BlockedUsersPageState extends State<BlockedUsersPage> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
             ),
-            title: const Text(
-              'Unblock account?',
+            title: Text(
+              textRead(context, 'Unblock account?'),
               style: TextStyle(
-                fontSize: 18,
+                fontSize: 20,
                 fontWeight: FontWeight.bold,
                 color: Colors.black87,
               ),
             ),
             content: Text(
-              'Are you sure you want to unblock $username?',
+              textRead(context, 'Are you sure you want to unblock') +
+                  ' $username?',
               style: const TextStyle(fontSize: 14, color: Colors.black54),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(dialogContext, false),
-                child: const Text(
-                  'Cancel',
+                child: Text(
+                  textRead(context, 'Cancel'),
                   style: TextStyle(color: Color(0xff333333)),
                 ),
               ),
@@ -173,8 +181,8 @@ class _BlockedUsersPageState extends State<BlockedUsersPage> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text(
-                  'Unblock',
+                child: Text(
+                  textRead(context, 'Unblock'),
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
@@ -208,7 +216,7 @@ class _BlockedUsersPageState extends State<BlockedUsersPage> {
         contentPadding: const EdgeInsets.symmetric(horizontal: 6),
         leading: _buildAvatar(user),
         title: Text(
-          username,
+          text(context, username),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: const TextStyle(
@@ -218,7 +226,7 @@ class _BlockedUsersPageState extends State<BlockedUsersPage> {
         ),
         subtitle: bio.isNotEmpty
             ? Text(
-                bio,
+                text(context, bio),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
@@ -248,22 +256,16 @@ class _BlockedUsersPageState extends State<BlockedUsersPage> {
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
       children: [
-        const SizedBox(height: 140),
-        Icon(Icons.block_outlined, size: 58, color: Colors.grey.shade400),
+        const SizedBox(height: 200),
+        Icon(Icons.block_outlined, size: 80, color: Colors.grey.shade400),
         const SizedBox(height: 16),
-        const Center(
+        Center(
           child: Text(
-            'No blocked accounts',
+            text(context, 'No blocked accounts'),
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
           ),
         ),
         const SizedBox(height: 8),
-        Center(
-          child: Text(
-            'Accounts you block will appear here.',
-            style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
-          ),
-        ),
       ],
     );
   }
@@ -278,15 +280,15 @@ class _BlockedUsersPageState extends State<BlockedUsersPage> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Text(
-            _errorMessage ?? 'Something went wrong.',
+            text(context, _errorMessage ?? 'Something went wrong.'),
             textAlign: TextAlign.center,
           ),
         ),
         Center(
           child: TextButton(
             onPressed: _loadBlockedUsers,
-            child: const Text(
-              'Try again',
+            child: Text(
+              text(context, 'Try again'),
               style: TextStyle(color: Colors.black87),
             ),
           ),
@@ -307,8 +309,8 @@ class _BlockedUsersPageState extends State<BlockedUsersPage> {
           icon: const Icon(Icons.arrow_back, color: Colors.black87),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Blocked accounts',
+        title: Text(
+          text(context, 'Blocked accounts'),
           style: TextStyle(
             color: Colors.black87,
             fontSize: 18,

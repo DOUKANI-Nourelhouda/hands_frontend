@@ -5,7 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:hands/services/profile_service.dart';
 import 'package:hands/services/residence_service.dart';
 import 'package:hands/widgets/residencedrowp.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:hands/utils/langs.dart';
 
 class EditProfilePage extends StatefulWidget {
   final PostService postService;
@@ -210,12 +210,12 @@ class _EditProfilePageState extends State<EditProfilePage> {
     }
 
     if (bio.length > 300) {
-      _showMessage('Bio cannot exceed 300 characters.');
+      _showMessage(text(context, 'Bio cannot exceed 300 characters.'));
       return;
     }
 
     if (_selectedWilaya == null || _selectedResidence == null) {
-      _showMessage('Please select your Wilaya and residence.');
+      _showMessage(text(context, 'Please select your Wilaya and residence.'));
       return;
     }
 
@@ -245,8 +245,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Profile updated successfully!'),
+        SnackBar(
+          content: Text(textRead(context, 'Profile updated successfully!')),
           backgroundColor: Color(0xff2e7d32),
         ),
       );
@@ -264,7 +264,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    ).showSnackBar(SnackBar(content: Text(textRead(context, message))));
   }
 
   InputDecoration _decoration(String label, IconData icon) {
@@ -309,8 +309,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  const Text(
-                    'Edit Profile',
+                  Text(
+                    text(context, 'Edit profile'),
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
@@ -395,8 +395,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
                           const SizedBox(height: 20),
 
-                          const Text(
-                            'Personal information',
+                          Text(
+                            text(context, 'Personal information'),
                             style: TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.bold,
@@ -456,8 +456,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
                             textAlignVertical: TextAlignVertical.top,
                             decoration: InputDecoration(
                               labelText: 'Bio',
-                              hintText:
-                                  'Tell students a little about yourself !',
+                              hintText: text(
+                                context,
+                                'Tell students a little about yourself !',
+                              ),
                               alignLabelWithHint: true,
                               filled: true,
                               fillColor: const Color(0xfffafafa),
@@ -491,8 +493,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                           ),
                           const SizedBox(height: 12),
 
-                          const Text(
-                            'Location',
+                          Text(
+                            text(context, 'Location'),
                             style: TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.bold,
@@ -503,7 +505,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
                           WilayaDropdown(
                             selectedWilaya: _selectedWilaya,
                             wilayas: const [
-                              // Keep your complete list of 58 wilayas here.
                               'Adrar',
                               'Chlef',
                               'Laghouat',
@@ -618,8 +619,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                         color: Colors.black,
                                       ),
                                     )
-                                  : const Text(
-                                      'Save Changes',
+                                  : Text(
+                                      text(context, 'Save changes'),
                                       style: TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
@@ -658,34 +659,54 @@ class _WilayaDropdownState extends State<WilayaDropdown> {
   final GlobalKey _key = GlobalKey();
 
   Future<void> _openDropdown() async {
-    final RenderBox renderBox =
-        _key.currentContext!.findRenderObject() as RenderBox;
+    final keyContext = _key.currentContext;
 
-    final Offset position = renderBox.localToGlobal(Offset.zero);
+    // Make sure the dropdown still exists.
+    if (keyContext == null || !mounted) return;
+
+    final renderObject = keyContext.findRenderObject();
+
+    if (renderObject is! RenderBox || !renderObject.hasSize) {
+      return;
+    }
+
+    final renderBox = renderObject;
+    final overlay = Overlay.of(context);
+    final overlayObject = overlay.context.findRenderObject();
+
+    if (overlayObject is! RenderBox) return;
+
+    final position = renderBox.localToGlobal(
+      Offset.zero,
+      ancestor: overlayObject,
+    );
+
+    final menuRect = Rect.fromLTWH(
+      position.dx,
+      position.dy + renderBox.size.height + 5,
+      renderBox.size.width,
+      0,
+    );
 
     final selected = await showMenu<String>(
       context: context,
-      position: RelativeRect.fromLTRB(
-        position.dx,
-        position.dy + renderBox.size.height + 5,
-        position.dx + renderBox.size.width,
-        0,
+      position: RelativeRect.fromRect(
+        menuRect,
+        Offset.zero & overlayObject.size,
       ),
       color: Colors.white,
       elevation: 8,
-
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
         side: const BorderSide(color: Color(0xfffcc001), width: 2.5),
       ),
-
       items: widget.wilayas.map((wilaya) {
         return PopupMenuItem<String>(
           value: wilaya,
           child: SizedBox(
             width: renderBox.size.width - 30,
             child: Text(
-              wilaya,
+              textRead(context, wilaya),
               style: const TextStyle(fontSize: 16, color: Colors.black),
             ),
           ),
@@ -693,9 +714,9 @@ class _WilayaDropdownState extends State<WilayaDropdown> {
       }).toList(),
     );
 
-    if (selected != null) {
-      widget.onChanged(selected);
-    }
+    if (!mounted || selected == null) return;
+
+    widget.onChanged(selected);
   }
 
   @override
@@ -724,7 +745,7 @@ class _WilayaDropdownState extends State<WilayaDropdown> {
 
             Expanded(
               child: Text(
-                widget.selectedWilaya ?? 'Wilaya',
+                text(context, widget.selectedWilaya ?? 'Wilaya'),
                 style: TextStyle(
                   fontSize: 16,
                   color: widget.selectedWilaya == null

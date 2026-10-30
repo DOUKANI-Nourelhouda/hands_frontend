@@ -153,14 +153,26 @@ class _MsgsPageState extends State<MsgsPage> {
   Map<String, dynamic>? _otherParticipant(Map<String, dynamic> conversation) {
     final participants = conversation['participants'];
 
-    if (participants is! List) return null;
+    if (participants is! List || participants.isEmpty) {
+      return null;
+    }
 
+    // First, try to find the other participant.
     for (final participant in participants) {
       if (_idOf(participant) != widget.currentUserId) {
         if (participant is Map) {
           return Map<String, dynamic>.from(participant);
         }
       }
+    }
+
+    // If nobody is different from the current user,
+    // this is probably a self-chat.
+    final firstParticipant = participants.first;
+
+    if (firstParticipant is Map &&
+        _idOf(firstParticipant) == widget.currentUserId) {
+      return Map<String, dynamic>.from(firstParticipant);
     }
 
     return null;
@@ -212,9 +224,22 @@ class _MsgsPageState extends State<MsgsPage> {
   List<Map<String, dynamic>> get _filteredConversations {
     return _conversations.where((conversation) {
       final user = _otherParticipant(conversation);
+
       if (user == null) return false;
 
-      return _matches(_usernameOf(user)) ||
+      final participants = conversation['participants'];
+
+      final isSelfChat =
+          participants is List &&
+          participants.isNotEmpty &&
+          participants.every(
+            (participant) => _idOf(participant) == widget.currentUserId,
+          );
+
+      final username = _usernameOf(user);
+
+      return _matches(username) ||
+          _matches(_usernameOf(user)) ||
           _matches(_lastDirectMessage(conversation));
     }).toList();
   }
@@ -236,8 +261,8 @@ class _MsgsPageState extends State<MsgsPage> {
     return CircleAvatar(
       radius: 23,
       backgroundColor: const Color(0xFFFFF2C2),
-      backgroundImage: picture.isNotEmpty
-          ? NetworkImage(picture)
+      backgroundImage: url.isNotEmpty
+          ? NetworkImage(url)
           : const AssetImage('assets/default_pfp.jpg') as ImageProvider,
     );
   }
@@ -282,7 +307,7 @@ class _MsgsPageState extends State<MsgsPage> {
         },
         textInputAction: TextInputAction.search,
         decoration: InputDecoration(
-          hintText: 'Search people or groups',
+          hintText: text(context, 'Search people or groups'),
           hintStyle: const TextStyle(fontSize: 14, color: Color(0xFF8E92A0)),
           prefixIcon: const Icon(
             Icons.search_rounded,
@@ -315,7 +340,7 @@ class _MsgsPageState extends State<MsgsPage> {
       child: Row(
         children: [
           Text(
-            title,
+            text(context, title),
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(width: 8),
@@ -341,6 +366,15 @@ class _MsgsPageState extends State<MsgsPage> {
     if (otherUser == null) {
       return const SizedBox.shrink();
     }
+
+    final participants = conversation['participants'];
+
+    final isSelfChat =
+        participants is List &&
+        participants.isNotEmpty &&
+        participants.every(
+          (participant) => _idOf(participant) == widget.currentUserId,
+        );
 
     final username = _usernameOf(otherUser);
 
@@ -490,7 +524,7 @@ class _MsgsPageState extends State<MsgsPage> {
                             const SizedBox(height: 16),
                             ElevatedButton(
                               onPressed: _loadChats,
-                              child: const Text('Try again'),
+                              child: Text(text(context, 'Try again')),
                             ),
                           ],
                         ),

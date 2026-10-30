@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hands/utils/langs.dart';
+import 'package:hands/services/lang_manager.dart';
+import 'package:provider/provider.dart';
 
 class ResidenceDropdown extends StatefulWidget {
   final String? selectedResidenceId;
@@ -30,6 +32,12 @@ class _ResidenceDropdownState extends State<ResidenceDropdown> {
     if (!widget.enabled || widget.loading || widget.residences.isEmpty) {
       return;
     }
+
+    // Read the language manager without subscribing to changes.
+    final languageManager = Provider.of<LanguageManager>(
+      context,
+      listen: false,
+    );
 
     final RenderBox? renderBox =
         _key.currentContext?.findRenderObject() as RenderBox?;
@@ -71,7 +79,7 @@ class _ResidenceDropdownState extends State<ResidenceDropdown> {
               children: [
                 Expanded(
                   child: Text(
-                    name,
+                    textRead(context, name),
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(fontSize: 16, color: Colors.black),
                   ),
@@ -129,7 +137,7 @@ class _ResidenceDropdownState extends State<ResidenceDropdown> {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                selectedName ?? hint,
+                textRead(context, selectedName ?? hint),
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: 16,

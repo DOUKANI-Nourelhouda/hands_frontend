@@ -19,7 +19,6 @@ import 'package:hands/main/post_credits.dart';
 import 'package:hands/services/lang_manager.dart';
 import 'package:hands/utils/langs.dart';
 import 'package:provider/provider.dart';
-import 'package:hands/utils/langs.dart';
 
 class ProfilePage extends StatefulWidget {
   final String? userId;
@@ -192,7 +191,11 @@ class _ProfilePageState extends State<ProfilePage> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+        SnackBar(
+          content: Text(
+            textRead(context, e.toString().replaceFirst('Exception: ', '')),
+          ),
+        ),
       );
     } finally {
       if (mounted) {
@@ -223,7 +226,9 @@ class _ProfilePageState extends State<ProfilePage> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Unable to share this profile.')),
+        SnackBar(
+          content: Text(textRead(context, 'Unable to share this profile.')),
+        ),
       );
       return;
     }
@@ -232,7 +237,9 @@ class _ProfilePageState extends State<ProfilePage> {
 
     if (baseUrl == null || baseUrl.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Profile link is unavailable.')),
+        SnackBar(
+          content: Text(textRead(context, 'Profile link is unavailable.')),
+        ),
       );
       return;
     }
@@ -249,9 +256,11 @@ class _ProfilePageState extends State<ProfilePage> {
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Could not share profile: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(textRead(context, 'Could not share profile: $e')),
+        ),
+      );
     }
   }
 
@@ -264,19 +273,24 @@ class _ProfilePageState extends State<ProfilePage> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          title: const Text(
-            'Block user?',
+          title: Text(
+            textRead(context, 'Block user?'),
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
           content: Text(
-            'Are you sure you want to block $username? '
-            'Their posts will no longer appear in your feed.',
+            textRead(context, 'Are you sure you want to block') +
+                ' $username? ' +
+                textRead(
+                  context,
+                  'Their posts will no longer appear in your feed.',
+                ),
           ),
+
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text(
-                'Cancel',
+              child: Text(
+                textRead(context, 'Cancel'),
                 style: TextStyle(color: Colors.black54),
               ),
             ),
@@ -286,7 +300,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 foregroundColor: Colors.white,
               ),
               onPressed: () => Navigator.pop(dialogContext, true),
-              child: const Text('Block'),
+              child: Text(textRead(context, 'Block')),
             ),
           ],
         );
@@ -300,7 +314,7 @@ class _ProfilePageState extends State<ProfilePage> {
     final detailsController = TextEditingController();
 
     const reasons = <String, String>{
-      'inappropriate': 'Inappropriate profile or content',
+      'inappropriate': 'Inappropriate content',
       'scam': 'Scam or fraud',
       'spam': 'Spam or fake account',
       'harassment': 'Harassment or bullying',
@@ -323,8 +337,8 @@ class _ProfilePageState extends State<ProfilePage> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(15),
               ),
-              title: const Text(
-                'Report user',
+              title: Text(
+                textRead(context, 'Report user'),
                 style: TextStyle(fontWeight: FontWeight.w700),
               ),
               content: SingleChildScrollView(
@@ -332,8 +346,8 @@ class _ProfilePageState extends State<ProfilePage> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Why are you reporting this user?',
+                    Text(
+                      textRead(context, 'Why are you reporting this user?'),
                       style: TextStyle(color: Colors.black54),
                     ),
                     const SizedBox(height: 12),
@@ -346,8 +360,8 @@ class _ProfilePageState extends State<ProfilePage> {
                         contentPadding: EdgeInsets.zero,
                         dense: true,
                         title: Text(
-                          entry.value,
-                          style: const TextStyle(fontSize: 14),
+                          textRead(context, entry.value),
+                          style: TextStyle(fontSize: 14),
                         ),
                         onChanged: isSubmitting
                             ? null
@@ -367,10 +381,13 @@ class _ProfilePageState extends State<ProfilePage> {
                     TextField(
                       controller: detailsController,
                       maxLength: 500,
-                      maxLines: 6,
+                      maxLines: 4,
                       enabled: !isSubmitting,
                       decoration: InputDecoration(
-                        hintText: 'Additional details (optional)',
+                        hintText: textRead(
+                          context,
+                          'Additional details (optional)',
+                        ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -387,7 +404,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     if (errorMessage != null) ...[
                       const SizedBox(height: 8),
                       Text(
-                        errorMessage!,
+                        textRead(context, errorMessage!),
                         style: const TextStyle(color: Colors.red, fontSize: 13),
                       ),
                     ],
@@ -399,8 +416,8 @@ class _ProfilePageState extends State<ProfilePage> {
                   onPressed: isSubmitting
                       ? null
                       : () => Navigator.pop(dialogContext, false),
-                  child: const Text(
-                    'Cancel',
+                  child: Text(
+                    textRead(context, 'Cancel'),
                     style: TextStyle(color: Colors.black54),
                   ),
                 ),
@@ -466,7 +483,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             color: Colors.black,
                           ),
                         )
-                      : const Text('Submit report'),
+                      : Text(textRead(context, 'Submit report')),
                 ),
               ],
             );
@@ -480,7 +497,7 @@ class _ProfilePageState extends State<ProfilePage> {
     if (!mounted || submitted != true) return false;
 
     ScaffoldMessenger.of(this.context).showSnackBar(
-      const SnackBar(content: Text('User reported successfully.')),
+      SnackBar(content: Text(textRead(context, 'User reported successfully.'))),
     );
 
     return true;
@@ -515,7 +532,15 @@ class _ProfilePageState extends State<ProfilePage> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: Text(text(context, 'choose_language')),
+          backgroundColor: Colors.white,
+          title: Text(
+            textRead(context, 'Choose language'),
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+              color: Color(0xff333333),
+            ),
+          ),
           content: RadioGroup<String>(
             groupValue: languageManager.locale.languageCode,
             onChanged: (value) async {
@@ -530,9 +555,21 @@ class _ProfilePageState extends State<ProfilePage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: const [
-                RadioListTile<String>(title: Text('English'), value: 'en'),
-                RadioListTile<String>(title: Text('Français'), value: 'fr'),
-                RadioListTile<String>(title: Text('العربية'), value: 'ar'),
+                RadioListTile<String>(
+                  title: Text('English'),
+                  value: 'en',
+                  activeColor: Color(0xfffcc001),
+                ),
+                RadioListTile<String>(
+                  title: Text('Français'),
+                  value: 'fr',
+                  activeColor: Color(0xfffcc001),
+                ),
+                RadioListTile<String>(
+                  title: Text('العربية'),
+                  value: 'ar',
+                  activeColor: Color(0xfffcc001),
+                ),
               ],
             ),
           ),
@@ -556,8 +593,8 @@ class _ProfilePageState extends State<ProfilePage> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(22),
               ),
-              title: const Text(
-                'Choose display mode',
+              title: Text(
+                textRead(context, 'Choose display mode'),
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 20,
@@ -601,8 +638,8 @@ class _ProfilePageState extends State<ProfilePage> {
 
                       Navigator.pop(dialogContext);
                     },
-                    child: const Text(
-                      'Confirm',
+                    child: Text(
+                      textRead(context, 'Confirm'),
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
@@ -627,7 +664,7 @@ class _ProfilePageState extends State<ProfilePage> {
         icon,
         color: selected ? const Color(0xffc99700) : Colors.grey,
       ),
-      title: Text(title),
+      title: Text(textRead(context, title)),
       trailing: selected
           ? const Icon(Icons.check_circle, color: Color(0xfffcc001))
           : const Icon(Icons.circle_outlined, color: Colors.grey),
@@ -663,7 +700,9 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 const SizedBox(height: 18),
                 Text(
-                  isOwnProfile ? 'Settings' : 'Profile options',
+                  isOwnProfile
+                      ? textRead(context, 'Settings')
+                      : textRead(context, 'Profile options'),
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -674,7 +713,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 if (isOwnProfile) ...[
                   _optionTile(
                     icon: Icons.edit_outlined,
-                    title: 'Edit profile',
+                    title: text(context, 'Edit profile'),
                     onTap: () {
                       Navigator.push(
                         context,
@@ -688,7 +727,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   _optionTile(
                     svgPath: 'assets/icons/groups.svg',
 
-                    title: 'Followers & following',
+                    title: text(context, 'Followers & Following'),
                     onTap: () {
                       Navigator.push(
                         context,
@@ -712,7 +751,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                   _optionTile(
                     icon: Icons.dark_mode_outlined,
-                    title: 'Mode',
+                    title: textRead(context, 'Mode'),
                     onTap: () {
                       _showDisplayModeDialog(context);
                     },
@@ -730,7 +769,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                   _optionTile(
                     icon: Icons.privacy_tip_outlined,
-                    title: 'Privacy policy',
+                    title: textRead(context, 'Privacy Policy'),
                     onTap: () {
                       Navigator.push(
                         context,
@@ -740,7 +779,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                   _optionTile(
                     icon: Icons.description_outlined,
-                    title: 'Terms of service',
+                    title: textRead(context, 'Terms of Service'),
                     onTap: () {
                       Navigator.pop(sheetContext);
 
@@ -753,7 +792,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
                   _optionTile(
                     icon: Icons.help_outline,
-                    title: 'Help & support',
+                    title: text(context, 'Help & Support'),
                     onTap: () {
                       Navigator.pop(sheetContext);
 
@@ -770,7 +809,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
                   _optionTile(
                     icon: Icons.logout,
-                    title: 'Log out',
+                    title: textRead(context, 'Log out'),
                     color: Colors.red,
                     onTap: () {
                       Navigator.pop(sheetContext);
@@ -808,8 +847,8 @@ class _ProfilePageState extends State<ProfilePage> {
                                 ),
                                 const SizedBox(height: 20),
 
-                                const Text(
-                                  'Log out?',
+                                Text(
+                                  textRead(context, 'Log out?'),
                                   style: TextStyle(
                                     fontSize: 21,
                                     fontWeight: FontWeight.bold,
@@ -819,9 +858,12 @@ class _ProfilePageState extends State<ProfilePage> {
 
                                 const SizedBox(height: 10),
 
-                                const Text(
-                                  'Are you sure you want to log out of your '
-                                  'Hands account?',
+                                Text(
+                                  textRead(
+                                    context,
+                                    'Are you sure you want to log out of your '
+                                    'Hands account?',
+                                  ),
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     fontSize: 14,
@@ -861,8 +903,8 @@ class _ProfilePageState extends State<ProfilePage> {
                                           ),
                                         ),
                                       ),
-                                      child: const Text(
-                                        'Cancel',
+                                      child: Text(
+                                        textRead(context, 'Cancel'),
                                         style: TextStyle(
                                           color: Color(0xff333333),
                                         ),
@@ -897,9 +939,12 @@ class _ProfilePageState extends State<ProfilePage> {
                                           ScaffoldMessenger.of(
                                             context,
                                           ).showSnackBar(
-                                            const SnackBar(
+                                            SnackBar(
                                               content: Text(
-                                                'Failed to log out. Please try again.',
+                                                textRead(
+                                                  context,
+                                                  'Failed to log out. Please try again.',
+                                                ),
                                               ),
                                             ),
                                           );
@@ -919,7 +964,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                           ),
                                         ),
                                       ),
-                                      child: const Text('Log out'),
+                                      child: Text(textRead(context, 'Log out')),
                                     ),
                                   ),
                                 ],
@@ -933,7 +978,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
                   _optionTile(
                     icon: Icons.delete_outline,
-                    title: 'Delete account',
+                    title: textRead(context, 'Delete account'),
                     color: Colors.red,
                     onTap: () {
                       Navigator.pop(sheetContext);
@@ -977,8 +1022,8 @@ class _ProfilePageState extends State<ProfilePage> {
                                     ),
                                     const SizedBox(height: 20),
 
-                                    const Text(
-                                      'Delete account?',
+                                    Text(
+                                      textRead(context, 'Delete account?'),
                                       textAlign: TextAlign.center,
                                       style: TextStyle(
                                         fontSize: 21,
@@ -988,10 +1033,20 @@ class _ProfilePageState extends State<ProfilePage> {
                                     ),
                                     const SizedBox(height: 12),
 
-                                    const Text(
-                                      'Are you sure you want to permanently '
-                                      'delete your Hands account? This action '
-                                      'cannot be undone.',
+                                    Text(
+                                      textRead(
+                                            context,
+                                            'Are you sure you want to permanently ',
+                                          ) +
+                                          textRead(
+                                            context,
+                                            'delete your Hands account? This action ',
+                                          ) +
+                                          textRead(
+                                            context,
+                                            'cannot be undone.',
+                                          ),
+
                                       textAlign: TextAlign.center,
                                       style: TextStyle(
                                         fontSize: 14,
@@ -1033,8 +1088,8 @@ class _ProfilePageState extends State<ProfilePage> {
                                                   BorderRadius.circular(12),
                                             ),
                                           ),
-                                          child: const Text(
-                                            'Cancel',
+                                          child: Text(
+                                            textRead(context, 'Cancel'),
                                             style: TextStyle(
                                               color: Color(0xff333333),
                                             ),
@@ -1072,8 +1127,11 @@ class _ProfilePageState extends State<ProfilePage> {
                                                     ).showSnackBar(
                                                       SnackBar(
                                                         content: Text(
-                                                          result['message'] ??
-                                                              'Account deleted successfully.',
+                                                          textRead(
+                                                            context,
+                                                            result['message'] ??
+                                                                'Account deleted successfully.',
+                                                          ),
                                                         ),
                                                       ),
                                                     );
@@ -1104,10 +1162,13 @@ class _ProfilePageState extends State<ProfilePage> {
                                                     ScaffoldMessenger.of(
                                                       context,
                                                     ).showSnackBar(
-                                                      const SnackBar(
+                                                      SnackBar(
                                                         content: Text(
-                                                          'Failed to delete account. '
-                                                          'Please try again.',
+                                                          textRead(
+                                                            context,
+                                                            'Failed to delete account. '
+                                                            'Please try again.',
+                                                          ),
                                                         ),
                                                       ),
                                                     );
@@ -1137,8 +1198,8 @@ class _ProfilePageState extends State<ProfilePage> {
                                                         color: Colors.white,
                                                       ),
                                                 )
-                                              : const Text(
-                                                  'Delete',
+                                              : Text(
+                                                  textRead(context, 'Delete'),
                                                   style: TextStyle(
                                                     fontWeight: FontWeight.bold,
                                                   ),
@@ -1171,8 +1232,10 @@ class _ProfilePageState extends State<ProfilePage> {
                         debugPrint('[PROFILE] ERROR: recipient ID is empty');
 
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Cannot find this user.'),
+                          SnackBar(
+                            content: Text(
+                              textRead(context, 'Cannot find this user.'),
+                            ),
                           ),
                         );
                         return;
@@ -1187,8 +1250,13 @@ class _ProfilePageState extends State<ProfilePage> {
                         debugPrint('[PROFILE] ERROR: onMessageTap is null');
 
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Messaging is not connected yet.'),
+                          SnackBar(
+                            content: Text(
+                              textRead(
+                                context,
+                                'Messaging is not connected yet.',
+                              ),
+                            ),
                           ),
                         );
                         return;
@@ -1238,7 +1306,10 @@ class _ProfilePageState extends State<ProfilePage> {
 
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('$username has been blocked.'),
+                            content: Text(
+                              '$username' +
+                                  textRead(context, ' has been blocked.'),
+                            ),
                           ),
                         );
 
@@ -1250,7 +1321,10 @@ class _ProfilePageState extends State<ProfilePage> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(
-                              'Could not block user: ${e.toString().replaceFirst('Exception: ', '')}',
+                              text(
+                                context,
+                                'Could not block user: ${e.toString().replaceFirst('Exception: ', '')}',
+                              ),
                             ),
                           ),
                         );
@@ -1297,7 +1371,7 @@ class _ProfilePageState extends State<ProfilePage> {
           children: [
             const Icon(Icons.error_outline, size: 42, color: Colors.grey),
             const SizedBox(height: 12),
-            Text(_error!, textAlign: TextAlign.center),
+            Text(textRead(context, _error!), textAlign: TextAlign.center),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _loadProfile,
@@ -1305,7 +1379,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 backgroundColor: yellow,
                 foregroundColor: Colors.black,
               ),
-              child: const Text('Try again'),
+              child: Text(textRead(context, 'Try again')),
             ),
           ],
         ),
@@ -1344,8 +1418,8 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ),
               const Spacer(),
-              const Text(
-                'Profile',
+              Text(
+                text(context, 'Profile'),
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
@@ -1426,8 +1500,11 @@ class _ProfilePageState extends State<ProfilePage> {
                                         Expanded(
                                           child: Text(
                                             wilaya == null || wilaya.isEmpty
-                                                ? residenceName
-                                                : '$residenceName, $wilaya',
+                                                ? text(context, residenceName)
+                                                : text(
+                                                    context,
+                                                    '$residenceName, $wilaya',
+                                                  ),
                                             style: const TextStyle(
                                               fontSize: 12,
                                               color: Colors.grey,
@@ -1446,7 +1523,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         if (bio.isNotEmpty) ...[
                           const SizedBox(height: 14),
                           Text(
-                            bio,
+                            text(context, bio),
                             style: const TextStyle(
                               fontSize: 14,
                               height: 1.4,
@@ -1504,9 +1581,9 @@ class _ProfilePageState extends State<ProfilePage> {
                                   );
                                 },
                                 borderRadius: BorderRadius.circular(13),
-                                child: const Center(
+                                child: Center(
                                   child: Text(
-                                    'Post Credits',
+                                    text(context, 'Post Credits'),
                                     style: TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.bold,
@@ -1548,7 +1625,9 @@ class _ProfilePageState extends State<ProfilePage> {
                                       ),
                                     )
                                   : Text(
-                                      _isFollowing ? 'Followed' : 'Follow',
+                                      _isFollowing
+                                          ? text(context, 'Followed')
+                                          : text(context, 'Follow'),
                                       style: const TextStyle(
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -1558,8 +1637,8 @@ class _ProfilePageState extends State<ProfilePage> {
 
                         const SizedBox(height: 24),
 
-                        const Text(
-                          'Posts',
+                        Text(
+                          text(context, 'Posts'),
                           style: TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.bold,
@@ -1583,12 +1662,12 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                   )
                 else if (_posts.isEmpty)
-                  const SliverToBoxAdapter(
+                  SliverToBoxAdapter(
                     child: Padding(
-                      padding: EdgeInsets.all(30),
+                      padding: EdgeInsets.all(50),
                       child: Center(
                         child: Text(
-                          'No posts yet',
+                          text(context, 'No posts yet'),
                           style: TextStyle(color: Colors.grey),
                         ),
                       ),
@@ -1626,11 +1705,14 @@ class _ProfilePageState extends State<ProfilePage> {
       child: Column(
         children: [
           Text(
-            value.toString(),
+            text(context, value.toString()),
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
-          Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+          Text(
+            text(context, label),
+            style: const TextStyle(fontSize: 12, color: Colors.grey),
+          ),
         ],
       ),
     );
@@ -1638,12 +1720,12 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _buildPostsFeed() {
     if (_posts.isEmpty) {
-      return const SliverToBoxAdapter(
+      return SliverToBoxAdapter(
         child: Padding(
           padding: EdgeInsets.symmetric(vertical: 40),
           child: Center(
             child: Text(
-              'No posts yet.',
+              text(context, 'No posts yet.'),
               style: TextStyle(color: Colors.grey, fontSize: 14),
             ),
           ),
@@ -1706,7 +1788,7 @@ class _ProfilePageState extends State<ProfilePage> {
           ? SvgPicture.asset(svgPath, width: 24, height: 24)
           : Icon(icon, color: color),
       title: Text(
-        title,
+        text(context, title),
         style: TextStyle(
           color: color,
           fontSize: 15,

@@ -136,8 +136,11 @@ class _NotificationsPageState extends State<NotificationsPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Could not load more notifications: '
-            '${e.toString().replaceFirst('Exception: ', '')}',
+            text(
+              context,
+              'Could not load more notifications: '
+              '${e.toString().replaceFirst('Exception: ', '')}',
+            ),
           ),
         ),
       );
@@ -171,8 +174,11 @@ class _NotificationsPageState extends State<NotificationsPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Could not mark as read: '
-            '${e.toString().replaceFirst('Exception: ', '')}',
+            text(
+              context,
+              'Could not mark as read: '
+              '${e.toString().replaceFirst('Exception: ', '')}',
+            ),
           ),
         ),
       );
@@ -198,7 +204,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('All notifications marked as read.')),
+        SnackBar(
+          content: Text(text(context, 'All notifications marked as read.')),
+        ),
       );
     } catch (e) {
       if (!mounted) return;
@@ -206,7 +214,11 @@ class _NotificationsPageState extends State<NotificationsPage> {
       setState(() => _isMarkingAll = false);
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+        SnackBar(
+          content: Text(
+            text(context, e.toString().replaceFirst('Exception: ', '')),
+          ),
+        ),
       );
     }
   }
@@ -242,8 +254,11 @@ class _NotificationsPageState extends State<NotificationsPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Could not delete notification: '
-            '${e.toString().replaceFirst('Exception: ', '')}',
+            text(
+              context,
+              'Could not delete notification: '
+              '${e.toString().replaceFirst('Exception: ', '')}',
+            ),
           ),
         ),
       );
@@ -256,19 +271,22 @@ class _NotificationsPageState extends State<NotificationsPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete all notifications?'),
-        content: const Text(
-          'This will permanently delete all your notifications.',
+        title: Text(text(context, 'Delete all notifications?')),
+        content: Text(
+          text(context, 'This will permanently delete all your notifications.'),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: Text('Cancel', style: TextStyle(color: Color(0xff333333))),
+            child: Text(
+              text(context, 'Cancel'),
+              style: TextStyle(color: Color(0xff333333)),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text(
-              'Delete all',
+            child: Text(
+              text(context, 'Delete all'),
               style: TextStyle(color: Colors.red),
             ),
           ),
@@ -291,13 +309,17 @@ class _NotificationsPageState extends State<NotificationsPage> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('All notifications deleted.')),
+        SnackBar(content: Text(text(context, 'All notifications deleted.'))),
       );
     } catch (e) {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+        SnackBar(
+          content: Text(
+            text(context, e.toString().replaceFirst('Exception: ', '')),
+          ),
+        ),
       );
     }
   }
@@ -397,8 +419,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
         ),
         title: Row(
           children: [
-            const Text(
-              'Notifications',
+            Text(
+              text(context, 'Notifications'),
               style: TextStyle(
                 fontWeight: FontWeight.w700,
                 fontSize: 20,
@@ -436,23 +458,23 @@ class _NotificationsPageState extends State<NotificationsPage> {
                 if (value == 'delete') _confirmDeleteAll();
               },
               itemBuilder: (context) => [
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'read',
                   child: Row(
                     children: [
                       Icon(Icons.done_all_rounded, size: 20),
                       SizedBox(width: 10),
-                      Text('Mark all as read'),
+                      Text(text(context, 'Mark all as read')),
                     ],
                   ),
                 ),
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'delete',
                   child: Row(
                     children: [
                       Icon(Icons.delete_outline, color: Colors.red, size: 20),
                       SizedBox(width: 10),
-                      Text('Delete all'),
+                      Text(text(context, 'Delete all')),
                     ],
                   ),
                 ),
@@ -477,8 +499,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               const SizedBox(height: 40),
-              const Text(
-                'Could not load notifications',
+              Text(
+                text(context, 'Could not load notifications'),
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
               const SizedBox(height: 8),
@@ -504,7 +526,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
         onRefresh: () => _loadNotifications(showLoading: false),
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          children: const [
+          children: [
             SizedBox(height: 140),
             Icon(
               Icons.notifications_none_rounded,
@@ -514,14 +536,14 @@ class _NotificationsPageState extends State<NotificationsPage> {
             SizedBox(height: 16),
             Center(
               child: Text(
-                'You’re all caught up!',
+                text(context, 'You’re all caught up!'),
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
               ),
             ),
             SizedBox(height: 8),
             Center(
               child: Text(
-                'Your notifications will appear here.',
+                text(context, 'Your notifications will appear here.'),
                 style: TextStyle(color: Colors.black54),
               ),
             ),
@@ -574,22 +596,25 @@ class _NotificationsPageState extends State<NotificationsPage> {
               return await showDialog<bool>(
                     context: context,
                     builder: (dialogContext) => AlertDialog(
-                      title: const Text('Delete notification?'),
-                      content: const Text(
-                        'This notification will be permanently deleted.',
+                      title: Text(text(context, 'Delete notification?')),
+                      content: Text(
+                        text(
+                          context,
+                          'This notification will be permanently deleted.',
+                        ),
                       ),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(dialogContext, false),
-                          child: const Text(
-                            'Cancel',
+                          child: Text(
+                            text(context, 'Cancel'),
                             style: TextStyle(color: Color(0xff333333)),
                           ),
                         ),
                         TextButton(
                           onPressed: () => Navigator.pop(dialogContext, true),
-                          child: const Text(
-                            'Delete',
+                          child: Text(
+                            text(context, 'Delete'),
                             style: TextStyle(color: Colors.red),
                           ),
                         ),
@@ -657,7 +682,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              _message(notification),
+                              text(context, _message(notification)),
                               style: TextStyle(
                                 color: Colors.black87,
                                 fontSize: 14,
@@ -669,7 +694,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
                             ),
                             const SizedBox(height: 7),
                             Text(
-                              _timeAgo(notification['createdAt']),
+                              text(
+                                context,
+                                _timeAgo(notification['createdAt']),
+                              ),
                               style: const TextStyle(
                                 fontSize: 12,
                                 color: Colors.black54,

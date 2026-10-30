@@ -118,11 +118,11 @@ class _MediaViewerPageState extends State<MediaViewerPage> {
   @override
   Widget build(BuildContext context) {
     if (widget.media.isEmpty) {
-      return const Scaffold(
+      return Scaffold(
         backgroundColor: Colors.black,
         body: Center(
           child: Text(
-            'No media available',
+            text(context, 'No media available'),
             style: TextStyle(color: Colors.white),
           ),
         ),
@@ -195,7 +195,7 @@ class _MediaViewerPageState extends State<MediaViewerPage> {
             );
           },
           errorBuilder: (context, error, stackTrace) {
-            return const Center(
+            return Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -206,7 +206,7 @@ class _MediaViewerPageState extends State<MediaViewerPage> {
                   ),
                   SizedBox(height: 12),
                   Text(
-                    'Could not load this photo',
+                    text(context, 'Could not load this photo'),
                     style: TextStyle(color: Colors.white),
                   ),
                 ],
@@ -220,9 +220,9 @@ class _MediaViewerPageState extends State<MediaViewerPage> {
 
   Widget _buildVideo() {
     if (_videoError) {
-      return const Center(
+      return Center(
         child: Text(
-          'Could not load this video.',
+          text(context, 'Could not load this video.'),
           style: TextStyle(color: Colors.white),
         ),
       );

@@ -47,12 +47,18 @@ class _ChatPageState extends State<ChatPage> {
   void initState() {
     super.initState();
 
+    debugPrint('========== CHAT PAGE DEBUG ==========');
+    debugPrint('Current user ID: ${widget.currentUserId}');
+    debugPrint('Other user ID: ${widget.otherUserId}');
+    debugPrint('Other user name: ${widget.otherUserName}');
+    debugPrint('Other user picture: ${widget.otherUserPicture}');
+    debugPrint('=====================================');
+
     widget.socket.on('message:new', onNewMessage);
     widget.socket.on('message:error', onMessageError);
 
     loadMessages();
 
-    // These events must match your backend's Socket.IO handlers.
     widget.socket.emit('conversation:join', {
       'conversationId': widget.conversationId,
     });
@@ -223,8 +229,10 @@ class _ChatPageState extends State<ChatPage> {
 
     if (content.length > 5000) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Messages cannot exceed 5000 characters.'),
+        SnackBar(
+          content: Text(
+            text(context, 'Messages cannot exceed 5000 characters.'),
+          ),
         ),
       );
       return;
@@ -232,7 +240,9 @@ class _ChatPageState extends State<ChatPage> {
 
     if (!widget.socket.connected) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Not connected. Please try again.')),
+        SnackBar(
+          content: Text(textRead(context, 'Not connected. Please try again.')),
+        ),
       );
       return;
     }
@@ -266,17 +276,115 @@ class _ChatPageState extends State<ChatPage> {
         isSending = false;
       });
 
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(textRead(context, 'Could not send message: $e')),
+        ),
+      );
+    }
+  }
+
+  Future<void> _confirmClearConversation() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: Text(textRead(context, 'Clear conversation?')),
+        content: Text(
+          textRead(
+            context,
+            'Are you sure you want to clear this conversation?',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(textRead(context, 'Cancel')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(
+              textRead(context, 'Clear'),
+              style: const TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    try {
+      await widget.msgService.deleteConversation(widget.conversationId);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(textRead(context, 'Conversation deleted successfully')),
+        ),
+      );
+
+      Navigator.pop(context, true);
+    } catch (e) {
+      if (!mounted) return;
+
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Could not send message: $e')));
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
     }
+  }
+
+  Future<bool> _showBlockUserDialog(String username) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Text(
+            textRead(context, 'Block user?'),
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          content: Text(
+            textRead(context, 'Are you sure you want to block') +
+                ' $username? ' +
+                textRead(
+                  context,
+                  'Their posts will no longer appear in your feed.',
+                ),
+          ),
+
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: Text(
+                textRead(context, 'Cancel'),
+                style: TextStyle(color: Colors.black54),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: Text(textRead(context, 'Block')),
+            ),
+          ],
+        );
+      },
+    );
+
+    return confirmed == true;
   }
 
   void _scrollToLatest() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || !scrollController.hasClients) return;
 
-      // The list is reversed, so the newest message is at minScrollExtent.
       scrollController.animateTo(
         scrollController.position.minScrollExtent,
         duration: const Duration(milliseconds: 250),
@@ -355,6 +463,50 @@ class _ChatPageState extends State<ChatPage> {
             ),
           ],
         ),
+
+        // THREE-DOT MENU
+        actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            color: Colors.white,
+            onSelected: (value) {
+              if (value == 'clear') {
+                _confirmClearConversation();
+              } else if (value == 'block') {
+                _showBlockUserDialog(widget.otherUserId);
+              }
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem<String>(
+                value: 'clear',
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.delete_outline,
+                      color: Colors.black87,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 10),
+                    Text(textRead(context, 'Clear conversation')),
+                  ],
+                ),
+              ),
+              PopupMenuItem<String>(
+                value: 'block',
+                child: Row(
+                  children: [
+                    const Icon(Icons.block, color: Colors.red, size: 20),
+                    const SizedBox(width: 10),
+                    Text(
+                      textRead(context, 'Block user'),
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -369,7 +521,7 @@ class _ChatPageState extends State<ChatPage> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        errorMessage!,
+                        text(context, errorMessage!),
                         style: const TextStyle(color: Colors.red),
                         maxLines: 3,
                         overflow: TextOverflow.ellipsis,
@@ -389,7 +541,7 @@ class _ChatPageState extends State<ChatPage> {
                     child: CircularProgressIndicator(color: chatYellow),
                   )
                 : messages.isEmpty
-                ? const Center(
+                ? Center(
                     child: Padding(
                       padding: EdgeInsets.all(24),
                       child: Column(
@@ -402,14 +554,14 @@ class _ChatPageState extends State<ChatPage> {
                           ),
                           SizedBox(height: 12),
                           Text(
-                            'Start the conversation!',
+                            text(context, 'Start the conversation!'),
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 17,
                             ),
                           ),
                           SizedBox(height: 6),
-                          Text('Send your first message.'),
+                          Text(textRead(context, 'Send your first message.')),
                         ],
                       ),
                     ),
@@ -556,7 +708,10 @@ class _ChatPageState extends State<ChatPage> {
                 onSubmitted: (_) => sendMessage(),
                 decoration: InputDecoration(
                   counterText: '',
-                  hintText: 'Message ${widget.otherUserName}...',
+                  hintText:
+                      text(context, 'Text ') +
+                      '${widget.otherUserName}' +
+                      "...",
                   filled: true,
                   fillColor: const Color(0xfff5f5f5),
                   contentPadding: const EdgeInsets.symmetric(

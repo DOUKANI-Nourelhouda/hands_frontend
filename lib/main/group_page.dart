@@ -94,8 +94,8 @@ class _GroupsPageState extends State<GroupsPage> {
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
-        title: const Text(
-          'Groups',
+        title: Text(
+          text(context, 'Groups'),
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         actions: [
@@ -130,7 +130,7 @@ class _GroupsPageState extends State<GroupsPage> {
               const SizedBox(height: 12),
               ElevatedButton(
                 onPressed: loadGroups,
-                child: const Text('Try again'),
+                child: Text(text(context, 'Try again')),
               ),
             ],
           ),
@@ -147,21 +147,24 @@ class _GroupsPageState extends State<GroupsPage> {
             children: [
               const Icon(Icons.groups_outlined, size: 72, color: Colors.grey),
               const SizedBox(height: 16),
-              const Text(
-                'No groups yet',
+              Text(
+                text(context, 'No groups yet'),
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
-              const Text(
-                'Create a study group or a group to connect with students '
-                'in your residence.',
+              Text(
+                text(
+                  context,
+                  'Create a study group or a group to connect with students '
+                  'in your residence.',
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 18),
               ElevatedButton.icon(
                 onPressed: openCreateGroup,
                 icon: const Icon(Icons.add),
-                label: const Text('Create a group'),
+                label: Text(text(context, 'Create a group')),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: handsYellow,
                   foregroundColor: Colors.black,
@@ -216,7 +219,7 @@ class _GroupsPageState extends State<GroupsPage> {
 
                 if (id.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Invalid group ID')),
+                    SnackBar(content: Text(text(context, 'Invalid group ID'))),
                   );
                   return;
                 }
@@ -308,12 +311,12 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
     final name = nameController.text.trim();
 
     if (name.isEmpty) {
-      showMessage('Enter a group name.');
+      showMessage(text(context, 'Enter a group name.'));
       return;
     }
 
     if (name.length > 60) {
-      showMessage('Group name must be 60 characters or fewer.');
+      showMessage(text(context, 'Group name must be 60 characters or fewer.'));
       return;
     }
 
@@ -355,7 +358,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
     return Scaffold(
       backgroundColor: const Color(0xfffafafa),
       appBar: AppBar(
-        title: const Text('Create a group'),
+        title: Text(text(context, 'Create a group')),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
@@ -370,7 +373,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
               cursorColor: Color(0xff333333),
               maxLength: 60,
               decoration: InputDecoration(
-                hintText: 'Group name',
+                hintText: text(context, 'Group name'),
                 hintStyle: TextStyle(color: Color(0xffC4C4C4)),
                 floatingLabelStyle: const TextStyle(color: Color(0xfffcc001)),
                 prefixIcon: Padding(
@@ -387,8 +390,13 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                 ),
                 filled: true,
                 fillColor: Colors.white,
+
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(
+                    color: Color(0xfffcc001),
+                    width: 2,
+                  ),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
@@ -407,7 +415,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
               cursorColor: Color(0xff333333),
               onChanged: searchStudents,
               decoration: InputDecoration(
-                hintText: 'Search students',
+                hintText: text(context, 'Search users'),
                 hintStyle: const TextStyle(color: Color(0xffC4C4C4)),
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: searching
@@ -427,6 +435,10 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                 fillColor: Colors.white,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(
+                    color: Color(0xfffcc001),
+                    width: 2,
+                  ),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
@@ -444,7 +456,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  '${selected.length} student(s) selected',
+                  '${selected.length} ' + text(context, 'student(s) selected'),
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
@@ -515,10 +527,10 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                     searchError == null &&
                     searchController.text.trim().isNotEmpty &&
                     results.isEmpty)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.all(24),
                     child: Text(
-                      'No students found.',
+                      text(context, 'No students found.'),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -542,8 +554,8 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                   ),
                   child: creating
                       ? const CircularProgressIndicator()
-                      : const Text(
-                          'Create group',
+                      : Text(
+                          text(context, 'Create group'),
                           style: TextStyle(fontSize: 23),
                         ),
                 ),

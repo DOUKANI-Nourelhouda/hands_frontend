@@ -34,7 +34,7 @@ class HomeCategories extends StatelessWidget {
     {'name': 'Electronics', 'icon': 'assets/icons/electronics.svg'},
     {'name': 'Clothing', 'icon': 'assets/icons/clothing.svg'},
     {'name': 'Jewelry', 'icon': 'assets/icons/jewelry.svg'},
-    {'name': 'Translation', 'icon': 'assets/icons/translation.svg'},
+    {'name': 'Exchange', 'icon': 'assets/icons/translation.svg'},
     {'name': 'Projects', 'icon': 'assets/icons/projects.svg'},
     {'name': 'Programming', 'icon': 'assets/icons/programming.svg'},
     {'name': 'Trips', 'icon': 'assets/icons/trips.svg'},
@@ -93,7 +93,7 @@ class HomeCategories extends StatelessWidget {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    name,
+                    text(context, name),
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: isSelected

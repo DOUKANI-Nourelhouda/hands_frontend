@@ -505,7 +505,7 @@ class _SearchPageState extends State<SearchPage> {
                 onChanged: _onSearchChanged,
                 textInputAction: TextInputAction.search,
                 decoration: InputDecoration(
-                  hintText: 'Search ...',
+                  hintText: text(context, 'Search ...'),
                   hintStyle: const TextStyle(
                     fontSize: 14,
                     color: Color(0xff8E92A0),
@@ -574,7 +574,7 @@ class _SearchPageState extends State<SearchPage> {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    filter['name']!,
+                    text(context, filter['name']!),
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: isSelected
@@ -661,7 +661,7 @@ class _SearchPageState extends State<SearchPage> {
     if (results.isEmpty) {
       return _buildMessage(
         icon: SvgPicture.asset(
-          'assets/icons/post.svg',
+          'assets/icons/posts.svg',
           width: 60,
           height: 60,
           colorFilter: const ColorFilter.mode(
@@ -716,7 +716,7 @@ class _SearchPageState extends State<SearchPage> {
     }
 
     if (searchErrorMessage != null && searchQuery.trim().isNotEmpty) {
-      return Center(child: Text(searchErrorMessage!));
+      return Center(child: Text(text(context, searchErrorMessage!)));
     }
 
     // No query: show the accounts the user follows
@@ -731,11 +731,11 @@ class _SearchPageState extends State<SearchPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(followingError!),
+            Text(text(context, followingError!)),
             TextButton(
               onPressed: _loadFollowing,
-              child: const Text(
-                'Try again',
+              child: Text(
+                text(context, 'Try again'),
                 style: TextStyle(color: Color(0xfffcc001)),
               ),
             ),
@@ -801,13 +801,13 @@ class _SearchPageState extends State<SearchPage> {
                   : const AssetImage('assets/default_pfp.jpg') as ImageProvider,
             ),
             title: Text(
-              username,
+              text(context, username),
               style: const TextStyle(
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF333333),
               ),
             ),
-            subtitle: bio.isNotEmpty ? Text(bio) : null,
+            subtitle: bio.isNotEmpty ? Text(text(context, bio)) : null,
 
             onTap: () {
               final selectedUserId = (user['_id'] ?? user['id'] ?? '')
@@ -815,7 +815,11 @@ class _SearchPageState extends State<SearchPage> {
 
               if (selectedUserId.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Could not open this profile.')),
+                  SnackBar(
+                    content: Text(
+                      text(context, 'Could not open this profile.'),
+                    ),
+                  ),
                 );
                 return;
               }
@@ -936,7 +940,7 @@ class _SearchPageState extends State<SearchPage> {
                 ),
               ),
               title: Text(
-                groupName,
+                text(context, groupName),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
@@ -948,7 +952,7 @@ class _SearchPageState extends State<SearchPage> {
                   ? Padding(
                       padding: const EdgeInsets.only(top: 3),
                       child: Text(
-                        description,
+                        text(context, description),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -968,9 +972,12 @@ class _SearchPageState extends State<SearchPage> {
                     socket == null ||
                     !socket.connected) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
+                    SnackBar(
                       content: Text(
-                        'Connecting to chat. Please try again in a moment.',
+                        text(
+                          context,
+                          'Connecting to chat. Please try again in a moment.',
+                        ),
                       ),
                     ),
                   );
@@ -1012,7 +1019,7 @@ class _SearchPageState extends State<SearchPage> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Text(
-            message,
+            text(context, message),
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontSize: 15,
@@ -1026,7 +1033,7 @@ class _SearchPageState extends State<SearchPage> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Text(
-              subtitle,
+              text(context, subtitle),
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 12, color: Color(0xff8E92A0)),
             ),
@@ -1037,7 +1044,10 @@ class _SearchPageState extends State<SearchPage> {
           Center(
             child: TextButton(
               onPressed: selectedFilter == 'Groups' ? _loadGroups : _loadPosts,
-              child: const Text('Try again', style: TextStyle(color: accent)),
+              child: Text(
+                text(context, 'Try again'),
+                style: TextStyle(color: accent),
+              ),
             ),
           ),
         ],
