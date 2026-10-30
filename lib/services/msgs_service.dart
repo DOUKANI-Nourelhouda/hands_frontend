@@ -155,4 +155,50 @@ class MsgService {
       rethrow;
     }
   }
+
+  /// Edit an existing text message.
+  Future<Map<String, dynamic>> editMessage({
+    required String messageId,
+    required String content,
+  }) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/messages/$messageId'),
+      headers: _headers,
+      body: jsonEncode({'content': content}),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Failed to edit message (${response.statusCode}): ${response.body}',
+      );
+    }
+
+    final dynamic decoded = jsonDecode(response.body);
+
+    if (decoded is! Map) {
+      throw Exception('Invalid updated-message response.');
+    }
+
+    final dynamic message = decoded['message'] ?? decoded;
+
+    if (message is! Map) {
+      throw Exception('Updated message not found in response.');
+    }
+
+    return Map<String, dynamic>.from(message);
+  }
+
+  /// Delete an existing message.
+  Future<void> deleteMessage(String messageId) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/messages/$messageId'),
+      headers: _headers,
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Failed to delete message (${response.statusCode}): ${response.body}',
+      );
+    }
+  }
 }

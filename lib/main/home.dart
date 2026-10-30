@@ -205,7 +205,9 @@ class HomePageState extends State<HomePage> {
       final message = category == null || category == 'All'
           ? 'No posts yet. Be the first who post!'
           : textRead(context, 'No posts about') +
-                ' $category ' +
+                " " +
+                textRead(context, '$category') +
+                ' ' +
                 textRead(context, 'yet.');
 
       return ListView(

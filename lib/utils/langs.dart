@@ -11,6 +11,7 @@ const Map<String, Map<String, String>> languages = {
     'Profile': 'Profile',
     'Settings': 'Settings',
     'Language': 'Language',
+
     'Choose language': 'Choose language',
     'English': 'English',
     'French': 'French',
@@ -47,7 +48,7 @@ const Map<String, Map<String, String>> languages = {
     'Save': 'Save',
     'Delete': 'Delete',
     'Report': 'Report',
-    'No Posts': 'No posts yet',
+
     'Search Hint': 'Discover services in your residence',
     'Edit post': 'Edit post',
     'Delete post?': 'Delete post?',
@@ -465,7 +466,7 @@ const Map<String, Map<String, String>> languages = {
     'This action cannot be undone.': 'This action cannot be undone.',
     'No posts yet. Be the first who post!':
         'No posts yet. Be the first who post!',
-    'No posts yet': 'No posts yet',
+    'No posts yet.': 'No posts yet.',
     'No posts found for ': 'No posts found for ',
     'Send message': 'Send message',
     'Share profile': 'Share profile',
@@ -490,6 +491,34 @@ const Map<String, Map<String, String>> languages = {
     'Bio cannot exceed 300 characters.': 'Bio cannot exceed 300 characters.',
     'Get help with an account or a problem':
         'Get help with an account or a problem',
+    'Clear conversation': 'Clear conversation',
+    'Clear conversation?': 'Clear conversation?',
+    'Are you sure you want to clear this conversation?':
+        'Are you sure you want to clear this conversation?',
+    'Clear': 'Clear',
+    'You are not following anyone yet.': 'You are not following anyone yet.',
+    'Follow users to see them here.': 'Follow users to see them here.',
+    'No users found.': 'No users found.',
+    'Try searching for another username.':
+        'Try searching for another username.',
+    'You have not joined any groups yet.':
+        'You have not joined any groups yet.',
+    'No groups match your search.': 'No groups match your search.',
+    'No groups found.': 'No groups found.',
+    'Could not load your groups': 'Could not load your groups',
+    'Check your connection and try again.':
+        'Check your connection and try again.',
+    'Groups you join will appear here.': 'Groups you join will appear here.',
+    'Try searching for another group.': 'Try searching for another group.',
+    'Edit message': 'Edit message',
+    'Delete message': 'Delete message',
+    'Write your message': 'Write your message',
+    'Message cannot be empty': 'Message cannot be empty',
+    'Message updated successfully': 'Message updated successfully',
+    'Delete message?': 'Delete message?',
+    'Are you sure you want to delete this message?':
+        'Are you sure you want to delete this message?',
+    'Message deleted successfully': 'Message deleted successfully',
   },
   'fr': {
     'Home': 'Accueil',
@@ -537,7 +566,7 @@ const Map<String, Map<String, String>> languages = {
     'Delete': 'Supprimer',
     'Reply to ': 'Répondre à ',
     'Report': 'Signaler',
-    'No Posts': 'Aucune publication pour le moment',
+
     'Search hint': 'Découvrez les services de votre résidence',
     'Edit post': 'Modifier la publication',
     'Delete post?': 'Supprimer la publication',
@@ -556,7 +585,7 @@ const Map<String, Map<String, String>> languages = {
     'Edit': 'Modifier',
     'Reply': 'Répondre',
     'Edit reply': 'Modifier la réponse',
-    'No posts about': 'Aucune pubs sur',
+    'No posts about': 'Aucune pubs trouve pour ',
     'yet.': 'encore.',
     ' has been blocked.': ' a été bloqué.',
     'Posts': 'Publications',
@@ -1026,6 +1055,39 @@ const Map<String, Map<String, String>> languages = {
         'La biographie ne peut pas dépasser 300 caractères.',
     'Get help with an account or a problem':
         'Obtenez de l’aide concernant votre compte ou un problème',
+    'Clear conversation': 'Effacer la conversation',
+    'Clear conversation?': 'Effacer la conversation ?',
+    'Are you sure you want to clear this conversation?':
+        'Êtes-vous sûr de vouloir effacer cette conversation ?',
+    'Clear': 'Effacer',
+    'You are not following anyone yet.': 'Vous ne suivez encore personne.',
+    'Follow users to see them here.':
+        'Suivez des utilisateurs pour les voir ici.',
+    'No users found.': 'Aucun utilisateur trouvé.',
+    'Try searching for another username.':
+        'Essayez de rechercher un autre nom d’utilisateur.',
+    'You have not joined any groups yet.':
+        'Vous n’avez encore rejoint aucun groupe.',
+    'No groups match your search.':
+        'Aucun groupe ne correspond à votre recherche.',
+    'No groups found.': 'Aucun groupe trouvé.',
+    'Could not load your groups': 'Impossible de charger vos groupes',
+    'Check your connection and try again.':
+        'Vérifiez votre connexion et réessayez.',
+    'Groups you join will appear here.':
+        'Les groupes que vous rejoignez apparaîtront ici.',
+    'Try searching for another group.':
+        'Essayez de rechercher un autre groupe.',
+    'No posts yet.': 'Aucune publication pour le moment.',
+    'Edit message': 'Modifier le message',
+    'Delete message': 'Supprimer le message',
+    'Write your message': 'Écrivez votre message',
+    'Message cannot be empty': 'Le message ne peut pas être vide',
+    'Message updated successfully': 'Message modifié avec succès',
+    'Delete message?': 'Supprimer le message ?',
+    'Are you sure you want to delete this message?':
+        'Êtes-vous sûr de vouloir supprimer ce message ?',
+    'Message deleted successfully': 'Message supprimé avec succès',
   },
 
   'ar': {
@@ -1074,7 +1136,7 @@ const Map<String, Map<String, String>> languages = {
     'Report': 'إبلاغ',
     'Followed': 'تتابعه',
     'Follow': 'متابعة',
-    'No Posts': 'لا توجد منشورات بعد',
+
     'Search Hint': 'اكتشف الخدمات في إقامتك الجامعية',
     'Edit post': 'تعديل المنشور',
     'Delete post?': 'حذف المنشور',
@@ -1487,7 +1549,7 @@ const Map<String, Map<String, String>> languages = {
     'This action cannot be undone.': 'لا يمكن التراجع عن هذا الإجراء.',
     'No posts yet. Be the first who post!':
         'لا توجد منشورات بعد. كن أول من ينشر!',
-    'No posts yet': 'لا توجد منشورات بعد',
+    'No posts yet.': 'لا توجد منشورات بعد',
     'No posts found for ': 'لم يتم العثور على منشورات لـ ',
     'Send message': 'إرسال رسالة',
     'Share profile': 'مشاركة الملف الشخصي',
@@ -1511,6 +1573,32 @@ const Map<String, Map<String, String>> languages = {
         'يجب ألا يتجاوز النبذة التعريفية 300 حرف.',
     'Get help with an account or a problem':
         'احصل على المساعدة بشأن حسابك أو أي مشكلة تواجهك',
+    'Clear conversation': 'حذف المحادثة',
+    'Clear conversation?': 'هل تريد حذف المحادثة؟',
+    'Are you sure you want to clear this conversation?':
+        'هل أنت متأكد أنك تريد حذف هذه المحادثة؟',
+    'Clear': 'حذف',
+    'You are not following anyone yet.': 'أنت لا تتابع أي شخص حتى الآن.',
+    'Follow users to see them here.': 'تابع المستخدمين لتراهم هنا.',
+    'No users found.': 'لم يتم العثور على أي مستخدمين.',
+    'Try searching for another username.': 'حاول البحث عن اسم مستخدم آخر.',
+    'You have not joined any groups yet.': 'لم تنضم إلى أي مجموعة حتى الآن.',
+    'No groups match your search.': 'لا توجد مجموعات تطابق بحثك.',
+    'No groups found.': 'لم يتم العثور على أي مجموعات.',
+    'Could not load your groups': 'تعذّر تحميل مجموعاتك',
+    'Check your connection and try again.':
+        'تحقق من اتصالك بالإنترنت وحاول مرة أخرى.',
+    'Groups you join will appear here.': 'ستظهر المجموعات التي تنضم إليها هنا.',
+    'Try searching for another group.': 'حاول البحث عن مجموعة أخرى.',
+    'Edit message': 'تعديل الرسالة',
+    'Delete message': 'حذف الرسالة',
+    'Write your message': 'اكتب رسالتك',
+    'Message cannot be empty': 'لا يمكن أن تكون الرسالة فارغة',
+    'Message updated successfully': 'تم تعديل الرسالة بنجاح',
+    'Delete message?': 'حذف الرسالة؟',
+    'Are you sure you want to delete this message?':
+        'هل أنت متأكد أنك تريد حذف هذه الرسالة؟',
+    'Message deleted successfully': 'تم حذف الرسالة بنجاح',
   },
 };
 

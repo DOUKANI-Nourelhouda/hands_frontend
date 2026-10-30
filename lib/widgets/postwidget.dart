@@ -14,6 +14,7 @@ class PostWidget extends StatefulWidget {
   final void Function(Map<String, dynamic> post)? onPostUpdated;
   final void Function(String userId)? onUserBlocked;
   final Future<void> Function(Map<String, dynamic> post)? onOpenChat;
+  final String searchQuery;
   const PostWidget({
     super.key,
     required this.post,
@@ -23,6 +24,7 @@ class PostWidget extends StatefulWidget {
     this.onPostUpdated,
     this.onUserBlocked,
     this.onOpenChat,
+    this.searchQuery = '',
   });
 
   @override
@@ -1964,8 +1966,9 @@ class _PostWidgetState extends State<PostWidget> {
           if (caption.isNotEmpty)
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
-              child: Text(
-                text(context, caption),
+              child: _highlightSearchText(
+                context,
+                caption,
                 style: const TextStyle(
                   fontSize: 15,
                   height: 1.5,
@@ -2198,6 +2201,60 @@ class _PostWidgetState extends State<PostWidget> {
       backgroundImage: imageUrl.isNotEmpty
           ? NetworkImage(imageUrl)
           : const AssetImage('assets/default_pfp.jpg') as ImageProvider,
+    );
+  }
+
+  Widget _highlightSearchText(
+    BuildContext context,
+    String value, {
+    int? maxLines,
+    TextStyle? style,
+  }) {
+    final query = widget.searchQuery.trim();
+
+    final spans = <TextSpan>[];
+
+    if (query.isEmpty || value.isEmpty) {
+      spans.add(TextSpan(text: value));
+    } else {
+      final lowerValue = value.toLowerCase();
+      final lowerQuery = query.toLowerCase();
+
+      int start = 0;
+
+      while (true) {
+        final matchIndex = lowerValue.indexOf(lowerQuery, start);
+
+        if (matchIndex == -1) {
+          if (start < value.length) {
+            spans.add(TextSpan(text: value.substring(start)));
+          }
+          break;
+        }
+
+        if (matchIndex > start) {
+          spans.add(TextSpan(text: value.substring(start, matchIndex)));
+        }
+
+        spans.add(
+          TextSpan(
+            text: value.substring(matchIndex, matchIndex + query.length),
+            style: const TextStyle(
+              backgroundColor: Color(0xFFFFE082),
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        );
+
+        start = matchIndex + query.length;
+      }
+    }
+
+    return Text.rich(
+      TextSpan(children: spans),
+      style: style,
+      maxLines: maxLines,
+      overflow: maxLines != null ? TextOverflow.ellipsis : TextOverflow.clip,
     );
   }
 }

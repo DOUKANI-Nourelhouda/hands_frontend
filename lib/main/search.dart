@@ -670,8 +670,8 @@ class _SearchPageState extends State<SearchPage> {
           ),
         ),
         message: searchQuery.isEmpty
-            ? 'No posts yet.'
-            : 'No posts found for "$searchQuery".',
+            ? textRead(context, 'No posts yet.')
+            : textRead(context, 'No posts found for ') + "$searchQuery",
       );
     }
 
@@ -702,6 +702,7 @@ class _SearchPageState extends State<SearchPage> {
             post: post,
             postService: widget.postService,
             currentUserId: currentUserId,
+            searchQuery: searchQuery,
           );
         },
       ),
@@ -756,11 +757,11 @@ class _SearchPageState extends State<SearchPage> {
           ),
         ),
         message: searchQuery.trim().isEmpty
-            ? 'You are not following anyone yet.'
-            : 'No students found.',
+            ? textRead(context, 'You are not following anyone yet.')
+            : textRead(context, 'No users found.'),
         subtitle: searchQuery.trim().isEmpty
-            ? 'Follow students to see them here.'
-            : 'Try searching for another username.',
+            ? textRead(context, 'Follow users to see them here.')
+            : textRead(context, 'Try searching for another username.'),
       );
     }
 
@@ -800,14 +801,22 @@ class _SearchPageState extends State<SearchPage> {
                   ? NetworkImage(profilePicture)
                   : const AssetImage('assets/default_pfp.jpg') as ImageProvider,
             ),
-            title: Text(
-              text(context, username),
+            title: _highlightSearchText(
+              context,
+              username,
               style: const TextStyle(
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF333333),
               ),
             ),
-            subtitle: bio.isNotEmpty ? Text(text(context, bio)) : null,
+            subtitle: bio.isNotEmpty
+                ? _highlightSearchText(
+                    context,
+                    bio,
+                    style: const TextStyle(color: Color(0xFF333333)),
+                    maxLines: 2,
+                  )
+                : null,
 
             onTap: () {
               final selectedUserId = (user['_id'] ?? user['id'] ?? '')
@@ -859,8 +868,8 @@ class _SearchPageState extends State<SearchPage> {
           size: 60,
           color: Color(0xffC4C4C4),
         ),
-        message: 'Could not load your groups.',
-        subtitle: 'Check your connection and try again.',
+        message: textRead(context, 'Could not load your groups.'),
+        subtitle: textRead(context, 'Check your connection and try again.'),
         showRetry: true,
       );
     }
@@ -888,11 +897,11 @@ class _SearchPageState extends State<SearchPage> {
           ),
         ),
         message: query.isEmpty
-            ? 'You haven’t joined any groups yet.'
-            : 'No groups found.',
+            ? textRead(context, 'You have not joined any groups yet.')
+            : textRead(context, 'No groups found.'),
         subtitle: query.isEmpty
-            ? 'Groups you join will appear here.'
-            : 'Try searching for another group.',
+            ? textRead(context, 'Groups you join will appear here.')
+            : textRead(context, 'Try searching for another group.'),
       );
     }
 
@@ -939,22 +948,26 @@ class _SearchPageState extends State<SearchPage> {
                   ),
                 ),
               ),
-              title: Text(
-                text(context, groupName),
+              title: _highlightSearchText(
+                context,
+                groupName,
                 maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF333333),
+                  color: const Color(0xFF333333),
                 ),
               ),
               subtitle: description.isNotEmpty
                   ? Padding(
                       padding: const EdgeInsets.only(top: 3),
-                      child: Text(
-                        text(context, description),
+                      child: _highlightSearchText(
+                        context,
+                        description,
                         maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Color(0xff8E92A0),
+                        ),
                       ),
                     )
                   : null,
@@ -1052,6 +1065,60 @@ class _SearchPageState extends State<SearchPage> {
           ),
         ],
       ],
+    );
+  }
+
+  Widget _highlightSearchText(
+    BuildContext context,
+    String value, {
+    int? maxLines,
+    TextStyle? style,
+  }) {
+    final query = searchQuery.trim();
+
+    final spans = <TextSpan>[];
+
+    if (query.isEmpty || value.isEmpty) {
+      spans.add(TextSpan(text: value));
+    } else {
+      final lowerValue = value.toLowerCase();
+      final lowerQuery = query.toLowerCase();
+
+      int start = 0;
+
+      while (true) {
+        final matchIndex = lowerValue.indexOf(lowerQuery, start);
+
+        if (matchIndex == -1) {
+          if (start < value.length) {
+            spans.add(TextSpan(text: value.substring(start)));
+          }
+          break;
+        }
+
+        if (matchIndex > start) {
+          spans.add(TextSpan(text: value.substring(start, matchIndex)));
+        }
+
+        spans.add(
+          TextSpan(
+            text: value.substring(matchIndex, matchIndex + query.length),
+            style: const TextStyle(
+              backgroundColor: Color(0xFFFFE082),
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        );
+
+        start = matchIndex + query.length;
+      }
+    }
+
+    return Text.rich(
+      TextSpan(children: spans),
+      style: style,
+      maxLines: maxLines,
+      overflow: maxLines != null ? TextOverflow.ellipsis : TextOverflow.clip,
     );
   }
 }

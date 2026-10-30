@@ -1667,7 +1667,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       padding: EdgeInsets.all(50),
                       child: Center(
                         child: Text(
-                          text(context, 'No posts yet'),
+                          text(context, 'No posts yet.'),
                           style: TextStyle(color: Colors.grey),
                         ),
                       ),

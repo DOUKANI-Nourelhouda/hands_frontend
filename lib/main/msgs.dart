@@ -561,8 +561,14 @@ class _MsgsPageState extends State<MsgsPage> {
                           if (_filteredGroups.isEmpty)
                             _buildEmptyState(
                               _searchQuery.isEmpty
-                                  ? 'You have not joined any groups yet.'
-                                  : 'No groups match your search.',
+                                  ? textRead(
+                                      context,
+                                      'You have not joined any groups yet.',
+                                    )
+                                  : textRead(
+                                      context,
+                                      'No groups match your search.',
+                                    ),
                             )
                           else
                             ..._filteredGroups.map(_buildGroupTile),

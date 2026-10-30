@@ -35,8 +35,9 @@ class ChatPage extends StatefulWidget {
 
 class _ChatPageState extends State<ChatPage> {
   final TextEditingController messageController = TextEditingController();
-  final ScrollController scrollController = ScrollController();
+  final TextEditingController editMessageController = TextEditingController();
 
+  final ScrollController scrollController = ScrollController();
   List<Map<String, dynamic>> messages = [];
 
   bool isLoading = true;
@@ -46,13 +47,6 @@ class _ChatPageState extends State<ChatPage> {
   @override
   void initState() {
     super.initState();
-
-    debugPrint('========== CHAT PAGE DEBUG ==========');
-    debugPrint('Current user ID: ${widget.currentUserId}');
-    debugPrint('Other user ID: ${widget.otherUserId}');
-    debugPrint('Other user name: ${widget.otherUserName}');
-    debugPrint('Other user picture: ${widget.otherUserPicture}');
-    debugPrint('=====================================');
 
     widget.socket.on('message:new', onNewMessage);
     widget.socket.on('message:error', onMessageError);
@@ -299,7 +293,10 @@ class _ChatPageState extends State<ChatPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: Text(textRead(context, 'Cancel')),
+            child: Text(
+              textRead(context, 'Cancel'),
+              style: TextStyle(color: Colors.black),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, true),
@@ -381,6 +378,197 @@ class _ChatPageState extends State<ChatPage> {
     return confirmed == true;
   }
 
+  Future<void> _showMessageOptions(Map<String, dynamic> message) async {
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.edit_outlined),
+                title: Text(textRead(context, 'Edit message')),
+                onTap: () => Navigator.pop(sheetContext, 'edit'),
+              ),
+              ListTile(
+                leading: const Icon(Icons.delete_outline, color: Colors.red),
+                title: Text(
+                  textRead(context, 'Delete message'),
+                  style: const TextStyle(color: Colors.red),
+                ),
+                onTap: () => Navigator.pop(sheetContext, 'delete'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (!mounted) return;
+
+    if (choice == 'edit') {
+      await _editMessage(message);
+    } else if (choice == 'delete') {
+      await _deleteMessage(message);
+    }
+  }
+
+  Future<void> _editMessage(Map<String, dynamic> message) async {
+    final messageId = _id(message['_id'] ?? message['id']);
+
+    if (messageId.isEmpty) return;
+
+    editMessageController.text = _messageText(message);
+
+    final newContent = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          title: Text(textRead(context, 'Edit message')),
+          content: TextField(
+            cursorColor: const Color(0xfffcc001),
+            controller: editMessageController,
+            autofocus: true,
+            maxLength: 5000,
+            maxLines: 5,
+            minLines: 1,
+            decoration: InputDecoration(
+              hintText: textRead(context, 'Write your message'),
+              border: const OutlineInputBorder(),
+              focusedBorder: const OutlineInputBorder(
+                borderSide: BorderSide(color: Color(0xfffcc001), width: 2),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+              },
+              child: Text(
+                textRead(context, 'Cancel'),
+                style: TextStyle(color: Colors.black),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext, editMessageController.text.trim());
+              },
+              child: Text(
+                textRead(context, 'Save'),
+                style: TextStyle(color: Color(0xfffcc001)),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (newContent == null || !mounted) return;
+
+    if (newContent.length > 5000) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            textRead(context, 'Messages cannot exceed 5000 characters.'),
+          ),
+        ),
+      );
+      return;
+    }
+
+    if (newContent == _messageText(message)) return;
+
+    try {
+      final updatedMessage = await widget.msgService.editMessage(
+        messageId: messageId,
+        content: newContent,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        final index = messages.indexWhere(
+          (item) => _id(item['_id'] ?? item['id']) == messageId,
+        );
+
+        if (index != -1) {
+          messages[index] = updatedMessage;
+        }
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+    }
+  }
+
+  Future<void> _deleteMessage(Map<String, dynamic> message) async {
+    final messageId = _id(message['_id'] ?? message['id']);
+
+    if (messageId.isEmpty) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          title: Text(textRead(context, 'Delete message?')),
+          content: Text(
+            textRead(context, 'Are you sure you want to delete this message?'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: Text(textRead(context, 'Cancel')),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: Text(
+                textRead(context, 'Delete'),
+                style: const TextStyle(color: Colors.red),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    try {
+      await widget.msgService.deleteMessage(messageId);
+
+      if (!mounted) return;
+
+      setState(() {
+        messages.removeWhere(
+          (item) => _id(item['_id'] ?? item['id']) == messageId,
+        );
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(textRead(context, 'Message deleted successfully')),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+    }
+  }
+
   void _scrollToLatest() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || !scrollController.hasClients) return;
@@ -411,12 +599,12 @@ class _ChatPageState extends State<ChatPage> {
     widget.socket.off('message:new', onNewMessage);
     widget.socket.off('message:error', onMessageError);
 
-    // Leave the room if your backend implements this event.
     widget.socket.emit('conversation:leave', {
       'conversationId': widget.conversationId,
     });
 
     messageController.dispose();
+    editMessageController.dispose();
     scrollController.dispose();
 
     super.dispose();
@@ -473,7 +661,7 @@ class _ChatPageState extends State<ChatPage> {
               if (value == 'clear') {
                 _confirmClearConversation();
               } else if (value == 'block') {
-                _showBlockUserDialog(widget.otherUserId);
+                _showBlockUserDialog(widget.otherUserName);
               }
             },
             itemBuilder: (context) => [
@@ -591,75 +779,81 @@ class _ChatPageState extends State<ChatPage> {
     final time = _formatTime(message['createdAt'] ?? message['timestamp']);
     final senderPicture = _senderPicture(message);
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Row(
-        mainAxisAlignment: isMine
-            ? MainAxisAlignment.end
-            : MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          if (!isMine) ...[
-            _buildAvatar(senderPicture, size: 32),
-            const SizedBox(width: 7),
-          ],
-          Flexible(
-            child: Container(
-              constraints: BoxConstraints(
-                maxWidth: MediaQuery.of(context).size.width * 0.70,
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
-              decoration: BoxDecoration(
-                color: isMine ? chatYellow : Colors.white,
-                borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(16),
-                  topRight: const Radius.circular(16),
-                  bottomLeft: Radius.circular(isMine ? 16 : 4),
-                  bottomRight: Radius.circular(isMine ? 4 : 16),
+    return GestureDetector(
+      onLongPress: isMine ? () => _showMessageOptions(message) : null,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: Row(
+          mainAxisAlignment: isMine
+              ? MainAxisAlignment.end
+              : MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            if (!isMine) ...[
+              _buildAvatar(senderPicture, size: 32),
+              const SizedBox(width: 7),
+            ],
+            Flexible(
+              child: Container(
+                constraints: BoxConstraints(
+                  maxWidth: MediaQuery.of(context).size.width * 0.70,
                 ),
-                border: isMine
-                    ? null
-                    : Border.all(color: const Color(0xffeeeeee)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (!isMine)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
-                      child: Text(
-                        _senderName(message),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                          color: chatYellow,
-                        ),
-                      ),
-                    ),
-                  Text(text, style: const TextStyle(fontSize: 15)),
-                  if (time.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 5),
-                      child: Align(
-                        alignment: Alignment.bottomRight,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 13,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: isMine ? chatYellow : Colors.white,
+                  borderRadius: BorderRadius.only(
+                    topLeft: const Radius.circular(16),
+                    topRight: const Radius.circular(16),
+                    bottomLeft: Radius.circular(isMine ? 16 : 4),
+                    bottomRight: Radius.circular(isMine ? 4 : 16),
+                  ),
+                  border: isMine
+                      ? null
+                      : Border.all(color: const Color(0xffeeeeee)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (!isMine)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 4),
                         child: Text(
-                          time,
+                          _senderName(message),
                           style: const TextStyle(
-                            fontSize: 10,
-                            color: Colors.black54,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                            color: chatYellow,
                           ),
                         ),
                       ),
-                    ),
-                ],
+                    Text(text, style: const TextStyle(fontSize: 15)),
+                    if (time.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 5),
+                        child: Align(
+                          alignment: Alignment.bottomRight,
+                          child: Text(
+                            time,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: Colors.black54,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
-          ),
-          if (isMine) ...[
-            const SizedBox(width: 7),
-            _buildAvatar(senderPicture, size: 32),
+            if (isMine) ...[
+              const SizedBox(width: 7),
+              _buildAvatar(senderPicture, size: 32),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
