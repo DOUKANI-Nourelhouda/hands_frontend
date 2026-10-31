@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:hands/services/post_service.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:hands/utils/langs.dart';
 import '../services/group_service.dart';
@@ -11,12 +12,14 @@ class GroupsPage extends StatefulWidget {
   final GroupService groupService;
   final IO.Socket socket;
   final String currentUserId;
+  final PostService postService;
 
   const GroupsPage({
     super.key,
     required this.groupService,
     required this.socket,
     required this.currentUserId,
+    required this.postService,
   });
 
   @override
@@ -88,6 +91,7 @@ class _GroupsPageState extends State<GroupsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       backgroundColor: const Color(0xfffafafa),
       appBar: AppBar(
@@ -113,8 +117,11 @@ class _GroupsPageState extends State<GroupsPage> {
   }
 
   Widget _buildBody() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     if (isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xfffcc001)),
+      );
     }
 
     if (error != null) {
@@ -233,6 +240,7 @@ class _GroupsPageState extends State<GroupsPage> {
                       groupService: widget.groupService,
                       socket: widget.socket,
                       currentUserId: widget.currentUserId,
+                      postService: widget.postService,
                     ),
                   ),
                 );
@@ -293,7 +301,6 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
 
       if (!mounted) return;
 
-      // Hide the current result if it is already selected.
       setState(() {
         results = users;
         searching = false;
@@ -319,7 +326,12 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
       showMessage(text(context, 'Group name must be 60 characters or fewer.'));
       return;
     }
-
+    if (selected.length + 1 < 3) {
+      showMessage(
+        text(context, 'Select at least 2 students to create a group.'),
+      );
+      return;
+    }
     if (creating) return;
 
     setState(() => creating = true);
@@ -355,6 +367,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       backgroundColor: const Color(0xfffafafa),
       appBar: AppBar(
@@ -553,7 +566,9 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                     ),
                   ),
                   child: creating
-                      ? const CircularProgressIndicator()
+                      ? const CircularProgressIndicator(
+                          color: Color(0xfffcc001),
+                        )
                       : Text(
                           text(context, 'Create group'),
                           style: TextStyle(fontSize: 23),

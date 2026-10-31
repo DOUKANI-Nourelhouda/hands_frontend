@@ -117,6 +117,7 @@ class _MediaViewerPageState extends State<MediaViewerPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     if (widget.media.isEmpty) {
       return Scaffold(
         backgroundColor: Colors.black,
@@ -178,6 +179,7 @@ class _MediaViewerPageState extends State<MediaViewerPage> {
   }
 
   Widget _buildImage(String url) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Center(
       child: InteractiveViewer(
         minScale: 1,
@@ -219,6 +221,7 @@ class _MediaViewerPageState extends State<MediaViewerPage> {
   }
 
   Widget _buildVideo() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     if (_videoError) {
       return Center(
         child: Text(

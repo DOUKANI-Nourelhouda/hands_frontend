@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:hands/utils/langs.dart';
-import 'package:hands/services/lang_manager.dart';
 
 class PrivacyPolicyPage extends StatelessWidget {
   const PrivacyPolicyPage({super.key});

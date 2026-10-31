@@ -1593,7 +1593,7 @@ class _PostWidgetState extends State<PostWidget> {
                             height: 18,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: Colors.black,
+                              color: Color(0xfffcc001),
                             ),
                           )
                         : Text(textRead(context, 'Submit report')),

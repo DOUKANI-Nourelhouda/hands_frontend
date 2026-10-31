@@ -265,16 +265,24 @@ class _ChatPageState extends State<ChatPage> {
     } catch (e) {
       if (!mounted) return;
 
+      final error = e.toString().toLowerCase();
+
+      if (error.contains('different residence') ||
+          error.contains('same residence') ||
+          error.contains('other residence')) {
+        _showDifferentResidenceMessage();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(textRead(context, 'Could not send message: $e')),
+          ),
+        );
+      }
+
       setState(() {
-        errorMessage = e.toString();
+        errorMessage = null;
         isSending = false;
       });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(textRead(context, 'Could not send message: $e')),
-        ),
-      );
     }
   }
 
@@ -579,6 +587,21 @@ class _ChatPageState extends State<ChatPage> {
         curve: Curves.easeOut,
       );
     });
+  }
+
+  void _showDifferentResidenceMessage() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          textRead(
+            context,
+            'You can only chat with users from your residence.',
+          ),
+        ),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   String _formatTime(dynamic value) {

@@ -483,6 +483,7 @@ class _MainScreenState extends State<MainScreen> {
           currentUserId: currentUserId,
           groupService: service,
           socket: connectedSocket,
+          postService: widget.postService,
         ),
       ),
     );

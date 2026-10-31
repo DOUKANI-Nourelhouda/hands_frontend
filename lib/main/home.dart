@@ -5,6 +5,7 @@ import 'package:hands/widgets/home_catigores.dart';
 import 'package:hands/widgets/postwidget.dart';
 import 'package:hands/services/post_service.dart';
 import 'package:hands/utils/langs.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class HomePage extends StatefulWidget {
   final PostService postService;
@@ -156,6 +157,7 @@ class HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -171,10 +173,35 @@ class HomePageState extends State<HomePage> {
               selectedCategory: selectedCategory,
               onCategorySelected: loadPostsForCategory,
             ),
-
-            // Only the feed scrolls.
+            // Wave + Feed
             Expanded(
-              child: RefreshIndicator(onRefresh: refresh, child: _buildFeed()),
+              child: Stack(
+                children: [
+                  // 1. Posts (background)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 0),
+                    child: RefreshIndicator(
+                      onRefresh: refresh,
+                      child: _buildFeed(),
+                    ),
+                  ),
+
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    child: IgnorePointer(
+                      child: SvgPicture.asset(
+                        'assets/tarchona.svg',
+                        width: double.infinity,
+                        color: Color(0xffffffff),
+                        height: 5,
+                        fit: BoxFit.fill,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -183,9 +210,18 @@ class HomePageState extends State<HomePage> {
   }
 
   Widget _buildFeed() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     if (isLoading && posts.isEmpty) {
-      return const Center(
-        child: CircularProgressIndicator(color: Color(0xfffcc001)),
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: const [
+          SizedBox(
+            height: 250,
+            child: Center(
+              child: CircularProgressIndicator(color: Color(0xfffcc001)),
+            ),
+          ),
+        ],
       );
     }
 

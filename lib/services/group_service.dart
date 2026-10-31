@@ -143,6 +143,58 @@ class GroupService {
         .toList();
   }
 
+  // GET /api/group/:groupId
+  Future<Map<String, dynamic>> getGroupDetails(String groupId) async {
+    final response = await http.get(_uri('/group/$groupId'), headers: _headers);
+
+    final data = _decode(response);
+
+    if (data is! Map || data['group'] is! Map) {
+      throw Exception('Invalid group details response.');
+    }
+
+    return Map<String, dynamic>.from(data['group'] as Map);
+  }
+
+  // POST /api/group/:groupId/members
+  Future<Map<String, dynamic>> addMembers(
+    String groupId,
+    List<String> memberIds,
+  ) async {
+    final response = await http.post(
+      _uri('/group/$groupId/members'),
+      headers: _headers,
+      body: jsonEncode({'memberIds': memberIds}),
+    );
+
+    final data = _decode(response);
+
+    if (data is! Map || data['group'] is! Map) {
+      throw Exception('Invalid response after adding members.');
+    }
+
+    return Map<String, dynamic>.from(data['group'] as Map);
+  }
+
+  // DELETE /api/group/:groupId/members/:memberId
+  Future<Map<String, dynamic>> removeMember(
+    String groupId,
+    String memberId,
+  ) async {
+    final response = await http.delete(
+      _uri('/group/$groupId/members/$memberId'),
+      headers: _headers,
+    );
+
+    final data = _decode(response);
+
+    if (data is! Map || data['group'] is! Map) {
+      throw Exception('Invalid response after removing member.');
+    }
+
+    return Map<String, dynamic>.from(data['group'] as Map);
+  }
+
   Future<void> leaveGroup(String groupId) async {
     final response = await http.delete(
       Uri.parse('$baseUrl/group/$groupId/leave'),

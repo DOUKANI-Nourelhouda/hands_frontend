@@ -236,31 +236,28 @@ class _FollowersFollowingPageState extends State<FollowersFollowingPage>
           onPressed: () => _removeUser(user: user, isFollower: isFollower),
           icon: const Icon(Icons.remove_circle, color: _red, size: 27),
         ),
+
         onTap: () {
-          onTap:
-          () {
-            final selectedUserId = _idOf(user);
+          final selectedUserId = _idOf(user);
 
-            if (selectedUserId.isEmpty) {
-              _showMessage('Could not identify this user.');
-              return;
-            }
+          if (selectedUserId.isEmpty) {
+            _showMessage('Could not identify this user.');
+            return;
+          }
 
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => ProfilePage(
-                  userId: selectedUserId,
-                  postService: widget.postService,
-
-                  onMessageTap: (recipientId) async {
-                    Navigator.pop(context); // Close the profile first.
-                    await widget.onMessageTap?.call(recipientId);
-                  },
-                ),
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ProfilePage(
+                userId: selectedUserId,
+                postService: widget.postService,
+                onMessageTap: (recipientId) async {
+                  Navigator.pop(context);
+                  await widget.onMessageTap?.call(recipientId);
+                },
               ),
-            );
-          };
+            ),
+          );
         },
       ),
     );

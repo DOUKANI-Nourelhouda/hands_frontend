@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:hands/utils/langs.dart';
 import '../services/group_service.dart';
+import 'package:hands/services/post_service.dart';
+import 'group_info_page.dart';
 
 const Color groupChatYellow = Color(0xfffcc001);
 
@@ -11,6 +13,7 @@ class GroupChatPage extends StatefulWidget {
   final String currentUserId;
   final GroupService groupService;
   final IO.Socket socket;
+  final PostService postService;
 
   const GroupChatPage({
     super.key,
@@ -19,6 +22,7 @@ class GroupChatPage extends StatefulWidget {
     required this.currentUserId,
     required this.groupService,
     required this.socket,
+    required this.postService,
   });
 
   @override
@@ -33,7 +37,7 @@ class _GroupChatPageState extends State<GroupChatPage> {
   bool isLoading = true;
   bool isSending = false;
   String? errorMessage;
-
+  Map<String, dynamic>? groupDetails;
   @override
   void initState() {
     super.initState();
@@ -54,6 +58,7 @@ class _GroupChatPageState extends State<GroupChatPage> {
 
     // Ask the backend to join this group room.
     widget.socket.emit('group:join', {'groupId': widget.groupId});
+    loadGroupDetails();
   }
 
   String _id(dynamic value) {
@@ -61,6 +66,36 @@ class _GroupChatPageState extends State<GroupChatPage> {
       return (value['_id'] ?? value['id'] ?? '').toString();
     }
     return value?.toString() ?? '';
+  }
+
+  Future<void> loadGroupDetails() async {
+    try {
+      final result = await widget.groupService.getGroupDetails(widget.groupId);
+
+      if (!mounted) return;
+
+      setState(() {
+        groupDetails = result;
+      });
+    } catch (e) {
+      debugPrint('[GROUP CHAT] Could not load group details: $e');
+    }
+  }
+
+  void _openGroupInfo() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => GroupInfoPage(
+          groupId: widget.groupId,
+          currentUserId: widget.currentUserId,
+          groupService: widget.groupService,
+          postService: widget.postService,
+        ),
+      ),
+    ).then((_) {
+      loadGroupDetails();
+    });
   }
 
   void onNewMessage(dynamic data) {
@@ -305,29 +340,49 @@ class _GroupChatPageState extends State<GroupChatPage> {
         foregroundColor: Colors.black,
         elevation: 0.5,
         titleSpacing: 0,
-        title: Row(
-          children: [
-            ClipOval(
-              child: Image.asset(
-                'assets/default_grp.png',
-                width: 50,
-                height: 50,
-                fit: BoxFit.cover,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                widget.groupName,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.bold,
+        title: InkWell(
+          onTap: _openGroupInfo,
+          borderRadius: BorderRadius.circular(10),
+          child: Row(
+            children: [
+              ClipOval(
+                child: Image.asset(
+                  'assets/default_grp.png',
+                  width: 45,
+                  height: 45,
+                  fit: BoxFit.cover,
                 ),
               ),
-            ),
-          ],
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      widget.groupName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      '${(groupDetails?['members'] as List?)?.length ?? 0} ' +
+                          '${textRead(context, 'members')}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey,
+                        fontWeight: FontWeight.normal,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
         actions: [
           PopupMenuButton<String>(
@@ -384,7 +439,9 @@ class _GroupChatPageState extends State<GroupChatPage> {
             ),
           Expanded(
             child: isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? const Center(
+                    child: CircularProgressIndicator(color: Color(0xfffcc001)),
+                  )
                 : messages.isEmpty
                 ? Center(
                     child: Padding(

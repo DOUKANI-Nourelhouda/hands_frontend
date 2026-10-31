@@ -7,15 +7,6 @@ class HelpSupportPage extends StatelessWidget {
   static const Color accentColor = Color(0xfffcc001);
   static const Color textColor = Color(0xff1e1f24);
 
-  void _showMessage(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(text(context, message)),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
-
   Widget _buildFaq({required String question, required String answer}) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),

@@ -25,7 +25,7 @@ class CustomFloatingNavBar extends StatelessWidget {
     const double fabSize = 52.0;
 
     return SizedBox(
-      height: barHeight + 20,
+      height: barHeight + 14,
       child: Stack(
         clipBehavior: Clip.none,
         alignment: Alignment.bottomCenter,

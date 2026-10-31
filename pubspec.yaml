@@ -83,6 +83,7 @@ flutter:
      - assets/default_grp.png
      - assets/
      - assets/icons/
+     - assets/tarchona.svg
      - .env
   fonts:
   - family: VAGRoundedNext

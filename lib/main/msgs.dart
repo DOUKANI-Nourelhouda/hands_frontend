@@ -206,15 +206,7 @@ class _MsgsPageState extends State<MsgsPage> {
       return 'Sent an attachment';
     }
 
-    return 'Start chatting with your group';
-  }
-
-  String _groupMemberCount(Map<String, dynamic> group) {
-    final members = group['members'];
-    if (members is List) {
-      return '${members.length} members';
-    }
-    return 'Group chat';
+    return textRead(context, 'Start chatting with your group');
   }
 
   bool _matches(String value) {
@@ -268,6 +260,7 @@ class _MsgsPageState extends State<MsgsPage> {
   }
 
   Widget _buildProfileHeader() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 12, 16, 4),
       child: Row(
@@ -292,6 +285,7 @@ class _MsgsPageState extends State<MsgsPage> {
   }
 
   Widget _buildSearchBar() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       height: 48,
       decoration: BoxDecoration(
@@ -335,6 +329,7 @@ class _MsgsPageState extends State<MsgsPage> {
   }
 
   Widget _buildSectionTitle(String title, int count) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 22, 20, 10),
       child: Row(
@@ -361,6 +356,7 @@ class _MsgsPageState extends State<MsgsPage> {
   }
 
   Widget _buildConversationTile(Map<String, dynamic> conversation) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final otherUser = _otherParticipant(conversation);
 
     if (otherUser == null) {
@@ -420,6 +416,7 @@ class _MsgsPageState extends State<MsgsPage> {
   }
 
   Widget _buildGroupTile(Map<String, dynamic> group) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final name = group['name']?.toString() ?? 'Group';
 
     return InkWell(
@@ -456,7 +453,6 @@ class _MsgsPageState extends State<MsgsPage> {
                   ),
                   const SizedBox(height: 5),
                   Text(
-                    '${_groupMemberCount(group)} · '
                     '${_lastGroupMessage(group)}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -473,6 +469,7 @@ class _MsgsPageState extends State<MsgsPage> {
   }
 
   Widget _buildEmptyState(String message) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
       child: Center(
@@ -487,6 +484,7 @@ class _MsgsPageState extends State<MsgsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       backgroundColor: Colors.white,
       extendBody: false,

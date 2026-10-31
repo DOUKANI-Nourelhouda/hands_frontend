@@ -447,6 +447,7 @@ class _SearchPageState extends State<SearchPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -470,6 +471,7 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   Widget _buildSearchHeader() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 12, 16, 0),
       child: Row(
@@ -540,6 +542,7 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   Widget _buildFilterRow() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return SizedBox(
       height: 35,
       child: ListView.separated(
@@ -593,6 +596,7 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   Widget _buildFilterIcon(String name, String assetPath, bool isSelected) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return SvgPicture.asset(
       assetPath,
       width: 22,
@@ -674,7 +678,7 @@ class _SearchPageState extends State<SearchPage> {
             : textRead(context, 'No posts found for ') + "$searchQuery",
       );
     }
-
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return RefreshIndicator(
       color: accent,
       onRefresh: searchQuery.isEmpty
@@ -728,6 +732,7 @@ class _SearchPageState extends State<SearchPage> {
     }
 
     if (searchQuery.trim().isEmpty && followingError != null) {
+      final isDark = Theme.of(context).brightness == Brightness.dark;
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -746,6 +751,7 @@ class _SearchPageState extends State<SearchPage> {
     }
 
     if (users.isEmpty) {
+      final isDark = Theme.of(context).brightness == Brightness.dark;
       return _buildMessage(
         icon: SvgPicture.asset(
           'assets/icons/user.svg',
@@ -766,7 +772,7 @@ class _SearchPageState extends State<SearchPage> {
     }
 
     // Keep your existing user-card ListView.builder here.
-
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -857,6 +863,7 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   Widget _buildGroupResults() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     if (isLoadingGroups && groups.isEmpty) {
       return const Center(child: CircularProgressIndicator(color: accent));
     }
@@ -1006,6 +1013,7 @@ class _SearchPageState extends State<SearchPage> {
                       currentUserId: currentUserId,
                       groupService: service,
                       socket: socket,
+                      postService: widget.postService,
                     ),
                   ),
                 );
@@ -1023,6 +1031,7 @@ class _SearchPageState extends State<SearchPage> {
     String? subtitle,
     bool showRetry = false,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
       children: [
@@ -1113,7 +1122,7 @@ class _SearchPageState extends State<SearchPage> {
         start = matchIndex + query.length;
       }
     }
-
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Text.rich(
       TextSpan(children: spans),
       style: style,

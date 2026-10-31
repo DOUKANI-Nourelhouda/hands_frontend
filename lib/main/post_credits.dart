@@ -140,9 +140,6 @@ class _PostCreditsPageState extends State<PostCreditsPage>
       if (!opened) {
         throw Exception('Could not open the payment page.');
       }
-
-      // The user may pay in the browser and return to Hands.
-      // Refresh again when they return using the lifecycle method below.
     } catch (e) {
       debugPrint('PAYMENT ERROR: $e');
 
@@ -166,6 +163,7 @@ class _PostCreditsPageState extends State<PostCreditsPage>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       backgroundColor: background,
       appBar: AppBar(
@@ -214,6 +212,7 @@ class _PostCreditsPageState extends State<PostCreditsPage>
   }
 
   Widget _buildCreditsSection() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -287,6 +286,7 @@ class _PostCreditsPageState extends State<PostCreditsPage>
     required IconData icon,
     required String subtitle,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
       decoration: BoxDecoration(
@@ -340,6 +340,7 @@ class _PostCreditsPageState extends State<PostCreditsPage>
   }
 
   Widget _buildPackagesHeader() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -366,7 +367,7 @@ class _PostCreditsPageState extends State<PostCreditsPage>
     final int price = package['price'] as int;
     final bool isBuying = buyingPackage == id;
     final bool anotherIsBuying = buyingPackage != null && !isBuying;
-
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
@@ -463,7 +464,7 @@ class _PostCreditsPageState extends State<PostCreditsPage>
                         width: 21,
                         child: CircularProgressIndicator(
                           strokeWidth: 2.2,
-                          color: Colors.black87,
+                          color: Color(0xfffcc001),
                         ),
                       )
                     : Text(
@@ -482,6 +483,7 @@ class _PostCreditsPageState extends State<PostCreditsPage>
   }
 
   Widget _buildInfoNote() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(

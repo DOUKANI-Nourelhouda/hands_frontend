@@ -4,6 +4,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:hands/widgets/catigory_dropdown.dart';
 import 'dart:io';
 import 'package:hands/utils/langs.dart';
+import 'package:hands/services/payment_service.dart';
+import 'package:hands/main/post_credits.dart';
 
 class CreatePostPage extends StatefulWidget {
   final PostService postService;
@@ -27,10 +29,18 @@ class _CreatePostPageState extends State<CreatePostPage> {
 
   List<XFile> _selectedMedia = [];
   List<Map<String, dynamic>> _existingMedia = [];
+  final PaymentService _paymentService = PaymentService();
+
+  int freePostsRemaining = 0;
+  int paidPostCredits = 0;
+
+  bool isLoadingCredits = true;
 
   @override
   void initState() {
     super.initState();
+
+    _loadCredits();
 
     final post = widget.post;
 
@@ -47,6 +57,30 @@ class _CreatePostPageState extends State<CreatePostPage> {
             .map((item) => Map<String, dynamic>.from(item))
             .toList();
       }
+    }
+  }
+
+  Future<void> _loadCredits() async {
+    try {
+      final data = await _paymentService.getCredits();
+
+      if (!mounted) return;
+
+      setState(() {
+        freePostsRemaining = (data['freePostsRemaining'] as num?)?.toInt() ?? 0;
+
+        paidPostCredits = (data['paidPostCredits'] as num?)?.toInt() ?? 0;
+
+        isLoadingCredits = false;
+      });
+    } catch (e) {
+      debugPrint('[CREATE POST] Could not load credits: $e');
+
+      if (!mounted) return;
+
+      setState(() {
+        isLoadingCredits = false;
+      });
     }
   }
 
@@ -105,6 +139,9 @@ class _CreatePostPageState extends State<CreatePostPage> {
     'Sports',
     'Delivery',
     'Printing & Copying',
+    'Lost & Found',
+    'Rentals & Borrowing',
+    'Questions & Answers',
     'Sewing',
     'Phone & PC Repair',
     'Education',
@@ -122,9 +159,6 @@ class _CreatePostPageState extends State<CreatePostPage> {
     'Projects',
     'Programming',
     'Trips',
-    'Lost & Found',
-    'Rentals & Borrowing',
-    'Questions & Answers',
     'Other',
   ];
 
@@ -138,12 +172,96 @@ class _CreatePostPageState extends State<CreatePostPage> {
     super.dispose();
   }
 
+  Future<void> _showNoCreditsDialog() async {
+    await showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          title: Text(
+            textRead(context, 'Free posts finished'),
+            style: const TextStyle(fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+          content: Text(
+            textRead(
+              context,
+              'You have used all your free posts. Buy post credits to continue publishing.',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(
+                textRead(context, 'Cancel'),
+                style: TextStyle(color: Colors.black),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xfffcc001),
+                foregroundColor: Colors.black,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              onPressed: () async {
+                Navigator.pop(dialogContext);
+
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        PostCreditsPage(onBuyPackage: (packageId) async {}),
+                  ),
+                );
+
+                if (!mounted) return;
+
+                await _loadCredits();
+              },
+              child: Text(
+                textRead(context, 'Credit posts'),
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _submitPost() async {
     debugPrint('\n========== SUBMIT POST ==========');
     debugPrint('[SUBMIT] Category: $selectedCategory');
     debugPrint('[SUBMIT] Caption: ${_captionController.text.trim()}');
     debugPrint('[SUBMIT] Selected media count: ${_selectedMedia.length}');
+    // Check credits only when creating a new post.
+    if (!widget.isEditing) {
+      if (isLoadingCredits) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              textRead(context, 'Please wait while we check your credits.'),
+            ),
+          ),
+        );
+        return;
+      }
 
+      // Refresh the balance before deciding whether publishing is allowed.
+      await _loadCredits();
+
+      if (!mounted) return;
+
+      if (freePostsRemaining <= 0 && paidPostCredits <= 0) {
+        await _showNoCreditsDialog();
+        return;
+      }
+    }
     for (final file in _selectedMedia) {
       debugPrint(
         '[SUBMIT] File=${file.name}, '
@@ -548,10 +666,12 @@ class _CreatePostPageState extends State<CreatePostPage> {
                 ),
               ],
 
+              const SizedBox(height: 60),
+              if (!widget.isEditing) ...[
+                _buildFreePostsInfo(),
+                const SizedBox(height: 15),
+              ],
               const SizedBox(height: 10),
-
-              const SizedBox(height: 120),
-
               SizedBox(
                 height: 52,
                 child: ElevatedButton(
@@ -571,7 +691,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
                           height: 22,
                           child: CircularProgressIndicator(
                             strokeWidth: 2.5,
-                            color: Colors.black,
+                            color: Color(0xfffcc001),
                           ),
                         )
                       : Text(
@@ -627,6 +747,45 @@ class _CreatePostPageState extends State<CreatePostPage> {
             child: Icon(Icons.videocam, color: Colors.white, size: 20),
           ),
       ],
+    );
+  }
+
+  Widget _buildFreePostsInfo() {
+    String message;
+
+    if (isLoadingCredits) {
+      message = textRead(context, 'Loading your credits...');
+    } else if (freePostsRemaining > 0) {
+      message =
+          '${textRead(context, 'You still have')} '
+          '$freePostsRemaining ${textRead(context, 'free posts')}';
+    } else if (paidPostCredits > 0) {
+      message =
+          '${textRead(context, 'You have')} '
+          '$paidPostCredits ${textRead(context, 'paid post credits')}';
+    } else {
+      message = textRead(
+        context,
+        'You have no free posts anymore. You need to pay to post.',
+      );
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xfffcc001).withOpacity(0.12),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        message,
+        style: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFF333333),
+        ),
+        textAlign: TextAlign.center,
+      ),
     );
   }
 }

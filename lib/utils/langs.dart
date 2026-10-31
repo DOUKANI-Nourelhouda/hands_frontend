@@ -153,9 +153,10 @@ const Map<String, Map<String, String>> languages = {
     'Are you sure you want to block': 'Are you sure you want to block',
     'Their posts will no longer appear in your feed.':
         'Their posts will no longer appear in your feed.',
-
+    'members': 'members',
     'Unblock account?': 'Unblock account?',
     'Are you sure you want to unblock': 'Are you sure you want to unblock',
+    'Start chatting with your group': 'Start chatting with your group',
     'Unblock': 'Unblock',
     'Block': 'Block',
     'Privacy Policy': 'Privacy Policy',
@@ -519,6 +520,58 @@ const Map<String, Map<String, String>> languages = {
     'Are you sure you want to delete this message?':
         'Are you sure you want to delete this message?',
     'Message deleted successfully': 'Message deleted successfully',
+    'Remove member?': 'Remove member?',
+    'Are you sure you want to remove this member?':
+        'Are you sure you want to remove this member?',
+    'Member removed successfully.': 'Member removed successfully.',
+    'Member added successfully.': 'Member added successfully.',
+    'Add members': 'Add members',
+    'Search for students to add.': 'Search for students to add.',
+    'Could not load group details.': 'Could not load group details.',
+    'Group members': 'Group members',
+    'Could not open this profile.': 'Could not open this profile.',
+    'Group creator': 'Group creator',
+    'Loading your credits...': 'Loading your credits...',
+    'You still have': 'You still have',
+    'free posts': 'free posts',
+    'You have': 'You have',
+    'paid post credits': 'paid post credits',
+    'You have no free posts anymore. You need to pay to post.':
+        'You have no free posts anymore. You need to pay to post.',
+    'Free posts finished': 'Free posts finished',
+    'You have used all your free posts. Buy post credits to continue publishing.':
+        'You have used all your free posts. Buy post credits to continue publishing.',
+    'Credit posts': 'Credit posts',
+    'You can only chat with users from your residence.':
+        'You can only chat with users from your residence.',
+    'Could not load more notifications': 'Could not load more notifications',
+    'All notifications marked as read.': 'All notifications marked as read.',
+    'Delete all notifications?': 'Delete all notifications?',
+    'This will permanently delete all your notifications.':
+        'This will permanently delete all your notifications.',
+    'Delete all': 'Delete all',
+    'All notifications deleted.': 'All notifications deleted.',
+    'liked your post.': 'liked your post.',
+    'commented on your post.': 'commented on your post.',
+    'replied to your comment.': 'replied to your comment.',
+    'started following you.': 'started following you.',
+    'sent you a message.': 'sent you a message.',
+    'mentioned you.': 'mentioned you.',
+    'sent you a notification.': 'sent you a notification.',
+    'Just now': 'Just now',
+    'm ago': 'm ago',
+    'h ago': 'h ago',
+    'd ago': 'd ago',
+    'Notifications': 'Notifications',
+    'Mark all as read': 'Mark all as read',
+    'Could not load notifications': 'Could not load notifications',
+    'You’re all caught up!': 'You’re all caught up!',
+    'Your notifications will appear here.':
+        'Your notifications will appear here.',
+    'Delete notification?': 'Delete notification?',
+    'This notification will be permanently deleted.':
+        'This notification will be permanently deleted.',
+    'Delete notification': 'Delete notification',
   },
   'fr': {
     'Home': 'Accueil',
@@ -566,7 +619,8 @@ const Map<String, Map<String, String>> languages = {
     'Delete': 'Supprimer',
     'Reply to ': 'Répondre à ',
     'Report': 'Signaler',
-
+    'members': 'membres',
+    'Start chatting with your group': 'Commencez à discuter avec votre groupe',
     'Search hint': 'Découvrez les services de votre résidence',
     'Edit post': 'Modifier la publication',
     'Delete post?': 'Supprimer la publication',
@@ -1027,8 +1081,8 @@ const Map<String, Map<String, String>> languages = {
     'This action cannot be undone.': 'Cette action ne peut pas être annulée.',
     'cannot be undone.': ' est irréversible.',
     'No posts yet. Be the first who post!':
-        'Aucune publication pour le moment. Soyez le premier à publier !',
-    'No posts yet': 'Aucune publication pour le moment',
+        'Aucune pub pour le moment. Soyez le premier à publier !',
+    'No posts yet': 'Aucune pub pour le moment',
     'No posts found for ': 'Aucune publication trouvée pour ',
     'Send message': 'Envoyer un message',
     'Share profile': 'Partager le profil',
@@ -1078,7 +1132,7 @@ const Map<String, Map<String, String>> languages = {
         'Les groupes que vous rejoignez apparaîtront ici.',
     'Try searching for another group.':
         'Essayez de rechercher un autre groupe.',
-    'No posts yet.': 'Aucune publication pour le moment.',
+    'No posts yet.': 'Aucune pub pour le moment.',
     'Edit message': 'Modifier le message',
     'Delete message': 'Supprimer le message',
     'Write your message': 'Écrivez votre message',
@@ -1088,6 +1142,62 @@ const Map<String, Map<String, String>> languages = {
     'Are you sure you want to delete this message?':
         'Êtes-vous sûr de vouloir supprimer ce message ?',
     'Message deleted successfully': 'Message supprimé avec succès',
+    'Remove member?': 'Supprimer ce membre ?',
+    'Are you sure you want to remove this member?':
+        'Voulez-vous vraiment supprimer ce membre ?',
+    'Member removed successfully.': 'Membre supprimé avec succès.',
+    'Member added successfully.': 'Membre ajouté avec succès.',
+    'Add members': 'Ajouter des membres',
+    'Search for students to add.': 'Recherchez des étudiants à ajouter.',
+    'Could not load group details.':
+        'Impossible de charger les informations du groupe.',
+    'Group members': 'Membres du groupe',
+    'Could not open this profile.': 'Impossible d’ouvrir ce profil.',
+    'Group creator': 'Créateur du groupe',
+    'Loading your credits...': 'Chargement de vos crédits...',
+    'You still have': 'Il vous reste',
+    'free posts': 'publications gratuites',
+    'You have': 'Vous avez',
+    'paid post credits': 'crédits de publication payants',
+    'You have no free posts anymore. You need to pay to post.':
+        'Vous n’avez plus de publications gratuites. Vous devez payer pour publier.',
+    'Free posts finished': 'Publications gratuites épuisées',
+    'You have used all your free posts. Buy post credits to continue publishing.':
+        'Vous avez utilisé toutes vos publications gratuites. Achetez des crédits pour continuer à publier.',
+    'Credit posts': 'Crédits de publication',
+    'You can only chat with users from your residence.':
+        'Vous pouvez uniquement discuter avec les utilisateurs de votre résidence.',
+    'Could not load more notifications':
+        'Impossible de charger plus de notifications',
+    'All notifications marked as read.':
+        'Toutes les notifications ont été marquées comme lues.',
+    'Delete all notifications?': 'Supprimer toutes les notifications ?',
+    'This will permanently delete all your notifications.':
+        'Cela supprimera définitivement toutes vos notifications.',
+    'Delete all': 'Tout supprimer',
+    'All notifications deleted.':
+        'Toutes les notifications ont été supprimées.',
+    'liked your post.': 'a aimé votre publication.',
+    'commented on your post.': 'a commenté votre publication.',
+    'replied to your comment.': 'a répondu à votre commentaire.',
+    'started following you.': 'a commencé à vous suivre.',
+    'sent you a message.': 'vous a envoyé un message.',
+    'mentioned you.': 'vous a mentionné(e).',
+    'sent you a notification.': 'vous a envoyé une notification.',
+    'Just now': 'À l’instant',
+    'm ago': 'min',
+    'h ago': 'h',
+    'd ago': 'j',
+    'Notifications': 'Notifications',
+    'Mark all as read': 'Tout marquer comme lu',
+    'Could not load notifications': 'Impossible de charger les notifications',
+    'You’re all caught up!': 'Vous êtes à jour !',
+    'Your notifications will appear here.':
+        'Vos notifications apparaîtront ici.',
+    'Delete notification?': 'Supprimer la notification ?',
+    'This notification will be permanently deleted.':
+        'Cette notification sera définitivement supprimée.',
+    'Delete notification': 'Supprimer la notification',
   },
 
   'ar': {
@@ -1190,6 +1300,7 @@ const Map<String, Map<String, String>> languages = {
     'Replies': 'الردود',
     'Post Credits': 'رصيد المنشورات',
     'Your balance': 'رصيدك',
+    'Start chatting with your group': 'ابدأ الدردشة مع مجموعتك',
     'Keep track of the posts you can publish.':
         'تابع عدد المنشورات التي يمكنك نشرها',
     'Free posts left': 'المنشورات المجانية المتبقية',
@@ -1591,6 +1702,7 @@ const Map<String, Map<String, String>> languages = {
     'Groups you join will appear here.': 'ستظهر المجموعات التي تنضم إليها هنا.',
     'Try searching for another group.': 'حاول البحث عن مجموعة أخرى.',
     'Edit message': 'تعديل الرسالة',
+    'members': 'الأعضاء',
     'Delete message': 'حذف الرسالة',
     'Write your message': 'اكتب رسالتك',
     'Message cannot be empty': 'لا يمكن أن تكون الرسالة فارغة',
@@ -1599,6 +1711,57 @@ const Map<String, Map<String, String>> languages = {
     'Are you sure you want to delete this message?':
         'هل أنت متأكد أنك تريد حذف هذه الرسالة؟',
     'Message deleted successfully': 'تم حذف الرسالة بنجاح',
+    'Remove member?': 'إزالة العضو؟',
+    'Are you sure you want to remove this member?':
+        'هل أنت متأكد أنك تريد إزالة هذا العضو؟',
+    'Member removed successfully.': 'تمت إزالة العضو بنجاح.',
+    'Member added successfully.': 'تمت إضافة العضو بنجاح.',
+    'Add members': 'إضافة أعضاء',
+    'Search for students to add.': 'ابحث عن الطلاب لإضافتهم.',
+    'Could not load group details.': 'تعذر تحميل معلومات المجموعة.',
+    'Group members': 'أعضاء المجموعة',
+    'Could not open this profile.': 'تعذر فتح هذا الملف الشخصي.',
+    'Group creator': 'منشئ المجموعة',
+    'Loading your credits...': 'جارٍ تحميل رصيدك...',
+    'You still have': 'لا يزال لديك',
+    'free posts': 'منشورات مجانية',
+    'You have': 'لديك',
+    'paid post credits': 'رصيد منشورات مدفوع',
+    'You have no free posts anymore. You need to pay to post.':
+        'لم تعد لديك منشورات مجانية. يجب عليك الدفع للنشر.',
+    'Free posts finished': 'انتهت المنشورات المجانية',
+    'You have used all your free posts. Buy post credits to continue publishing.':
+        'لقد استخدمت جميع منشوراتك المجانية. اشترِ رصيد المنشورات لمواصلة النشر.',
+    'Credit posts': 'رصيد المنشورات',
+    'You can only chat with users from your residence.':
+        'يمكنك الدردشة فقط مع المستخدمين المقيمين في نفس إقامتك.',
+    'Could not load more notifications': 'تعذّر تحميل المزيد من الإشعارات',
+    'All notifications marked as read.': 'تم تحديد جميع الإشعارات كمقروءة.',
+    'Delete all notifications?': 'هل تريد حذف جميع الإشعارات؟',
+    'This will permanently delete all your notifications.':
+        'سيؤدي هذا إلى حذف جميع إشعاراتك نهائيًا.',
+    'Delete all': 'حذف الكل',
+    'All notifications deleted.': 'تم حذف جميع الإشعارات.',
+    'liked your post.': 'أُعجب بمنشورك.',
+    'commented on your post.': 'علّق على منشورك.',
+    'replied to your comment.': 'ردّ على تعليقك.',
+    'started following you.': 'بدأ بمتابعتك.',
+    'sent you a message.': 'أرسل إليك رسالة.',
+    'mentioned you.': 'أشار إليك.',
+    'sent you a notification.': 'أرسل إليك إشعارًا.',
+    'Just now': 'الآن',
+    'm ago': 'د',
+    'h ago': 'س',
+    'd ago': 'ي',
+    'Notifications': 'الإشعارات',
+    'Mark all as read': 'تحديد الكل كمقروء',
+    'Could not load notifications': 'تعذّر تحميل الإشعارات',
+    'You’re all caught up!': 'لقد اطّلعت على جميع الإشعارات!',
+    'Your notifications will appear here.': 'ستظهر إشعاراتك هنا.',
+    'Delete notification?': 'هل تريد حذف الإشعار؟',
+    'This notification will be permanently deleted.':
+        'سيتم حذف هذا الإشعار نهائيًا.',
+    'Delete notification': 'حذف الإشعار',
   },
 };
 

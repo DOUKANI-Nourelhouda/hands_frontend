@@ -19,6 +19,7 @@ import 'package:hands/main/post_credits.dart';
 import 'package:hands/services/lang_manager.dart';
 import 'package:hands/utils/langs.dart';
 import 'package:provider/provider.dart';
+import 'package:hands/utils/theme_manager.dart';
 
 class ProfilePage extends StatefulWidget {
   final String? userId;
@@ -268,6 +269,7 @@ class _ProfilePageState extends State<ProfilePage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
         return AlertDialog(
           backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(
@@ -330,6 +332,7 @@ class _ProfilePageState extends State<ProfilePage> {
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
@@ -480,7 +483,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           height: 18,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: Colors.black,
+                            color: Color(0xfffcc001),
                           ),
                         )
                       : Text(textRead(context, 'Submit report')),
@@ -531,6 +534,7 @@ class _ProfilePageState extends State<ProfilePage> {
     showDialog(
       context: context,
       builder: (dialogContext) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
         return AlertDialog(
           backgroundColor: Colors.white,
           title: Text(
@@ -579,26 +583,29 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   String _selectedDisplayMode = 'System';
-
   void _showDisplayModeDialog(BuildContext context) {
-    String tempMode = _selectedDisplayMode;
+    final themeManager = context.read<ThemeManager>();
+
+    String tempMode = themeManager.themeMode == ThemeMode.dark
+        ? 'Dark'
+        : 'Light';
 
     showDialog(
       context: context,
       builder: (dialogContext) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              backgroundColor: Colors.white,
+              backgroundColor: Theme.of(context).colorScheme.surface,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(22),
               ),
               title: Text(
                 textRead(context, 'Choose display mode'),
-                style: TextStyle(
+                style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 20,
-                  color: Color(0xff333333),
                 ),
               ),
               content: Column(
@@ -622,26 +629,16 @@ class _ProfilePageState extends State<ProfilePage> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xfffcc001),
-                      foregroundColor: const Color(0xff333333),
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _selectedDisplayMode = tempMode;
-                      });
+                    onPressed: () async {
+                      await context.read<ThemeManager>().setTheme(
+                        tempMode == 'Dark' ? ThemeMode.dark : ThemeMode.light,
+                      );
 
-                      Navigator.pop(dialogContext);
+                      if (dialogContext.mounted) {
+                        Navigator.pop(dialogContext);
+                      }
                     },
-                    child: Text(
-                      textRead(context, 'Confirm'),
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
+                    child: Text(textRead(context, 'Confirm')),
                   ),
                 ),
               ],
@@ -658,6 +655,7 @@ class _ProfilePageState extends State<ProfilePage> {
     required bool selected,
     required VoidCallback onTap,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return ListTile(
       contentPadding: EdgeInsets.zero,
       leading: Icon(
@@ -674,7 +672,9 @@ class _ProfilePageState extends State<ProfilePage> {
 
   void _showProfileOptions() {
     final bool isOwnProfile =
-        widget.userId == null || widget.userId == currentUserId;
+        widget.userId == null ||
+        widget.userId!.isEmpty ||
+        widget.userId == _currentUserId;
 
     showModalBottomSheet(
       context: context,
@@ -684,6 +684,7 @@ class _ProfilePageState extends State<ProfilePage> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (sheetContext) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
@@ -1195,7 +1196,9 @@ class _ProfilePageState extends State<ProfilePage> {
                                                   child:
                                                       CircularProgressIndicator(
                                                         strokeWidth: 2,
-                                                        color: Colors.white,
+                                                        color: Color(
+                                                          0xfffcc001,
+                                                        ),
                                                       ),
                                                 )
                                               : Text(
@@ -1350,6 +1353,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -1363,6 +1367,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildError() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -1399,7 +1404,7 @@ class _ProfilePageState extends State<ProfilePage> {
         : 'My residence';
 
     final wilaya = residence is Map ? residence['wilaya']?.toString() : null;
-
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       children: [
         // Header
@@ -1701,6 +1706,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _stat(String label, int value) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Expanded(
       child: Column(
         children: [
@@ -1720,6 +1726,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _buildPostsFeed() {
     if (_posts.isEmpty) {
+      final isDark = Theme.of(context).brightness == Brightness.dark;
       return SliverToBoxAdapter(
         child: Padding(
           padding: EdgeInsets.symmetric(vertical: 40),
@@ -1737,7 +1744,7 @@ class _ProfilePageState extends State<ProfilePage> {
       delegate: SliverChildBuilderDelegate((context, index) {
         final post = _posts[index];
         final postId = (post['_id'] ?? post['id'] ?? '').toString();
-
+        final isDark = Theme.of(context).brightness == Brightness.dark;
         return PostWidget(
           key: ValueKey(postId),
           post: post,
@@ -1782,6 +1789,7 @@ class _ProfilePageState extends State<ProfilePage> {
     required VoidCallback onTap,
     Color color = Colors.black87,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 4),
       leading: svgPath != null

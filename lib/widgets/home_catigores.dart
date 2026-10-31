@@ -21,6 +21,12 @@ class HomeCategories extends StatelessWidget {
     {'name': 'Sports', 'icon': 'assets/icons/sports.svg'},
     {'name': 'Delivery', 'icon': 'assets/icons/delivery.svg'},
     {'name': 'Printing & Copying', 'icon': 'assets/icons/printing&copying.svg'},
+    {'name': 'Lost & Found', 'icon': 'assets/icons/losts&founds.svg'},
+    {
+      'name': 'Rentals & Borrowing',
+      'icon': 'assets/icons/rentals&borrowing.svg',
+    },
+    {'name': 'Questions & Answers', 'icon': 'assets/icons/q&a.svg'},
     {'name': 'Sewing', 'icon': 'assets/icons/sewing.svg'},
     {'name': 'Phone & PC Repair', 'icon': 'assets/icons/phone&pcrepair.svg'},
     {'name': 'Education', 'icon': 'assets/icons/education.svg'},
@@ -38,78 +44,79 @@ class HomeCategories extends StatelessWidget {
     {'name': 'Projects', 'icon': 'assets/icons/projects.svg'},
     {'name': 'Programming', 'icon': 'assets/icons/programming.svg'},
     {'name': 'Trips', 'icon': 'assets/icons/trips.svg'},
-    {'name': 'Lost & Found', 'icon': 'assets/icons/losts&founds.svg'},
-    {
-      'name': 'Rentals & Borrowing',
-      'icon': 'assets/icons/rentals&borrowing.svg',
-    },
-    {'name': 'Questions & Answers', 'icon': 'assets/icons/q&a.svg'},
+    {'name': 'Pets', 'icon': 'assets/icons/pets.svg'},
+
     {'name': 'Other', 'icon': 'assets/icons/others.svg'},
   ];
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 37,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 10),
-        itemCount: categories.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 14),
-        itemBuilder: (context, index) {
-          final category = categories[index];
-          final name = category['name']!;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          height: 37,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            itemCount: categories.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 14),
+            itemBuilder: (context, index) {
+              final category = categories[index];
+              final name = category['name']!;
+              final isSelected = name == (selectedCategory ?? 'All');
 
-          // The selected category now comes from HomePageState.
-          final isSelected = name == (selectedCategory ?? 'All');
-
-          return GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () {
-              onCategorySelected(name == 'All' ? null : name);
-            },
-            child: Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: isSelected ? accent : const Color(0xFFF5F5F5),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: isSelected ? accent : const Color(0xFFEEEEEE),
-                  width: 2,
+              return GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  onCategorySelected(name == 'All' ? null : name);
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: isSelected ? accent : const Color(0xFFF5F5F5),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isSelected ? accent : const Color(0xFFEEEEEE),
+                      width: 2,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SvgPicture.asset(
+                        category['icon']!,
+                        width: 22,
+                        height: 22,
+                        colorFilter: ColorFilter.mode(
+                          isSelected ? Colors.white : const Color(0xff333333),
+                          BlendMode.srcIn,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        text(context, name),
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: isSelected
+                              ? FontWeight.w600
+                              : FontWeight.w400,
+                          color: isSelected
+                              ? Colors.white
+                              : const Color(0xff333333),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SvgPicture.asset(
-                    category['icon']!,
-                    width: 22,
-                    height: 22,
-                    colorFilter: ColorFilter.mode(
-                      isSelected ? Colors.white : const Color(0xff333333),
-                      BlendMode.srcIn,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    text(context, name),
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: isSelected
-                          ? FontWeight.w600
-                          : FontWeight.w400,
-                      color: isSelected
-                          ? Colors.white
-                          : const Color(0xff333333),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
+              );
+            },
+          ),
+        ),
+
+        SizedBox(height: 6),
+      ],
     );
   }
 }
