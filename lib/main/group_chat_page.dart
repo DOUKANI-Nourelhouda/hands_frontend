@@ -14,6 +14,7 @@ class GroupChatPage extends StatefulWidget {
   final GroupService groupService;
   final IO.Socket socket;
   final PostService postService;
+  final Future<void> Function(String recipientId)? onMessageTap;
 
   const GroupChatPage({
     super.key,
@@ -23,6 +24,7 @@ class GroupChatPage extends StatefulWidget {
     required this.groupService,
     required this.socket,
     required this.postService,
+    this.onMessageTap,
   });
 
   @override
@@ -91,6 +93,7 @@ class _GroupChatPageState extends State<GroupChatPage> {
           currentUserId: widget.currentUserId,
           groupService: widget.groupService,
           postService: widget.postService,
+          onMessageTap: widget.onMessageTap,
         ),
       ),
     ).then((_) {
@@ -287,6 +290,7 @@ class _GroupChatPageState extends State<GroupChatPage> {
   }
 
   Future<void> _confirmLeaveGroup() async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final shouldLeave = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -299,7 +303,9 @@ class _GroupChatPageState extends State<GroupChatPage> {
             onPressed: () => Navigator.pop(dialogContext, false),
             child: Text(
               textRead(context, 'Cancel'),
-              style: TextStyle(color: Colors.black),
+              style: TextStyle(
+                color: isDark ? Colors.white : Color(0xff333333),
+              ),
             ),
           ),
           TextButton(
@@ -332,12 +338,13 @@ class _GroupChatPageState extends State<GroupChatPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: const Color(0xfff7f7f7),
+      backgroundColor: isDark ? Color(0xff333333) : Colors.white,
 
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: isDark ? const Color(0xff333333) : Colors.white,
+        foregroundColor: isDark ? Colors.white : Color(0xff333333),
         elevation: 0.5,
         titleSpacing: 0,
         title: InkWell(
@@ -387,7 +394,7 @@ class _GroupChatPageState extends State<GroupChatPage> {
         actions: [
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert),
-            color: Colors.white,
+            color: isDark ? Color(0xff333333) : Colors.white,
             onSelected: (value) {
               if (value == 'leave') {
                 _confirmLeaveGroup();
@@ -416,7 +423,7 @@ class _GroupChatPageState extends State<GroupChatPage> {
         children: [
           if (errorMessage != null)
             Material(
-              color: const Color(0xfffff0f0),
+              color: isDark ? Color(0xff333333) : Color(0xfffff0f0),
               child: Padding(
                 padding: const EdgeInsets.all(5),
                 child: Row(
@@ -501,7 +508,7 @@ class _GroupChatPageState extends State<GroupChatPage> {
     final profilePicture = sender is Map
         ? (sender['profilePicture'] ?? '').toString().trim()
         : '';
-
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
@@ -523,7 +530,11 @@ class _GroupChatPageState extends State<GroupChatPage> {
               ),
               padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
               decoration: BoxDecoration(
-                color: isMine ? groupChatYellow : Colors.white,
+                color: isMine
+                    ? isDark
+                          ? Color(0xfffcc001)
+                          : Color(0xfffcc001)
+                    : Colors.white,
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(16),
                   topRight: const Radius.circular(16),
@@ -532,7 +543,9 @@ class _GroupChatPageState extends State<GroupChatPage> {
                 ),
                 border: isMine
                     ? null
-                    : Border.all(color: const Color(0xffeeeeee)),
+                    : Border.all(
+                        color: isDark ? Colors.grey : const Color(0xffeeeeee),
+                      ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -549,7 +562,13 @@ class _GroupChatPageState extends State<GroupChatPage> {
                         ),
                       ),
                     ),
-                  Text(text, style: const TextStyle(fontSize: 15)),
+                  Text(
+                    text,
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: isDark ? Color(0xff333333) : Colors.white,
+                    ),
+                  ),
                   if (time.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(top: 5),
@@ -559,7 +578,11 @@ class _GroupChatPageState extends State<GroupChatPage> {
                           time,
                           style: TextStyle(
                             fontSize: 10,
-                            color: isMine ? Colors.black54 : Colors.black45,
+                            color: isMine
+                                ? isDark
+                                      ? Colors.black54
+                                      : Colors.black54
+                                : Colors.grey,
                           ),
                         ),
                       ),
@@ -569,7 +592,6 @@ class _GroupChatPageState extends State<GroupChatPage> {
             ),
           ),
 
-          // Your own profile picture: bottom-right for sent messages.
           if (isMine) ...[
             const SizedBox(width: 7),
             _buildSenderAvatar(profilePicture),
@@ -581,11 +603,11 @@ class _GroupChatPageState extends State<GroupChatPage> {
 
   Widget _buildSenderAvatar(String imageUrl) {
     const double avatarSize = 32;
-
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     Widget defaultAvatar() {
       return ClipOval(
         child: Image.asset(
-          'assets/default_pfp.jpg',
+          isDark ? 'assets/default_pfp_dark.png' : 'assets/default_pfp.jpg',
           width: avatarSize,
           height: avatarSize,
           fit: BoxFit.cover,
@@ -611,10 +633,11 @@ class _GroupChatPageState extends State<GroupChatPage> {
   }
 
   Widget _buildComposer() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return SafeArea(
       child: Container(
         padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-        color: Colors.white,
+        color: isDark ? Color(0xff333333) : Colors.white,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
@@ -630,14 +653,23 @@ class _GroupChatPageState extends State<GroupChatPage> {
                   counterText: '',
                   hintText: text(context, 'Message your group...'),
                   filled: true,
-                  fillColor: const Color(0xfff5f5f5),
+                  fillColor: isDark ? Color(0xff333333) : Color(0xfff5f5f5),
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 12,
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(24),
-                    borderSide: BorderSide.none,
+                    borderSide: BorderSide(
+                      color: isDark ? Color(0xff333333) : Color(0xfff5f5f5),
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(24),
+                    borderSide: BorderSide(
+                      color: isDark ? Color(0xfffcc001) : Color(0xfffcc001),
+                      width: 2,
+                    ),
                   ),
                 ),
               ),

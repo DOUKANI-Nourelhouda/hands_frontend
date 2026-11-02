@@ -33,12 +33,6 @@ class _ResidenceDropdownState extends State<ResidenceDropdown> {
       return;
     }
 
-    // Read the language manager without subscribing to changes.
-    final languageManager = Provider.of<LanguageManager>(
-      context,
-      listen: false,
-    );
-
     final RenderBox? renderBox =
         _key.currentContext?.findRenderObject() as RenderBox?;
 
@@ -46,7 +40,7 @@ class _ResidenceDropdownState extends State<ResidenceDropdown> {
 
     final Offset position = renderBox.localToGlobal(Offset.zero);
     final double fieldWidth = renderBox.size.width;
-
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final selected = await showMenu<String>(
       context: context,
       position: RelativeRect.fromLTRB(
@@ -55,7 +49,7 @@ class _ResidenceDropdownState extends State<ResidenceDropdown> {
         position.dx + fieldWidth,
         0,
       ),
-      color: Colors.white,
+      color: isDark ? Color(0xff333333) : Colors.white,
       elevation: 8,
       constraints: BoxConstraints(
         minWidth: fieldWidth,
@@ -81,7 +75,10 @@ class _ResidenceDropdownState extends State<ResidenceDropdown> {
                   child: Text(
                     textRead(context, name),
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 16, color: Colors.black),
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: isDark ? Colors.white : Color(0xff333333),
+                    ),
                   ),
                 ),
                 if (id == widget.selectedResidenceId)
@@ -119,6 +116,7 @@ class _ResidenceDropdownState extends State<ResidenceDropdown> {
     } else if (widget.residences.isEmpty) {
       hint = 'No residences available';
     }
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return GestureDetector(
       onTap: _openDropdown,
@@ -127,7 +125,7 @@ class _ResidenceDropdownState extends State<ResidenceDropdown> {
         height: 60,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
-          color: Colors.grey.shade50,
+          color: isDark ? Color(0xff444444) : Colors.white,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: const Color(0xfffcc001), width: 2.5),
         ),
@@ -141,7 +139,11 @@ class _ResidenceDropdownState extends State<ResidenceDropdown> {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: 16,
-                  color: selectedName == null ? Colors.grey : Colors.black,
+                  color: selectedName == null
+                      ? Colors.grey
+                      : isDark
+                      ? Colors.white
+                      : Color(0xff333333),
                 ),
               ),
             ),

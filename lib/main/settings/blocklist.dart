@@ -112,7 +112,7 @@ class _BlockedUsersPageState extends State<BlockedUsersPage> {
 
   Widget _buildAvatar(Map<String, dynamic> user) {
     final picture = (user['profilePicture'] ?? '').toString();
-
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return CircleAvatar(
       radius: 23,
       backgroundColor: const Color(0xFFFFF2C2),
@@ -120,7 +120,7 @@ class _BlockedUsersPageState extends State<BlockedUsersPage> {
       onBackgroundImageError: picture.isNotEmpty ? (_, __) {} : null,
       child: picture.isEmpty
           ? Image.asset(
-              'assets/default_pfp.jpg',
+              isDark ? 'assets/default_pfp_dark.png' : 'assets/default_pfp.jpg',
               width: 46,
               height: 46,
               fit: BoxFit.cover,
@@ -139,6 +139,7 @@ class _BlockedUsersPageState extends State<BlockedUsersPage> {
     final bio = (user['bio'] ?? '').toString();
     final userId = (user['_id'] ?? user['id'] ?? '').toString();
     final isRemoving = _removingUsers.contains(userId);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     Future<void> _confirmUnblockUser(Map<String, dynamic> user) async {
       final username = (user['username'] ?? 'this user').toString();
 
@@ -146,7 +147,7 @@ class _BlockedUsersPageState extends State<BlockedUsersPage> {
         context: context,
         builder: (dialogContext) {
           return AlertDialog(
-            backgroundColor: Colors.white,
+            backgroundColor: isDark ? Color(0xFF333333) : Colors.white,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
             ),
@@ -166,16 +167,13 @@ class _BlockedUsersPageState extends State<BlockedUsersPage> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(dialogContext, false),
-                child: Text(
-                  textRead(context, 'Cancel'),
-                  style: TextStyle(color: Color(0xff333333)),
-                ),
+                child: Text(textRead(context, 'Cancel')),
               ),
               ElevatedButton(
                 onPressed: () => Navigator.pop(dialogContext, true),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xfffcc001),
-                  foregroundColor: Colors.black,
+                  foregroundColor: isDark ? Colors.white : Color(0xFF333333),
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -200,12 +198,17 @@ class _BlockedUsersPageState extends State<BlockedUsersPage> {
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? Color(0xFF333333) : Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFF0F0F0), width: 1),
+        border: Border.all(
+          color: isDark ? Colors.grey : const Color(0xFFF0F0F0),
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.07),
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.07)
+                : Colors.black.withValues(alpha: 0.07),
             blurRadius: 12,
             spreadRadius: 1,
             offset: const Offset(0, 4),
@@ -219,9 +222,9 @@ class _BlockedUsersPageState extends State<BlockedUsersPage> {
           text(context, username),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
+          style: TextStyle(
             fontWeight: FontWeight.w600,
-            color: Color(0xFF333333),
+            color: isDark ? Colors.white : Color(0xFF333333),
           ),
         ),
         subtitle: bio.isNotEmpty
@@ -229,7 +232,10 @@ class _BlockedUsersPageState extends State<BlockedUsersPage> {
                 text(context, bio),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                style: TextStyle(
+                  color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                  fontSize: 13,
+                ),
               )
             : null,
         trailing: IconButton(
@@ -253,6 +259,7 @@ class _BlockedUsersPageState extends State<BlockedUsersPage> {
   }
 
   Widget _buildEmptyState() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
       children: [
@@ -271,6 +278,7 @@ class _BlockedUsersPageState extends State<BlockedUsersPage> {
   }
 
   Widget _buildErrorState() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
       children: [
@@ -287,10 +295,7 @@ class _BlockedUsersPageState extends State<BlockedUsersPage> {
         Center(
           child: TextButton(
             onPressed: _loadBlockedUsers,
-            child: Text(
-              text(context, 'Try again'),
-              style: TextStyle(color: Colors.black87),
-            ),
+            child: Text(text(context, 'Try again')),
           ),
         ),
       ],
@@ -299,20 +304,24 @@ class _BlockedUsersPageState extends State<BlockedUsersPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: const Color(0xfffafafa),
+      backgroundColor: isDark ? Color(0xFF333333) : Color(0xfffafafa),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: isDark ? Color(0xFF333333) : Colors.white,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          icon: Icon(
+            Icons.arrow_back,
+            color: isDark ? Colors.white : Color(0xFF333333),
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           text(context, 'Blocked accounts'),
           style: TextStyle(
-            color: Colors.black87,
+            color: isDark ? Colors.white : Color(0xFF333333),
             fontSize: 18,
             fontWeight: FontWeight.w600,
           ),

@@ -11,14 +11,18 @@ class PrivacyPolicyPage extends StatelessWidget {
     required String title,
     required String content,
   }) {
+    final isDark =
+        WidgetsBinding.instance.window.platformBrightness == Brightness.dark;
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? Color(0xFF333333) : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xffeeeeee)),
+        border: Border.all(
+          color: isDark ? Color(0xFF444444) : const Color(0xffeeeeee),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -30,10 +34,10 @@ class PrivacyPolicyPage extends StatelessWidget {
               Expanded(
                 child: Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xff292929),
+                    color: isDark ? Colors.white : Color(0xff333333),
                   ),
                 ),
               ),
@@ -42,10 +46,10 @@ class PrivacyPolicyPage extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             content,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               height: 1.7,
-              color: Color(0xff666666),
+              color: isDark ? Colors.white : Color(0xff666666),
             ),
           ),
         ],
@@ -55,20 +59,24 @@ class PrivacyPolicyPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: const Color(0xfffafafa),
+      backgroundColor: isDark ? Color(0xFF333333) : Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: isDark ? Color(0xFF333333) : Colors.white,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          icon: Icon(
+            Icons.arrow_back,
+            color: isDark ? Colors.white : Color(0xff333333),
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           text(context, 'Privacy Policy'),
           style: TextStyle(
-            color: Colors.black87,
+            color: isDark ? Colors.white : Color(0xff333333),
             fontSize: 18,
             fontWeight: FontWeight.w600,
           ),
@@ -83,13 +91,13 @@ class PrivacyPolicyPage extends StatelessWidget {
               width: 66,
               height: 66,
               decoration: BoxDecoration(
-                color: const Color(0xfffff4cc),
+                color: isDark ? Color(0xFF444444) : const Color(0xfffff4cc),
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.privacy_tip_outlined,
                 size: 34,
-                color: Color(0xff292929),
+                color: isDark ? Colors.white : Color(0xff292929),
               ),
             ),
           ),
@@ -100,7 +108,7 @@ class PrivacyPolicyPage extends StatelessWidget {
               style: TextStyle(
                 fontSize: 21,
                 fontWeight: FontWeight.w700,
-                color: Color(0xff292929),
+                color: isDark ? Colors.white : Color(0xff333333),
               ),
             ),
           ),
@@ -114,7 +122,7 @@ class PrivacyPolicyPage extends StatelessWidget {
             style: TextStyle(
               fontSize: 13,
               height: 1.6,
-              color: Color(0xff777777),
+              color: isDark ? Colors.white : Color(0xff777777),
             ),
           ),
           const SizedBox(height: 24),
@@ -359,7 +367,10 @@ class PrivacyPolicyPage extends StatelessWidget {
             child: Text(
               text(context, 'Hands - To survive in your residence.'),
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: Color(0xff999999)),
+              style: TextStyle(
+                fontSize: 14,
+                color: isDark ? Colors.white : Color(0xff999999),
+              ),
             ),
           ),
           const SizedBox(height: 20),

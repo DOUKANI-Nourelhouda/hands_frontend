@@ -654,7 +654,11 @@ class _NotificationsPageState extends State<NotificationsPage> {
                             backgroundColor: const Color(0xFFFFF2C2),
                             backgroundImage: profilePicture.isNotEmpty
                                 ? NetworkImage(profilePicture)
-                                : const AssetImage('assets/default_pfp.jpg')
+                                : AssetImage(
+                                        isDark
+                                            ? 'assets/default_pfp_dark.png'
+                                            : 'assets/default_pfp.jpg',
+                                      )
                                       as ImageProvider,
                           ),
                           Positioned(

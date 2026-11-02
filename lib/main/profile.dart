@@ -271,7 +271,7 @@ class _ProfilePageState extends State<ProfilePage> {
       builder: (dialogContext) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
         return AlertDialog(
-          backgroundColor: Colors.white,
+          backgroundColor: isDark ? Color(0xFF333333) : Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
@@ -293,13 +293,15 @@ class _ProfilePageState extends State<ProfilePage> {
               onPressed: () => Navigator.pop(dialogContext, false),
               child: Text(
                 textRead(context, 'Cancel'),
-                style: TextStyle(color: Colors.black54),
+                style: TextStyle(
+                  color: isDark ? Colors.white : Color(0xFF333333),
+                ),
               ),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
+                foregroundColor: isDark ? Color(0xFF333333) : Colors.white,
               ),
               onPressed: () => Navigator.pop(dialogContext, true),
               child: Text(textRead(context, 'Block')),
@@ -336,7 +338,7 @@ class _ProfilePageState extends State<ProfilePage> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              backgroundColor: Colors.white,
+              backgroundColor: isDark ? Color(0xFF333333) : Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(15),
               ),
@@ -349,10 +351,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      textRead(context, 'Why are you reporting this user?'),
-                      style: TextStyle(color: Colors.black54),
-                    ),
+                    Text(textRead(context, 'Why are you reporting this user?')),
                     const SizedBox(height: 12),
 
                     ...reasons.entries.map((entry) {
@@ -421,13 +420,15 @@ class _ProfilePageState extends State<ProfilePage> {
                       : () => Navigator.pop(dialogContext, false),
                   child: Text(
                     textRead(context, 'Cancel'),
-                    style: TextStyle(color: Colors.black54),
+                    style: TextStyle(
+                      color: isDark ? Colors.white : Color(0xFF333333),
+                    ),
                   ),
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xfffcc001),
-                    foregroundColor: Colors.black,
+                    foregroundColor: isDark ? Colors.white : Color(0xFF333333),
                     disabledBackgroundColor: Colors.amber.shade200,
                   ),
                   onPressed: isSubmitting
@@ -536,13 +537,13 @@ class _ProfilePageState extends State<ProfilePage> {
       builder: (dialogContext) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
         return AlertDialog(
-          backgroundColor: Colors.white,
+          backgroundColor: isDark ? Color(0xFF333333) : Colors.white,
           title: Text(
             textRead(context, 'Choose language'),
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 20,
-              color: Color(0xff333333),
+              color: isDark ? Colors.white : Color(0xFF333333),
             ),
           ),
           content: RadioGroup<String>(
@@ -597,7 +598,7 @@ class _ProfilePageState extends State<ProfilePage> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              backgroundColor: Theme.of(context).colorScheme.surface,
+              backgroundColor: isDark ? Color(0xFF333333) : Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(22),
               ),
@@ -629,6 +630,17 @@ class _ProfilePageState extends State<ProfilePage> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xfffcc001),
+                      foregroundColor: isDark
+                          ? Colors.white
+                          : Color(0xFF333333),
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
                     onPressed: () async {
                       await context.read<ThemeManager>().setTheme(
                         tempMode == 'Dark' ? ThemeMode.dark : ThemeMode.light,
@@ -638,7 +650,13 @@ class _ProfilePageState extends State<ProfilePage> {
                         Navigator.pop(dialogContext);
                       }
                     },
-                    child: Text(textRead(context, 'Confirm')),
+                    child: Text(
+                      textRead(context, 'Confirm'),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -675,16 +693,15 @@ class _ProfilePageState extends State<ProfilePage> {
         widget.userId == null ||
         widget.userId!.isEmpty ||
         widget.userId == _currentUserId;
-
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? Color(0xFF333333) : Colors.white,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (sheetContext) {
-        final isDark = Theme.of(context).brightness == Brightness.dark;
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
@@ -695,7 +712,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   width: 42,
                   height: 5,
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
+                    color: isDark ? Color(0xFF444444) : Colors.grey.shade300,
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
@@ -820,7 +837,9 @@ class _ProfilePageState extends State<ProfilePage> {
                         barrierDismissible: false,
                         builder: (dialogContext) {
                           return AlertDialog(
-                            backgroundColor: Colors.white,
+                            backgroundColor: isDark
+                                ? Color(0xFF333333)
+                                : Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(20),
                             ),
@@ -853,7 +872,9 @@ class _ProfilePageState extends State<ProfilePage> {
                                   style: TextStyle(
                                     fontSize: 21,
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xff1e1f24),
+                                    color: isDark
+                                        ? Colors.white
+                                        : Color(0xFF333333),
                                   ),
                                 ),
 
@@ -869,7 +890,9 @@ class _ProfilePageState extends State<ProfilePage> {
                                   style: TextStyle(
                                     fontSize: 14,
                                     height: 1.5,
-                                    color: Colors.black54,
+                                    color: isDark
+                                        ? Colors.white
+                                        : Color(0xFF333333),
                                   ),
                                 ),
                               ],
@@ -889,11 +912,13 @@ class _ProfilePageState extends State<ProfilePage> {
                                         Navigator.pop(dialogContext);
                                       },
                                       style: OutlinedButton.styleFrom(
-                                        foregroundColor: const Color(
-                                          0xff1e1f24,
-                                        ),
+                                        foregroundColor: isDark
+                                            ? Colors.white
+                                            : Color(0xFF333333),
                                         side: BorderSide(
-                                          color: Colors.grey.shade300,
+                                          color: isDark
+                                              ? Color(0xFF444444)
+                                              : Colors.grey.shade300,
                                         ),
                                         padding: const EdgeInsets.symmetric(
                                           vertical: 13,
@@ -907,7 +932,9 @@ class _ProfilePageState extends State<ProfilePage> {
                                       child: Text(
                                         textRead(context, 'Cancel'),
                                         style: TextStyle(
-                                          color: Color(0xff333333),
+                                          color: isDark
+                                              ? Colors.white
+                                              : Color(0xFF333333),
                                         ),
                                       ),
                                     ),
@@ -954,7 +981,9 @@ class _ProfilePageState extends State<ProfilePage> {
 
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: Colors.red,
-                                        foregroundColor: Colors.white,
+                                        foregroundColor: isDark
+                                            ? Color(0xFF333333)
+                                            : Colors.white,
                                         elevation: 0,
                                         padding: const EdgeInsets.symmetric(
                                           vertical: 13,
@@ -993,7 +1022,9 @@ class _ProfilePageState extends State<ProfilePage> {
                           return StatefulBuilder(
                             builder: (context, setDialogState) {
                               return AlertDialog(
-                                backgroundColor: Colors.white,
+                                backgroundColor: isDark
+                                    ? Color(0xFF333333)
+                                    : Colors.white,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(22),
                                 ),
@@ -1029,7 +1060,9 @@ class _ProfilePageState extends State<ProfilePage> {
                                       style: TextStyle(
                                         fontSize: 21,
                                         fontWeight: FontWeight.bold,
-                                        color: Color(0xff1e1f24),
+                                        color: isDark
+                                            ? Colors.white
+                                            : Color(0xff333333),
                                       ),
                                     ),
                                     const SizedBox(height: 12),
@@ -1052,7 +1085,9 @@ class _ProfilePageState extends State<ProfilePage> {
                                       style: TextStyle(
                                         fontSize: 14,
                                         height: 1.6,
-                                        color: Colors.black54,
+                                        color: isDark
+                                            ? Colors.white
+                                            : Color(0xff333333),
                                       ),
                                     ),
                                     const SizedBox(height: 7),
@@ -1075,11 +1110,13 @@ class _ProfilePageState extends State<ProfilePage> {
                                                   Navigator.pop(dialogContext);
                                                 },
                                           style: OutlinedButton.styleFrom(
-                                            foregroundColor: const Color(
-                                              0xff1e1f24,
-                                            ),
+                                            foregroundColor: isDark
+                                                ? Colors.white
+                                                : Color(0xff333333),
                                             side: BorderSide(
-                                              color: Colors.grey.shade300,
+                                              color: isDark
+                                                  ? Color(0xff444444)
+                                                  : Colors.grey.shade300,
                                             ),
                                             padding: const EdgeInsets.symmetric(
                                               vertical: 13,
@@ -1092,7 +1129,9 @@ class _ProfilePageState extends State<ProfilePage> {
                                           child: Text(
                                             textRead(context, 'Cancel'),
                                             style: TextStyle(
-                                              color: Color(0xff333333),
+                                              color: isDark
+                                                  ? Colors.white
+                                                  : Color(0xff333333),
                                             ),
                                           ),
                                         ),
@@ -1177,7 +1216,9 @@ class _ProfilePageState extends State<ProfilePage> {
                                                 },
                                           style: ElevatedButton.styleFrom(
                                             backgroundColor: Colors.red,
-                                            foregroundColor: Colors.white,
+                                            foregroundColor: isDark
+                                                ? Color(0xff333333)
+                                                : Colors.white,
                                             disabledBackgroundColor: Colors.red
                                                 .withValues(alpha: 0.5),
                                             elevation: 0,
@@ -1355,7 +1396,7 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? Color(0xff333333) : Colors.white,
       body: SafeArea(
         child: _isLoading
             ? const Center(child: CircularProgressIndicator(color: yellow))
@@ -1382,7 +1423,7 @@ class _ProfilePageState extends State<ProfilePage> {
               onPressed: _loadProfile,
               style: ElevatedButton.styleFrom(
                 backgroundColor: yellow,
-                foregroundColor: Colors.black,
+                foregroundColor: isDark ? Colors.white : Color(0xff333333),
               ),
               child: Text(textRead(context, 'Try again')),
             ),
@@ -1416,9 +1457,9 @@ class _ProfilePageState extends State<ProfilePage> {
                 onPressed: () {
                   Navigator.pop(context);
                 },
-                icon: const Icon(
+                icon: Icon(
                   Icons.arrow_back_rounded,
-                  color: Color(0xff333333),
+                  color: isDark ? Colors.white : Color(0xff333333),
                   size: 26,
                 ),
               ),
@@ -1429,7 +1470,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1,
-                  color: Color(0xff333333),
+                  color: isDark ? Colors.white : Color(0xff333333),
                 ),
               ),
               const Spacer(),
@@ -1470,7 +1511,11 @@ class _ProfilePageState extends State<ProfilePage> {
                                 backgroundColor: const Color(0xFFFFF2C2),
                                 backgroundImage: picture.isNotEmpty
                                     ? NetworkImage(picture)
-                                    : const AssetImage('assets/default_pfp.jpg')
+                                    : AssetImage(
+                                            isDark
+                                                ? 'assets/default_pfp_dark.png'
+                                                : 'assets/default_pfp.jpg',
+                                          )
                                           as ImageProvider,
                               ),
                             ),
@@ -1483,10 +1528,12 @@ class _ProfilePageState extends State<ProfilePage> {
                                   children: [
                                     Text(
                                       username,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 22,
                                         fontWeight: FontWeight.bold,
-                                        color: Color(0xff333333),
+                                        color: isDark
+                                            ? Colors.white
+                                            : Color(0xff333333),
                                       ),
                                     ),
                                     const SizedBox(height: 7),
@@ -1529,10 +1576,10 @@ class _ProfilePageState extends State<ProfilePage> {
                           const SizedBox(height: 14),
                           Text(
                             text(context, bio),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 14,
                               height: 1.4,
-                              color: Color(0xff333333),
+                              color: isDark ? Colors.white : Color(0xff333333),
                             ),
                           ),
                         ],
@@ -1592,7 +1639,9 @@ class _ProfilePageState extends State<ProfilePage> {
                                     style: TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.black,
+                                      color: isDark
+                                          ? Colors.white
+                                          : Color(0xff333333),
                                     ),
                                   ),
                                 ),
@@ -1609,9 +1658,13 @@ class _ProfilePageState extends State<ProfilePage> {
                                   : _toggleFollow,
                               style: OutlinedButton.styleFrom(
                                 backgroundColor: _isFollowing
-                                    ? Colors.white
+                                    ? isDark
+                                          ? Color(0xff333333)
+                                          : Colors.white
                                     : yellow,
-                                foregroundColor: Colors.black,
+                                foregroundColor: isDark
+                                    ? Colors.white
+                                    : Color(0xff333333),
                                 side: const BorderSide(
                                   color: yellow,
                                   width: 1.4,
@@ -1633,8 +1686,13 @@ class _ProfilePageState extends State<ProfilePage> {
                                       _isFollowing
                                           ? text(context, 'Followed')
                                           : text(context, 'Follow'),
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontWeight: FontWeight.bold,
+                                        color: _isFollowing
+                                            ? isDark
+                                                  ? Colors.white
+                                                  : Color(0xff333333)
+                                            : Colors.white,
                                       ),
                                     ),
                             ),
@@ -1787,18 +1845,26 @@ class _ProfilePageState extends State<ProfilePage> {
     String? svgPath,
     required String title,
     required VoidCallback onTap,
-    Color color = Colors.black87,
+    Color? color,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 4),
       leading: svgPath != null
-          ? SvgPicture.asset(svgPath, width: 24, height: 24)
-          : Icon(icon, color: color),
+          ? SvgPicture.asset(
+              svgPath,
+              width: 24,
+              height: 24,
+              color: color ?? (isDark ? Colors.white : Color(0xff333333)),
+            )
+          : Icon(
+              icon,
+              color: color ?? (isDark ? Colors.white : Color(0xff333333)),
+            ),
       title: Text(
         text(context, title),
         style: TextStyle(
-          color: color,
+          color: color ?? (isDark ? Colors.white : Color(0xff333333)),
           fontSize: 15,
           fontWeight: FontWeight.w500,
         ),

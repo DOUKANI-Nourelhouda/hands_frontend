@@ -5,29 +5,37 @@ class TermsPage extends StatelessWidget {
   const TermsPage({super.key});
 
   static const Color accentColor = Color(0xfffcc001);
-  static const Color textColor = Color(0xff1e1f24);
+  static const Color textColor = Color(0xff333333);
 
   Widget _section(String title, String content) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 24),
+    final isDark =
+        WidgetsBinding.instance.window.platformBrightness == Brightness.dark;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 24),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade400, width: 1),
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.bold,
-              color: textColor,
+              color: isDark ? Colors.white : const Color(0xff333333),
             ),
           ),
           const SizedBox(height: 8),
           Text(
             content,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               height: 1.7,
-              color: Colors.black87,
+              color: isDark ? Colors.white : const Color(0xff333333),
             ),
           ),
         ],
@@ -37,21 +45,25 @@ class TermsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: const Color(0xfffafafa),
+      backgroundColor: isDark ? const Color(0xff333333) : Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: isDark ? Color(0xff333333) : Colors.white,
         elevation: 0,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          icon: Icon(
+            Icons.arrow_back,
+            color: isDark ? Colors.white : Color(0xff333333),
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           text(context, 'Terms of Service'),
           style: TextStyle(
-            color: Colors.black87,
+            color: isDark ? Colors.white : Color(0xff333333),
             fontSize: 18,
             fontWeight: FontWeight.w600,
           ),
@@ -66,13 +78,13 @@ class TermsPage extends StatelessWidget {
               width: 66,
               height: 66,
               decoration: BoxDecoration(
-                color: const Color(0xfffff4cc),
+                color: isDark ? Color(0xff444444) : Color(0xfffff4cc),
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.handshake_outlined,
                 size: 34,
-                color: Color(0xff292929),
+                color: isDark ? Colors.white : Color(0xff292929),
               ),
             ),
           ),
@@ -85,7 +97,7 @@ class TermsPage extends StatelessWidget {
               style: TextStyle(
                 fontSize: 21,
                 fontWeight: FontWeight.w700,
-                color: Color(0xff292929),
+                color: isDark ? Colors.white : Color(0xff333333),
               ),
             ),
           ),
@@ -101,7 +113,7 @@ class TermsPage extends StatelessWidget {
             style: TextStyle(
               fontSize: 13,
               height: 1.6,
-              color: Color(0xff777777),
+              color: isDark ? Colors.white : Color(0xff777777),
             ),
           ),
 
@@ -299,7 +311,10 @@ class TermsPage extends StatelessWidget {
             child: Text(
               text(context, 'Hands - To survive in your residence.'),
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: Colors.black54),
+              style: TextStyle(
+                fontSize: 14,
+                color: isDark ? Colors.white : Color(0xff333333),
+              ),
             ),
           ),
         ],

@@ -49,7 +49,7 @@ class HomePageState extends State<HomePage> {
       final result;
 
       if (category == null || category == 'All') {
-        result = await widget.postService.getPosts(page: 1, limit: 10);
+        result = await widget.postService.getPosts(page: 1, limit: 50);
       } else {
         result = await widget.postService.getPostsByCategory(
           category,
@@ -128,7 +128,7 @@ class HomePageState extends State<HomePage> {
     }
 
     try {
-      final result = await widget.postService.getPosts(page: 1, limit: 10);
+      final result = await widget.postService.getPosts(page: 1, limit: 50);
 
       final rawPosts = result['posts'] as List<dynamic>? ?? [];
 
@@ -159,7 +159,7 @@ class HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? Color(0xff333333) : Colors.white,
       body: SafeArea(
         child: Column(
           children: [
@@ -194,7 +194,7 @@ class HomePageState extends State<HomePage> {
                       child: SvgPicture.asset(
                         'assets/tarchona.svg',
                         width: double.infinity,
-                        color: Color(0xffffffff),
+                        color: isDark ? const Color(0xff333333) : Colors.white,
                         height: 5,
                         fit: BoxFit.fill,
                       ),

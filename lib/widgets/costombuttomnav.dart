@@ -23,7 +23,7 @@ class CustomFloatingNavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     const double barHeight = 64.0;
     const double fabSize = 52.0;
-
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return SizedBox(
       height: barHeight + 14,
       child: Stack(
@@ -52,11 +52,13 @@ class CustomFloatingNavBar extends StatelessWidget {
               width: 360, // Customize the width
               height: barHeight + 14,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark ? Color(0xFF333333) : Colors.white,
                 borderRadius: BorderRadius.circular(30), // Rounded corners
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
+                    color: isDark
+                        ? Colors.white.withOpacity(0.02)
+                        : Colors.black.withOpacity(0.02),
                     blurRadius: 20,
                     offset: const Offset(0, 5),
                   ),
@@ -115,7 +117,7 @@ class CustomFloatingNavBar extends StatelessWidget {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: primaryColor.withOpacity(0.25),
+                          color: primaryColor.withOpacity(0.2),
                           blurRadius: 18,
                           spreadRadius: 2,
                           offset: const Offset(0, 6),
@@ -134,9 +136,9 @@ class CustomFloatingNavBar extends StatelessWidget {
                         end: Alignment.bottomRight,
                       ),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.add_rounded,
-                      color: Color(0xFFffffff),
+                      color: isDark ? Color(0xff333333) : Color(0xFFffffff),
                       size: 35,
                     ),
                   ),
@@ -163,11 +165,12 @@ class _NavBarItem extends StatelessWidget {
     required this.onTap,
   });
 
-  static const Color inactiveColor = Color(0xFF8E92A0);
-  static const Color activeColor = Color(0xFF333333);
-
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    Color inactiveColor = Color(0xFF8E92A0);
+    Color activeColor = isDark ? Colors.white : Color(0xFF333333);
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,

@@ -10,6 +10,7 @@ class HomeHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
       child: SizedBox(
@@ -24,7 +25,7 @@ class HomeHeader extends StatelessWidget {
             ),
 
             // Hands: always centered
-            const Expanded(
+            Expanded(
               child: Center(
                 child: Text(
                   'Hands',
@@ -32,7 +33,7 @@ class HomeHeader extends StatelessWidget {
                     fontSize: 30,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 0.5,
-                    color: Color(0xff333333),
+                    color: isDark ? Colors.white : Color(0xff333333),
                   ),
                 ),
               ),

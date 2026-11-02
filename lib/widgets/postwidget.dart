@@ -72,17 +72,21 @@ class _PostWidgetState extends State<PostWidget> {
   }
 
   Future<bool> _showBlockUserDialog(String username) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          backgroundColor: Colors.white,
+          backgroundColor: isDark ? const Color(0xff333333) : Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
           title: Text(
             textRead(context, 'Block user?'),
-            style: TextStyle(fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: isDark ? Colors.white : Color(0xff333333),
+            ),
           ),
           content: Text(
             textRead(
@@ -90,22 +94,28 @@ class _PostWidgetState extends State<PostWidget> {
               'Are you sure you want to block $username? '
               'Their posts will no longer appear in your feed.',
             ),
+            style: TextStyle(color: isDark ? Colors.white : Color(0xff333333)),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, false),
               child: Text(
                 textRead(context, 'Cancel'),
-                style: TextStyle(color: Colors.black54),
+                style: TextStyle(
+                  color: isDark ? Colors.white : Color(0xff333333),
+                ),
               ),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
+                foregroundColor: isDark ? Color(0xff333333) : Colors.white,
               ),
               onPressed: () => Navigator.pop(dialogContext, true),
-              child: Text(textRead(context, 'Block')),
+              child: Text(
+                textRead(context, 'Block'),
+                style: TextStyle(color: Colors.white),
+              ),
             ),
           ],
         );
@@ -146,7 +156,7 @@ class _PostWidgetState extends State<PostWidget> {
 
   Future<void> _openComments() async {
     if (_postId.isEmpty) return;
-
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     List<Map<String, dynamic>> loadedComments;
 
     try {
@@ -176,7 +186,7 @@ class _PostWidgetState extends State<PostWidget> {
         isScrollControlled: true,
         isDismissible: true,
         enableDrag: true,
-        backgroundColor: Colors.white,
+        backgroundColor: isDark ? Color(0xff333333) : Colors.white,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
         ),
@@ -208,7 +218,9 @@ class _PostWidgetState extends State<PostWidget> {
                             width: 40,
                             height: 5,
                             decoration: BoxDecoration(
-                              color: const Color(0xFFD0D0D0),
+                              color: isDark
+                                  ? Color(0xff333333)
+                                  : Color(0xFFD0D0D0),
                               borderRadius: BorderRadius.circular(10),
                             ),
                           ),
@@ -221,17 +233,20 @@ class _PostWidgetState extends State<PostWidget> {
                             style: TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF202124),
+                              color: isDark ? Colors.white : Color(0xff333333),
                             ),
                           ),
                         ),
 
-                        const Divider(height: 1, color: Color(0xFFEEEEEE)),
+                        Divider(
+                          height: 1,
+                          color: isDark ? Colors.grey : Color(0xFFEEEEEE),
+                        ),
 
                         // WHITE COMMENTS LIST BACKGROUND
                         Expanded(
                           child: Container(
-                            color: Colors.white,
+                            color: isDark ? Color(0xff333333) : Colors.white,
                             child: comments.isEmpty
                                 ? Center(
                                     child: Text(
@@ -287,7 +302,9 @@ class _PostWidgetState extends State<PostWidget> {
                                       final username =
                                           user['username']?.toString() ??
                                           'Student';
-
+                                      final isDark =
+                                          Theme.of(context).brightness ==
+                                          Brightness.dark;
                                       return Container(
                                         margin: const EdgeInsets.only(
                                           bottom: 12,
@@ -295,7 +312,9 @@ class _PostWidgetState extends State<PostWidget> {
                                         padding: const EdgeInsets.all(12),
                                         decoration: BoxDecoration(
                                           // GRAY BACKGROUND FOR EACH COMMENT
-                                          color: const Color(0xFFF2F2F2),
+                                          color: isDark
+                                              ? Color(0xff444444)
+                                              : Color(0xFFF2F2F2),
                                           borderRadius: BorderRadius.circular(
                                             14,
                                           ),
@@ -329,7 +348,9 @@ class _PostWidgetState extends State<PostWidget> {
                                                                   stackTrace,
                                                                 ) {
                                                                   return Image.asset(
-                                                                    'assets/default_pfp.jpg',
+                                                                    isDark
+                                                                        ? 'assets/default_pfp_dark.png'
+                                                                        : 'assets/default_pfp.jpg',
                                                                     width: 44,
                                                                     height: 44,
                                                                     fit: BoxFit
@@ -338,7 +359,9 @@ class _PostWidgetState extends State<PostWidget> {
                                                                 },
                                                           )
                                                         : Image.asset(
-                                                            'assets/default_pfp.jpg',
+                                                            isDark
+                                                                ? 'assets/default_pfp_dark.png'
+                                                                : 'assets/default_pfp.jpg',
                                                             width: 44,
                                                             height: 44,
                                                             fit: BoxFit.cover,
@@ -363,13 +386,15 @@ class _PostWidgetState extends State<PostWidget> {
                                                         maxLines: 1,
                                                         overflow: TextOverflow
                                                             .ellipsis,
-                                                        style: const TextStyle(
+                                                        style: TextStyle(
                                                           fontSize: 14,
                                                           fontWeight:
                                                               FontWeight.w700,
-                                                          color: Color(
-                                                            0xFF202124,
-                                                          ),
+                                                          color: isDark
+                                                              ? Colors.white
+                                                              : Color(
+                                                                  0xFF333333,
+                                                                ),
                                                         ),
                                                       ),
 
@@ -382,12 +407,14 @@ class _PostWidgetState extends State<PostWidget> {
                                                                   ?.toString() ??
                                                               '',
                                                         ),
-                                                        style: const TextStyle(
+                                                        style: TextStyle(
                                                           fontSize: 14,
                                                           height: 1.4,
-                                                          color: Color(
-                                                            0xFF444444,
-                                                          ),
+                                                          color: isDark
+                                                              ? Colors.white
+                                                              : Color(
+                                                                  0xFF444444,
+                                                                ),
                                                         ),
                                                       ),
                                                     ],
@@ -398,12 +425,16 @@ class _PostWidgetState extends State<PostWidget> {
                                                 // THREE-DOT COMMENT MENU
                                                 PopupMenuButton<String>(
                                                   tooltip: 'Comment options',
-                                                  icon: const Icon(
+                                                  icon: Icon(
                                                     Icons.more_horiz,
                                                     size: 23,
-                                                    color: Color(0xFF777777),
+                                                    color: isDark
+                                                        ? Colors.white
+                                                        : Color(0xFF777777),
                                                   ),
-                                                  color: Colors.white,
+                                                  color: isDark
+                                                      ? Color(0xff333333)
+                                                      : Colors.white,
                                                   elevation: 8,
                                                   shape: RoundedRectangleBorder(
                                                     borderRadius:
@@ -418,6 +449,7 @@ class _PostWidgetState extends State<PostWidget> {
                                                             String
                                                           >(
                                                             context: context,
+
                                                             builder: (_) => CommentTextDialog(
                                                               title: textRead(
                                                                 context,
@@ -621,17 +653,35 @@ class _PostWidgetState extends State<PostWidget> {
                                                         context: context,
                                                         builder: (dialogContext) => AlertDialog(
                                                           backgroundColor:
-                                                              Colors.white,
+                                                              isDark
+                                                              ? Color(
+                                                                  0xFF333333,
+                                                                )
+                                                              : Colors.white,
                                                           title: Text(
                                                             textRead(
                                                               context,
                                                               'Delete comment?',
+                                                            ),
+                                                            style: TextStyle(
+                                                              color: isDark
+                                                                  ? Colors.white
+                                                                  : Color(
+                                                                      0xff333333,
+                                                                    ),
                                                             ),
                                                           ),
                                                           content: Text(
                                                             textRead(
                                                               context,
                                                               'This action cannot be undone.',
+                                                            ),
+                                                            style: TextStyle(
+                                                              color: isDark
+                                                                  ? Colors.white
+                                                                  : Color(
+                                                                      0xff333333,
+                                                                    ),
                                                             ),
                                                           ),
                                                           actions: [
@@ -647,8 +697,12 @@ class _PostWidgetState extends State<PostWidget> {
                                                                   'Cancel',
                                                                 ),
                                                                 style: TextStyle(
-                                                                  color: Colors
-                                                                      .black,
+                                                                  color: isDark
+                                                                      ? Colors
+                                                                            .white
+                                                                      : Color(
+                                                                          0xff333333,
+                                                                        ),
                                                                 ),
                                                               ),
                                                             ),
@@ -733,12 +787,25 @@ class _PostWidgetState extends State<PostWidget> {
                                                               'assets/icons/edit.svg',
                                                               width: 19,
                                                               height: 19,
+                                                              color: isDark
+                                                                  ? Colors.white
+                                                                  : Color(
+                                                                      0xff333333,
+                                                                    ),
                                                             ),
                                                             SizedBox(width: 10),
                                                             Text(
                                                               textRead(
                                                                 context,
                                                                 'Edit',
+                                                              ),
+                                                              style: TextStyle(
+                                                                color: isDark
+                                                                    ? Colors
+                                                                          .white
+                                                                    : Color(
+                                                                        0xff333333,
+                                                                      ),
                                                               ),
                                                             ),
                                                           ],
@@ -752,12 +819,25 @@ class _PostWidgetState extends State<PostWidget> {
                                                               'assets/icons/delete.svg',
                                                               width: 19,
                                                               height: 19,
+                                                              color: isDark
+                                                                  ? Colors.white
+                                                                  : Color(
+                                                                      0xff333333,
+                                                                    ),
                                                             ),
                                                             SizedBox(width: 10),
                                                             Text(
                                                               textRead(
                                                                 context,
                                                                 'Delete',
+                                                              ),
+                                                              style: TextStyle(
+                                                                color: isDark
+                                                                    ? Colors
+                                                                          .white
+                                                                    : Color(
+                                                                        0xff333333,
+                                                                      ),
                                                               ),
                                                             ),
                                                           ],
@@ -772,12 +852,24 @@ class _PostWidgetState extends State<PostWidget> {
                                                             'assets/icons/reply.svg',
                                                             width: 19,
                                                             height: 19,
+                                                            color: isDark
+                                                                ? Colors.white
+                                                                : Color(
+                                                                    0xff333333,
+                                                                  ),
                                                           ),
                                                           SizedBox(width: 10),
                                                           Text(
                                                             textRead(
                                                               context,
                                                               'Reply',
+                                                            ),
+                                                            style: TextStyle(
+                                                              color: isDark
+                                                                  ? Colors.white
+                                                                  : Color(
+                                                                      0xff333333,
+                                                                    ),
                                                             ),
                                                           ),
                                                         ],
@@ -807,6 +899,11 @@ class _PostWidgetState extends State<PostWidget> {
                                                           'assets/icons/reply.svg',
                                                           width: 17,
                                                           height: 17,
+                                                          color: isDark
+                                                              ? Colors.white
+                                                              : Color(
+                                                                  0xff333333,
+                                                                ),
                                                         ),
                                                         const SizedBox(
                                                           width: 6,
@@ -820,9 +917,11 @@ class _PostWidgetState extends State<PostWidget> {
                                                             fontSize: 12,
                                                             fontWeight:
                                                                 FontWeight.w600,
-                                                            color: Color(
-                                                              0xFF777777,
-                                                            ),
+                                                            color: isDark
+                                                                ? Colors.white
+                                                                : Color(
+                                                                    0xFF777777,
+                                                                  ),
                                                           ),
                                                         ),
                                                       ],
@@ -879,7 +978,11 @@ class _PostWidgetState extends State<PostWidget> {
                                                               10,
                                                             ),
                                                         decoration: BoxDecoration(
-                                                          color: Colors.white,
+                                                          color: isDark
+                                                              ? Color(
+                                                                  0xff333333,
+                                                                )
+                                                              : Colors.white,
                                                           borderRadius:
                                                               BorderRadius.circular(
                                                                 12,
@@ -914,7 +1017,9 @@ class _PostWidgetState extends State<PostWidget> {
                                                                               stackTrace,
                                                                             ) {
                                                                               return Image.asset(
-                                                                                'assets/default_pfp.jpg',
+                                                                                isDark
+                                                                                    ? 'assets/default_pfp_dark.png'
+                                                                                    : 'assets/default_pfp.jpg',
                                                                                 width: 44,
                                                                                 height: 44,
                                                                                 fit: BoxFit.cover,
@@ -922,7 +1027,9 @@ class _PostWidgetState extends State<PostWidget> {
                                                                             },
                                                                       )
                                                                     : Image.asset(
-                                                                        'assets/default_pfp.jpg',
+                                                                        isDark
+                                                                            ? 'assets/default_pfp_dark.png'
+                                                                            : 'assets/default_pfp.jpg',
                                                                         width:
                                                                             44,
                                                                         height:
@@ -953,15 +1060,18 @@ class _PostWidgetState extends State<PostWidget> {
                                                                     overflow:
                                                                         TextOverflow
                                                                             .ellipsis,
-                                                                    style: const TextStyle(
+                                                                    style: TextStyle(
                                                                       fontSize:
                                                                           12,
                                                                       fontWeight:
                                                                           FontWeight
                                                                               .w700,
-                                                                      color: Color(
-                                                                        0xFF202124,
-                                                                      ),
+                                                                      color:
+                                                                          isDark
+                                                                          ? Colors.white
+                                                                          : Color(
+                                                                              0xFF202124,
+                                                                            ),
                                                                     ),
                                                                   ),
                                                                   const SizedBox(
@@ -971,14 +1081,17 @@ class _PostWidgetState extends State<PostWidget> {
                                                                     reply['content']
                                                                             ?.toString() ??
                                                                         '',
-                                                                    style: const TextStyle(
+                                                                    style: TextStyle(
                                                                       fontSize:
                                                                           13,
                                                                       height:
                                                                           1.4,
-                                                                      color: Color(
-                                                                        0xFF444444,
-                                                                      ),
+                                                                      color:
+                                                                          isDark
+                                                                          ? Colors.white
+                                                                          : Color(
+                                                                              0xFF444444,
+                                                                            ),
                                                                     ),
                                                                   ),
                                                                 ],
@@ -1008,16 +1121,23 @@ class _PostWidgetState extends State<PostWidget> {
                                                                       minHeight:
                                                                           40,
                                                                     ),
-                                                                icon: const Icon(
+                                                                icon: Icon(
                                                                   Icons
                                                                       .more_horiz,
                                                                   size: 21,
-                                                                  color: Color(
-                                                                    0xFF777777,
-                                                                  ),
+                                                                  color: isDark
+                                                                      ? Colors
+                                                                            .white
+                                                                      : Color(
+                                                                          0xFF777777,
+                                                                        ),
                                                                 ),
-                                                                color: Colors
-                                                                    .white,
+                                                                color: isDark
+                                                                    ? Color(
+                                                                        0xff333333,
+                                                                      )
+                                                                    : Colors
+                                                                          .white,
                                                                 onSelected: (action) async {
                                                                   if (action ==
                                                                       'edit') {
@@ -1105,7 +1225,11 @@ class _PostWidgetState extends State<PostWidget> {
                                                                             dialogContext,
                                                                           ) => AlertDialog(
                                                                             backgroundColor:
-                                                                                Colors.white,
+                                                                                isDark
+                                                                                ? Color(
+                                                                                    0xff333333,
+                                                                                  )
+                                                                                : Colors.white,
                                                                             title: Text(
                                                                               text(
                                                                                 context,
@@ -1130,7 +1254,11 @@ class _PostWidgetState extends State<PostWidget> {
                                                                                     'Cancel',
                                                                                   ),
                                                                                   style: TextStyle(
-                                                                                    color: Colors.black,
+                                                                                    color: isDark
+                                                                                        ? Colors.white
+                                                                                        : Color(
+                                                                                            0xff333333,
+                                                                                          ),
                                                                                   ),
                                                                                 ),
                                                                               ),
@@ -1222,6 +1350,12 @@ class _PostWidgetState extends State<PostWidget> {
                                                                               19,
                                                                           height:
                                                                               19,
+                                                                          color:
+                                                                              isDark
+                                                                              ? Colors.white
+                                                                              : Color(
+                                                                                  0xff333333,
+                                                                                ),
                                                                         ),
                                                                         SizedBox(
                                                                           width:
@@ -1231,6 +1365,14 @@ class _PostWidgetState extends State<PostWidget> {
                                                                           textRead(
                                                                             context,
                                                                             'Edit',
+                                                                          ),
+                                                                          style: TextStyle(
+                                                                            color:
+                                                                                isDark
+                                                                                ? Colors.white
+                                                                                : Color(
+                                                                                    0xff333333,
+                                                                                  ),
                                                                           ),
                                                                         ),
                                                                       ],
@@ -1249,6 +1391,12 @@ class _PostWidgetState extends State<PostWidget> {
                                                                               19,
                                                                           height:
                                                                               19,
+                                                                          color:
+                                                                              isDark
+                                                                              ? Colors.white
+                                                                              : Color(
+                                                                                  0xff333333,
+                                                                                ),
                                                                         ),
                                                                         SizedBox(
                                                                           width:
@@ -1258,6 +1406,12 @@ class _PostWidgetState extends State<PostWidget> {
                                                                           textRead(
                                                                             context,
                                                                             'Delete',
+                                                                          ),
+                                                                          style: TextStyle(
+                                                                            color:
+                                                                                isDark
+                                                                                ? Colors.white
+                                                                                : Colors.black,
                                                                           ),
                                                                         ),
                                                                       ],
@@ -1280,7 +1434,10 @@ class _PostWidgetState extends State<PostWidget> {
                           ),
                         ),
 
-                        const Divider(height: 1, color: Color(0xFFEEEEEE)),
+                        Divider(
+                          height: 1,
+                          color: isDark ? Colors.grey : Color(0xFFEEEEEE),
+                        ),
 
                         // WRITE COMMENT FIELD
                         Padding(
@@ -1294,6 +1451,11 @@ class _PostWidgetState extends State<PostWidget> {
                             children: [
                               Expanded(
                                 child: TextField(
+                                  style: TextStyle(
+                                    color: isDark
+                                        ? Colors.white
+                                        : Color(0xff333333),
+                                  ),
                                   controller: _commentController,
                                   textCapitalization:
                                       TextCapitalization.sentences,
@@ -1309,14 +1471,18 @@ class _PostWidgetState extends State<PostWidget> {
                                       fontSize: 14,
                                     ),
                                     filled: true,
-                                    fillColor: const Color(0xFFF2F2F2),
+                                    fillColor: isDark
+                                        ? Color(0xFF333333)
+                                        : Color(0xFFF2F2F2),
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(24),
                                       borderSide: BorderSide.none,
                                     ),
                                     enabledBorder: OutlineInputBorder(
+                                      borderSide: const BorderSide(
+                                        color: Colors.grey,
+                                      ),
                                       borderRadius: BorderRadius.circular(24),
-                                      borderSide: BorderSide.none,
                                     ),
                                     focusedBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(24),
@@ -1453,10 +1619,11 @@ class _PostWidgetState extends State<PostWidget> {
         context: context,
         barrierDismissible: false,
         builder: (dialogContext) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
           return StatefulBuilder(
             builder: (context, setDialogState) {
               return AlertDialog(
-                backgroundColor: Colors.white,
+                backgroundColor: isDark ? Color(0xFF333333) : Colors.white,
 
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(15),
@@ -1473,7 +1640,9 @@ class _PostWidgetState extends State<PostWidget> {
                     children: [
                       Text(
                         textRead(context, 'Why are you reporting this post?'),
-                        style: TextStyle(color: Colors.black54),
+                        style: TextStyle(
+                          color: isDark ? Colors.white : Color(0xff333333),
+                        ),
                       ),
                       const SizedBox(height: 12),
 
@@ -1546,13 +1715,17 @@ class _PostWidgetState extends State<PostWidget> {
                         : () => Navigator.pop(dialogContext, false),
                     child: Text(
                       textRead(context, 'Cancel'),
-                      style: TextStyle(color: Colors.black54),
+                      style: TextStyle(
+                        color: isDark ? Colors.white : Color(0xff333333),
+                      ),
                     ),
                   ),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xfffcc001),
-                      foregroundColor: Colors.black,
+                      foregroundColor: isDark
+                          ? Colors.white
+                          : Color(0xff333333),
                       disabledBackgroundColor: Colors.amber.shade200,
                     ),
                     onPressed: isSubmitting
@@ -1638,16 +1811,21 @@ class _PostWidgetState extends State<PostWidget> {
     final List<dynamic> postMedia = post['media'] is List
         ? post['media'] as List<dynamic>
         : [];
-
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 5),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? Color(0xFF333333) : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFEEEEEE), width: 1),
+        border: Border.all(
+          color: isDark ? Color(0xFF555555) : const Color(0xFFEEEEEE),
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.035),
+            color: isDark
+                ? Color(0xFF000000).withValues(alpha: 0.035)
+                : Color(0xFF000000).withValues(alpha: 0.035),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
@@ -1673,10 +1851,10 @@ class _PostWidgetState extends State<PostWidget> {
                         text(context, username),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF202124),
+                          color: isDark ? Colors.white : Color(0xFF333333),
                         ),
                       ),
 
@@ -1688,15 +1866,17 @@ class _PostWidgetState extends State<PostWidget> {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFFF7D6),
+                          color: isDark ? Color(0xFF8A6800) : Color(0xFFFFF7D6),
                           borderRadius: BorderRadius.circular(7),
                         ),
                         child: Text(
                           text(context, category),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w500,
-                            color: Color(0xFF8A6800),
+                            color: isDark
+                                ? Color(0xFFFFF7D6)
+                                : Color(0xFF8A6800),
                           ),
                         ),
                       ),
@@ -1706,14 +1886,14 @@ class _PostWidgetState extends State<PostWidget> {
 
                 PopupMenuButton<String>(
                   tooltip: 'Post options',
-                  color: Colors.white,
+                  color: isDark ? Color(0xFF333333) : Colors.white,
                   elevation: 8,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.more_horiz,
-                    color: Color(0xFF777777),
+                    color: isDark ? Colors.white : Color(0xFF777777),
                     size: 24,
                   ),
 
@@ -1773,7 +1953,9 @@ class _PostWidgetState extends State<PostWidget> {
                         final confirmed = await showDialog<bool>(
                           context: context,
                           builder: (dialogContext) => AlertDialog(
-                            backgroundColor: Colors.white,
+                            backgroundColor: isDark
+                                ? Color(0xFF333333)
+                                : Colors.white,
                             title: Text(textRead(context, 'Delete post?')),
                             content: Text(
                               textRead(
@@ -1787,7 +1969,11 @@ class _PostWidgetState extends State<PostWidget> {
                                     Navigator.pop(dialogContext, false),
                                 child: Text(
                                   textRead(context, 'Cancel'),
-                                  style: TextStyle(color: Colors.black),
+                                  style: TextStyle(
+                                    color: isDark
+                                        ? Colors.white
+                                        : Color(0xff333333),
+                                  ),
                                 ),
                               ),
                               TextButton(
@@ -1969,10 +2155,10 @@ class _PostWidgetState extends State<PostWidget> {
               child: _highlightSearchText(
                 context,
                 caption,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 15,
                   height: 1.5,
-                  color: Color(0xFF333333),
+                  color: isDark ? Colors.white : Color(0xff333333),
                 ),
               ),
             ),
@@ -2010,9 +2196,12 @@ class _PostWidgetState extends State<PostWidget> {
                     ),
             ),
           // DIVIDER
-          const Padding(
+          Padding(
             padding: EdgeInsets.only(top: 7),
-            child: Divider(height: 1, thickness: 1, color: Color(0xFFF0F0F0)),
+            child: Divider(
+              height: 1,
+              color: isDark ? Colors.grey : Color(0xFFEEEEEE),
+            ),
           ),
 
           // LIKE AND COMMENT COUNTS
@@ -2033,7 +2222,11 @@ class _PostWidgetState extends State<PostWidget> {
                       width: 25,
                       height: 25,
                       colorFilter: ColorFilter.mode(
-                        _isLiked ? Colors.red : const Color(0xFF666666),
+                        _isLiked
+                            ? Colors.red
+                            : isDark
+                            ? Colors.white
+                            : const Color(0xFF666666),
                         BlendMode.srcIn,
                       ),
                     ),
@@ -2045,9 +2238,9 @@ class _PostWidgetState extends State<PostWidget> {
                 // LIKE COUNT
                 Text(
                   '$_likeCount',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
-                    color: Color(0xFF666666),
+                    color: isDark ? Colors.white : const Color(0xFF666666),
                   ),
                 ),
 
@@ -2063,8 +2256,8 @@ class _PostWidgetState extends State<PostWidget> {
                       'assets/icons/comment.svg',
                       width: 24,
                       height: 24,
-                      colorFilter: const ColorFilter.mode(
-                        Color(0xFF666666),
+                      colorFilter: ColorFilter.mode(
+                        isDark ? Colors.white : const Color(0xFF666666),
                         BlendMode.srcIn,
                       ),
                     ),
@@ -2076,9 +2269,9 @@ class _PostWidgetState extends State<PostWidget> {
                 // COMMENT COUNT
                 Text(
                   '$_commentCount',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
-                    color: Color(0xFF666666),
+                    color: isDark ? Colors.white : const Color(0xFF666666),
                   ),
                 ),
 
@@ -2099,8 +2292,8 @@ class _PostWidgetState extends State<PostWidget> {
                       'assets/icons/send.svg',
                       width: 24,
                       height: 24,
-                      colorFilter: const ColorFilter.mode(
-                        Color(0xFF666666),
+                      colorFilter: ColorFilter.mode(
+                        isDark ? Colors.white : const Color(0xFF666666),
                         BlendMode.srcIn,
                       ),
                     ),
@@ -2134,7 +2327,7 @@ class _PostWidgetState extends State<PostWidget> {
     }
 
     final bool isVideo = type.toLowerCase() == 'video';
-
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -2157,11 +2350,11 @@ class _PostWidgetState extends State<PostWidget> {
           height: height,
           child: isVideo
               ? Container(
-                  color: Colors.black,
-                  child: const Center(
+                  color: isDark ? Colors.white : Colors.black,
+                  child: Center(
                     child: Icon(
                       Icons.play_circle_fill,
-                      color: Colors.white,
+                      color: isDark ? Colors.black : Colors.white,
                       size: 58,
                     ),
                   ),
@@ -2179,7 +2372,9 @@ class _PostWidgetState extends State<PostWidget> {
                   },
                   errorBuilder: (context, error, stackTrace) {
                     return Container(
-                      color: const Color(0xFFF5F5F5),
+                      color: isDark
+                          ? Color(0xFF333333)
+                          : const Color(0xFFF5F5F5),
                       alignment: Alignment.center,
                       child: const Icon(
                         Icons.broken_image_outlined,
@@ -2195,12 +2390,18 @@ class _PostWidgetState extends State<PostWidget> {
   }
 
   Widget _buildAvatar(String imageUrl, String username) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return CircleAvatar(
       radius: 23,
       backgroundColor: const Color(0xFFFFF2C2),
       backgroundImage: imageUrl.isNotEmpty
           ? NetworkImage(imageUrl)
-          : const AssetImage('assets/default_pfp.jpg') as ImageProvider,
+          : AssetImage(
+                  isDark
+                      ? 'assets/default_pfp_dark.png'
+                      : 'assets/default_pfp.jpg',
+                )
+                as ImageProvider,
     );
   }
 
@@ -2210,6 +2411,7 @@ class _PostWidgetState extends State<PostWidget> {
     int? maxLines,
     TextStyle? style,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final query = widget.searchQuery.trim();
 
     final spans = <TextSpan>[];
@@ -2295,12 +2497,13 @@ class _CommentTextDialogState extends State<CommentTextDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return AlertDialog(
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? Color(0xFF333333) : Colors.white,
       title: Text(widget.title),
       content: TextField(
         controller: _controller,
-        cursorColor: Colors.black,
+        cursorColor: isDark ? Colors.white : Color(0xFF333333),
         autofocus: true,
         maxLength: 500,
         maxLines: 4,
@@ -2308,14 +2511,17 @@ class _CommentTextDialogState extends State<CommentTextDialog> {
           hintText: widget.hintText,
 
           // Line color when the TextField is not selected
-          enabledBorder: const UnderlineInputBorder(
-            borderSide: BorderSide(color: Color(0xFf000000), width: 1.5),
+          enabledBorder: UnderlineInputBorder(
+            borderSide: BorderSide(
+              color: isDark ? Colors.white : Color(0xFf000000),
+              width: 1.5,
+            ),
           ),
 
           // Line color when the user taps the TextField
-          focusedBorder: const UnderlineInputBorder(
+          focusedBorder: UnderlineInputBorder(
             borderSide: BorderSide(
-              color: Color(0xFF000000), // Hands yellow
+              color: isDark ? Colors.white : Color(0xFF000000), // Hands yellow
               width: 1.5,
             ),
           ),
@@ -2326,7 +2532,7 @@ class _CommentTextDialogState extends State<CommentTextDialog> {
           onPressed: () => Navigator.pop(context),
           child: Text(
             textRead(context, 'Cancel'),
-            style: TextStyle(color: Colors.black),
+            style: TextStyle(color: isDark ? Colors.white : Colors.black),
           ),
         ),
         TextButton(

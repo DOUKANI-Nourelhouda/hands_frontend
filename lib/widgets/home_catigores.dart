@@ -51,6 +51,7 @@ class HomeCategories extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -75,10 +76,18 @@ class HomeCategories extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: isSelected ? accent : const Color(0xFFF5F5F5),
+                    color: isSelected
+                        ? accent
+                        : isDark
+                        ? Color(0xFF555555)
+                        : Color(0xFFF5F5F5),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: isSelected ? accent : const Color(0xFFEEEEEE),
+                      color: isSelected
+                          ? accent
+                          : isDark
+                          ? Color(0xFF444444)
+                          : const Color(0xFFEEEEEE),
                       width: 2,
                     ),
                   ),
@@ -90,7 +99,11 @@ class HomeCategories extends StatelessWidget {
                         width: 22,
                         height: 22,
                         colorFilter: ColorFilter.mode(
-                          isSelected ? Colors.white : const Color(0xff333333),
+                          isSelected
+                              ? Colors.white
+                              : isDark
+                              ? Colors.white
+                              : const Color(0xff333333),
                           BlendMode.srcIn,
                         ),
                       ),
@@ -103,6 +116,8 @@ class HomeCategories extends StatelessWidget {
                               ? FontWeight.w600
                               : FontWeight.w400,
                           color: isSelected
+                              ? Colors.white
+                              : isDark
                               ? Colors.white
                               : const Color(0xff333333),
                         ),

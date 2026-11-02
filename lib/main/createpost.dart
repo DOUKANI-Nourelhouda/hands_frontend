@@ -173,11 +173,12 @@ class _CreatePostPageState extends State<CreatePostPage> {
   }
 
   Future<void> _showNoCreditsDialog() async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     await showDialog(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          backgroundColor: Colors.white,
+          backgroundColor: isDark ? Color(0xff333333) : Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18),
           ),
@@ -197,7 +198,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
               onPressed: () => Navigator.pop(dialogContext),
               child: Text(
                 textRead(context, 'Cancel'),
-                style: TextStyle(color: Colors.black),
+                style: TextStyle(color: isDark ? Colors.white : Colors.black),
               ),
             ),
             ElevatedButton(
@@ -340,15 +341,16 @@ class _CreatePostPageState extends State<CreatePostPage> {
   }
 
   InputDecoration _decoration(String label) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return InputDecoration(
       labelText: label,
       labelStyle: const TextStyle(color: Colors.grey),
       filled: true,
-      fillColor: Colors.white,
+      fillColor: isDark ? Color(0xff333333) : Colors.white,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFFEEEEEE)),
+        borderSide: BorderSide(color: isDark ? Colors.grey : Color(0xFFEEEEEE)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -367,21 +369,24 @@ class _CreatePostPageState extends State<CreatePostPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: const Color(0xFFffffff),
+      backgroundColor: isDark ? Color(0xff333333) : Color(0xFFffffff),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: isDark ? Color(0xff333333) : Colors.white,
         elevation: 0,
         title: Text(
           widget.isEditing
               ? text(context, 'Edit post')
               : text(context, 'Create a post'),
           style: TextStyle(
-            color: Color(0xFF333333),
+            color: isDark ? Colors.white : Color(0xFF333333),
             fontWeight: FontWeight.w700,
           ),
         ),
-        iconTheme: const IconThemeData(color: Color(0xFF333333)),
+        iconTheme: IconThemeData(
+          color: isDark ? Colors.white : Color(0xFF333333),
+        ),
       ),
       body: SafeArea(
         child: Form(
@@ -459,8 +464,6 @@ class _CreatePostPageState extends State<CreatePostPage> {
 
               const SizedBox(height: 12),
 
-              // Existing media from the post
-
               // EXISTING MEDIA FROM THE POST
               if (_existingMedia.isNotEmpty) ...[
                 const SizedBox(height: 10),
@@ -493,11 +496,15 @@ class _CreatePostPageState extends State<CreatePostPage> {
                               height: 120,
                               child: isVideo
                                   ? Container(
-                                      color: Colors.black87,
-                                      child: const Center(
+                                      color: isDark
+                                          ? Colors.white
+                                          : Color(0xff333333),
+                                      child: Center(
                                         child: Icon(
                                           Icons.play_circle_outline,
-                                          color: Colors.white,
+                                          color: isDark
+                                              ? Color(0xff333333)
+                                              : Colors.white,
                                           size: 45,
                                         ),
                                       ),
@@ -507,17 +514,18 @@ class _CreatePostPageState extends State<CreatePostPage> {
                                       width: 120,
                                       height: 120,
                                       fit: BoxFit.cover,
-                                      errorBuilder: (_, __, ___) =>
-                                          const SizedBox(
-                                            width: 120,
-                                            height: 120,
-                                            child: ColoredBox(
-                                              color: Color(0xFFF2F2F2),
-                                              child: Icon(
-                                                Icons.broken_image_outlined,
-                                              ),
-                                            ),
+                                      errorBuilder: (_, __, ___) => SizedBox(
+                                        width: 120,
+                                        height: 120,
+                                        child: ColoredBox(
+                                          color: isDark
+                                              ? Color(0xff333333)
+                                              : Color(0xFFF2F2F2),
+                                          child: Icon(
+                                            Icons.broken_image_outlined,
                                           ),
+                                        ),
+                                      ),
                                     ),
                             ),
                           ),
@@ -533,8 +541,10 @@ class _CreatePostPageState extends State<CreatePostPage> {
                               child: Container(
                                 width: 28,
                                 height: 28,
-                                decoration: const BoxDecoration(
-                                  color: Colors.white,
+                                decoration: BoxDecoration(
+                                  color: isDark
+                                      ? Color(0xff333333)
+                                      : Colors.white,
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(
@@ -546,12 +556,14 @@ class _CreatePostPageState extends State<CreatePostPage> {
                             ),
                           ),
                           if (isVideo)
-                            const Positioned(
+                            Positioned(
                               bottom: 5,
                               left: 5,
                               child: Icon(
                                 Icons.videocam,
-                                color: Colors.white,
+                                color: isDark
+                                    ? Color(0xff333333)
+                                    : Colors.white,
                                 size: 20,
                               ),
                             ),
@@ -601,11 +613,15 @@ class _CreatePostPageState extends State<CreatePostPage> {
                               height: 120,
                               child: isVideo
                                   ? Container(
-                                      color: Colors.black87,
-                                      child: const Center(
+                                      color: isDark
+                                          ? Colors.white
+                                          : Color(0xff333333),
+                                      child: Center(
                                         child: Icon(
                                           Icons.play_circle_outline,
-                                          color: Colors.white,
+                                          color: isDark
+                                              ? Color(0xff333333)
+                                              : Colors.white,
                                           size: 45,
                                         ),
                                       ),
@@ -615,17 +631,18 @@ class _CreatePostPageState extends State<CreatePostPage> {
                                       width: 120,
                                       height: 120,
                                       fit: BoxFit.cover,
-                                      errorBuilder: (_, __, ___) =>
-                                          const SizedBox(
-                                            width: 120,
-                                            height: 120,
-                                            child: ColoredBox(
-                                              color: Color(0xFFF2F2F2),
-                                              child: Icon(
-                                                Icons.broken_image_outlined,
-                                              ),
-                                            ),
+                                      errorBuilder: (_, __, ___) => SizedBox(
+                                        width: 120,
+                                        height: 120,
+                                        child: ColoredBox(
+                                          color: isDark
+                                              ? Color(0xff444444)
+                                              : Color(0xFFF2F2F2),
+                                          child: Icon(
+                                            Icons.broken_image_outlined,
                                           ),
+                                        ),
+                                      ),
                                     ),
                             ),
                           ),
@@ -637,8 +654,10 @@ class _CreatePostPageState extends State<CreatePostPage> {
                               child: Container(
                                 width: 28,
                                 height: 28,
-                                decoration: const BoxDecoration(
-                                  color: Colors.white,
+                                decoration: BoxDecoration(
+                                  color: isDark
+                                      ? Color(0xff333333)
+                                      : Colors.white,
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(
@@ -650,12 +669,14 @@ class _CreatePostPageState extends State<CreatePostPage> {
                             ),
                           ),
                           if (isVideo)
-                            const Positioned(
+                            Positioned(
                               bottom: 5,
                               left: 5,
                               child: Icon(
                                 Icons.videocam,
-                                color: Colors.white,
+                                color: isDark
+                                    ? Color(0xff333333)
+                                    : Colors.white,
                                 size: 20,
                               ),
                             ),
@@ -678,7 +699,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
                   onPressed: isSubmitting ? null : _submitPost,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: accent,
-                    foregroundColor: Colors.black,
+                    foregroundColor: isDark ? Colors.white : Color(0xFF333333),
                     disabledBackgroundColor: Colors.amber.shade200,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
@@ -718,6 +739,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
     required VoidCallback onRemove,
     required Widget image,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Stack(
       children: [
         ClipRRect(
@@ -732,8 +754,8 @@ class _CreatePostPageState extends State<CreatePostPage> {
             child: Container(
               width: 28,
               height: 28,
-              decoration: const BoxDecoration(
-                color: Colors.white,
+              decoration: BoxDecoration(
+                color: isDark ? Color(0xff333333) : Colors.white,
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.close, size: 19, color: Colors.redAccent),
@@ -741,10 +763,14 @@ class _CreatePostPageState extends State<CreatePostPage> {
           ),
         ),
         if (isVideo)
-          const Positioned(
+          Positioned(
             bottom: 5,
             left: 5,
-            child: Icon(Icons.videocam, color: Colors.white, size: 20),
+            child: Icon(
+              Icons.videocam,
+              color: isDark ? Color(0xff333333) : Colors.white,
+              size: 20,
+            ),
           ),
       ],
     );
@@ -769,7 +795,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
         'You have no free posts anymore. You need to pay to post.',
       );
     }
-
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
@@ -779,10 +805,10 @@ class _CreatePostPageState extends State<CreatePostPage> {
       ),
       child: Text(
         message,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w600,
-          color: Color(0xFF333333),
+          color: isDark ? Colors.white : Color(0xFF333333),
         ),
         textAlign: TextAlign.center,
       ),

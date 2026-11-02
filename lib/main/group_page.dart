@@ -93,10 +93,10 @@ class _GroupsPageState extends State<GroupsPage> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: const Color(0xfffafafa),
+      backgroundColor: isDark ? Color(0xFF333333) : Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: isDark ? Color(0xFF333333) : Colors.white,
+        foregroundColor: isDark ? Colors.white : Color(0xFF333333),
         elevation: 0,
         title: Text(
           text(context, 'Groups'),
@@ -108,7 +108,7 @@ class _GroupsPageState extends State<GroupsPage> {
       ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: handsYellow,
-        foregroundColor: Colors.black,
+        foregroundColor: isDark ? Colors.white : Color(0xFF333333),
         onPressed: openCreateGroup,
         child: const Icon(Icons.group_add),
       ),
@@ -174,7 +174,7 @@ class _GroupsPageState extends State<GroupsPage> {
                 label: Text(text(context, 'Create a group')),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: handsYellow,
-                  foregroundColor: Colors.black,
+                  foregroundColor: isDark ? Colors.white : Color(0xFF333333),
                 ),
               ),
             ],
@@ -193,18 +193,18 @@ class _GroupsPageState extends State<GroupsPage> {
           final group = groups[index];
 
           return Card(
-            color: Colors.white,
+            color: isDark ? Color(0xFF333333) : Colors.white,
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
-              side: const BorderSide(color: Color(0xffeeeeee)),
+              side: BorderSide(color: isDark ? Colors.grey : Color(0xffeeeeee)),
             ),
             child: ListTile(
               contentPadding: const EdgeInsets.all(12),
               leading: CircleAvatar(
                 radius: 26,
                 backgroundColor: const Color(0xfffff1bf),
-                child: const Icon(Icons.groups, color: Colors.black87),
+                child: const Icon(Icons.groups, color: Color(0xff333333)),
               ),
               title: Text(
                 groupName(group),
@@ -369,11 +369,11 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: const Color(0xfffafafa),
+      backgroundColor: isDark ? Color(0xFF333333) : Colors.white,
       appBar: AppBar(
         title: Text(text(context, 'Create a group')),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: isDark ? Color(0xFF333333) : Colors.white,
+        foregroundColor: isDark ? Colors.white : Color(0xFF333333),
         elevation: 0,
       ),
       body: Column(
@@ -383,7 +383,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
             padding: const EdgeInsets.all(16),
             child: TextField(
               controller: nameController,
-              cursorColor: Color(0xff333333),
+              cursorColor: isDark ? Colors.white : Color(0xff333333),
               maxLength: 60,
               decoration: InputDecoration(
                 hintText: text(context, 'Group name'),
@@ -402,7 +402,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                   ),
                 ),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: isDark ? Color(0xFF333333) : Colors.white,
 
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
@@ -425,7 +425,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
             padding: const EdgeInsets.all(16),
             child: TextField(
               controller: searchController,
-              cursorColor: Color(0xff333333),
+              cursorColor: isDark ? Colors.white : Color(0xff333333),
               onChanged: searchStudents,
               decoration: InputDecoration(
                 hintText: text(context, 'Search users'),
@@ -445,7 +445,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                       )
                     : null,
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: isDark ? Color(0xFF333333) : Colors.white,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
                   borderSide: const BorderSide(
@@ -489,14 +489,20 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                   return CheckboxListTile(
                     value: true,
                     activeColor: handsYellow,
-                    checkColor: Colors.black,
+                    checkColor: isDark ? Colors.white : Color(0xff333333),
                     title: Text(studentName(user)),
                     secondary: CircleAvatar(
                       radius: 24,
-                      backgroundColor: const Color(0xfff5f5f5),
+                      backgroundColor: isDark
+                          ? Color(0xFF333333)
+                          : Colors.white,
                       backgroundImage: studentPicture(user).isNotEmpty
                           ? NetworkImage(studentPicture(user))
-                          : const AssetImage('assets/default_pfp.jpg')
+                          : AssetImage(
+                                  isDark
+                                      ? 'assets/default_pfp_dark.png'
+                                      : 'assets/default_pfp.jpg',
+                                )
                                 as ImageProvider,
                     ),
                     onChanged: (_) {
@@ -515,14 +521,20 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                       return CheckboxListTile(
                         value: selected.containsKey(id),
                         activeColor: handsYellow,
-                        checkColor: Colors.black,
+                        checkColor: isDark ? Colors.white : Color(0xFF333333),
                         title: Text(studentName(user)),
                         secondary: CircleAvatar(
                           radius: 24,
-                          backgroundColor: const Color(0xfff5f5f5),
+                          backgroundColor: isDark
+                              ? Color(0xFF333333)
+                              : Colors.white,
                           backgroundImage: studentPicture(user).isNotEmpty
                               ? NetworkImage(studentPicture(user))
-                              : const AssetImage('assets/default_pfp.jpg')
+                              : AssetImage(
+                                      isDark
+                                          ? 'assets/default_pfp_dark.png'
+                                          : 'assets/default_pfp.jpg',
+                                    )
                                     as ImageProvider,
                         ),
                         onChanged: (checked) {
@@ -560,7 +572,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                   onPressed: creating ? null : createGroup,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: handsYellow,
-                    foregroundColor: Colors.black,
+                    foregroundColor: isDark ? Colors.white : Color(0xFF333333),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
@@ -571,7 +583,10 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                         )
                       : Text(
                           text(context, 'Create group'),
-                          style: TextStyle(fontSize: 23),
+                          style: TextStyle(
+                            fontSize: 22,
+                            color: isDark ? Color(0xff333333) : Colors.white,
+                          ),
                         ),
                 ),
               ),

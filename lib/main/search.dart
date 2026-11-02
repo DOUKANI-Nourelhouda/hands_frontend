@@ -449,7 +449,7 @@ class _SearchPageState extends State<SearchPage> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? Color(0xFF333333) : Colors.white,
       body: SafeArea(
         child: Column(
           children: [
@@ -483,9 +483,9 @@ class _SearchPageState extends State<SearchPage> {
                 Navigator.pop(context);
               }
             },
-            icon: const Icon(
+            icon: Icon(
               Icons.arrow_back_rounded,
-              color: textColor,
+              color: isDark ? Colors.white : textColor,
               size: 26,
             ),
           ),
@@ -497,24 +497,27 @@ class _SearchPageState extends State<SearchPage> {
             child: Container(
               height: 48,
               decoration: BoxDecoration(
-                color: const Color(0xFFF5F5F5),
+                color: isDark ? Color(0xFF444444) : Color(0xFFF5F5F5),
                 borderRadius: BorderRadius.circular(25),
-                border: Border.all(color: const Color(0xFFEEEEEE), width: 1.5),
+                border: Border.all(
+                  color: isDark ? Colors.grey : Color(0xFFEEEEEE),
+                  width: 1.5,
+                ),
               ),
               child: TextField(
                 controller: _searchController,
-                cursorColor: Colors.black,
+                cursorColor: isDark ? Colors.white : Color(0xff333333),
                 onChanged: _onSearchChanged,
                 textInputAction: TextInputAction.search,
                 decoration: InputDecoration(
                   hintText: text(context, 'Search ...'),
-                  hintStyle: const TextStyle(
+                  hintStyle: TextStyle(
                     fontSize: 14,
-                    color: Color(0xff8E92A0),
+                    color: isDark ? Colors.grey : Color(0xff8E92A0),
                   ),
-                  prefixIcon: const Icon(
+                  prefixIcon: Icon(
                     Icons.search_rounded,
-                    color: Color(0xff8E92A0),
+                    color: isDark ? Colors.grey : Color(0xff8E92A0),
                     size: 22,
                   ),
                   suffixIcon: searchQuery.isNotEmpty
@@ -560,10 +563,18 @@ class _SearchPageState extends State<SearchPage> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 0),
               decoration: BoxDecoration(
-                color: isSelected ? accent : const Color(0xFFF5F5F5),
+                color: isSelected
+                    ? accent
+                    : isDark
+                    ? Color(0xFF444444)
+                    : Color(0xFFF5F5F5),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: isSelected ? accent : const Color(0xFFEEEEEE),
+                  color: isSelected
+                      ? accent
+                      : isDark
+                      ? Colors.grey
+                      : const Color(0xFFEEEEEE),
                   width: 2,
                 ),
               ),
@@ -583,7 +594,11 @@ class _SearchPageState extends State<SearchPage> {
                       fontWeight: isSelected
                           ? FontWeight.w600
                           : FontWeight.w400,
-                      color: isSelected ? Colors.white : textColor,
+                      color: isSelected
+                          ? isDark
+                                ? Colors.white
+                                : textColor
+                          : Colors.white,
                     ),
                   ),
                 ],
@@ -602,7 +617,11 @@ class _SearchPageState extends State<SearchPage> {
       width: 22,
       height: 22,
       colorFilter: ColorFilter.mode(
-        isSelected ? Colors.white : textColor,
+        isSelected
+            ? isDark
+                  ? Colors.white
+                  : textColor
+            : Colors.white,
         BlendMode.srcIn,
       ),
     );
@@ -666,8 +685,8 @@ class _SearchPageState extends State<SearchPage> {
       return _buildMessage(
         icon: SvgPicture.asset(
           'assets/icons/posts.svg',
-          width: 60,
-          height: 60,
+          width: 80,
+          height: 80,
           colorFilter: const ColorFilter.mode(
             Color(0xffC4C4C4),
             BlendMode.srcIn,
@@ -787,12 +806,17 @@ class _SearchPageState extends State<SearchPage> {
           margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: isDark ? Color(0xFF444444) : Colors.white,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: const Color(0xFFF0F0F0), width: 1),
+            border: Border.all(
+              color: isDark ? Color(0xFF444444) : Color(0xFFF0F0F0),
+              width: 1,
+            ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.07),
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.07)
+                    : const Color(0xFF000000).withValues(alpha: 0.07),
                 blurRadius: 12,
                 spreadRadius: 1,
                 offset: const Offset(0, 4),
@@ -805,21 +829,28 @@ class _SearchPageState extends State<SearchPage> {
               backgroundColor: const Color(0xFFFFF2C2),
               backgroundImage: profilePicture.isNotEmpty
                   ? NetworkImage(profilePicture)
-                  : const AssetImage('assets/default_pfp.jpg') as ImageProvider,
+                  : AssetImage(
+                          isDark
+                              ? 'assets/default_pfp_dark.png'
+                              : 'assets/default_pfp.jpg',
+                        )
+                        as ImageProvider,
             ),
             title: _highlightSearchText(
               context,
               username,
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF333333),
+                color: isDark ? Colors.white : Color(0xFF333333),
               ),
             ),
             subtitle: bio.isNotEmpty
                 ? _highlightSearchText(
                     context,
                     bio,
-                    style: const TextStyle(color: Color(0xFF333333)),
+                    style: TextStyle(
+                      color: isDark ? Colors.white : Color(0xFF333333),
+                    ),
                     maxLines: 2,
                   )
                 : null,
@@ -930,12 +961,17 @@ class _SearchPageState extends State<SearchPage> {
             margin: const EdgeInsets.symmetric(vertical: 5),
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: isDark ? Color(0xFF444444) : Colors.white,
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: const Color(0xFFF0F0F0), width: 1),
+              border: Border.all(
+                color: isDark ? Color(0xFF444444) : Color(0xFFF0F0F0),
+                width: 1,
+              ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.07),
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.07)
+                      : const Color(0xFF000000).withValues(alpha: 0.07),
                   blurRadius: 12,
                   spreadRadius: 1,
                   offset: const Offset(0, 4),
@@ -961,7 +997,7 @@ class _SearchPageState extends State<SearchPage> {
                 maxLines: 1,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: const Color(0xFF333333),
+                  color: isDark ? Colors.white : Color(0xFF333333),
                 ),
               ),
               subtitle: description.isNotEmpty
@@ -971,16 +1007,16 @@ class _SearchPageState extends State<SearchPage> {
                         context,
                         description,
                         maxLines: 2,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
-                          color: Color(0xff8E92A0),
+                          color: isDark ? Colors.white : Color(0xff8E92A0),
                         ),
                       ),
                     )
                   : null,
-              trailing: const Icon(
+              trailing: Icon(
                 Icons.chevron_right_rounded,
-                color: Color(0xff8E92A0),
+                color: isDark ? Colors.white : Color(0xff8E92A0),
               ),
               onTap: () {
                 final service = _groupService;
@@ -1043,10 +1079,10 @@ class _SearchPageState extends State<SearchPage> {
           child: Text(
             text(context, message),
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w500,
-              color: textColor,
+              color: isDark ? Color(0xffC4C4C4) : textColor,
             ),
           ),
         ),
@@ -1057,7 +1093,10 @@ class _SearchPageState extends State<SearchPage> {
             child: Text(
               text(context, subtitle),
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 12, color: Color(0xff8E92A0)),
+              style: TextStyle(
+                fontSize: 12,
+                color: isDark ? Color(0xff8E92A0) : Color(0xff8E92A0),
+              ),
             ),
           ),
         ],
@@ -1084,7 +1123,7 @@ class _SearchPageState extends State<SearchPage> {
     TextStyle? style,
   }) {
     final query = searchQuery.trim();
-
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final spans = <TextSpan>[];
 
     if (query.isEmpty || value.isEmpty) {
@@ -1112,8 +1151,8 @@ class _SearchPageState extends State<SearchPage> {
         spans.add(
           TextSpan(
             text: value.substring(matchIndex, matchIndex + query.length),
-            style: const TextStyle(
-              backgroundColor: Color(0xFFFFE082),
+            style: TextStyle(
+              backgroundColor: isDark ? Color(0xFF8A6800) : Color(0xFFFFE082),
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -1122,7 +1161,7 @@ class _SearchPageState extends State<SearchPage> {
         start = matchIndex + query.length;
       }
     }
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Text.rich(
       TextSpan(children: spans),
       style: style,

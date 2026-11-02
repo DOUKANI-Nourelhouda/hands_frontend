@@ -9,6 +9,7 @@ class GroupInfoPage extends StatefulWidget {
   final String currentUserId;
   final GroupService groupService;
   final PostService postService;
+  final Future<void> Function(String recipientId)? onMessageTap;
 
   const GroupInfoPage({
     super.key,
@@ -16,6 +17,7 @@ class GroupInfoPage extends StatefulWidget {
     required this.currentUserId,
     required this.groupService,
     required this.postService,
+    this.onMessageTap,
   });
 
   @override
@@ -87,19 +89,22 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) =>
-            ProfilePage(userId: userId, postService: widget.postService),
+        builder: (_) => ProfilePage(
+          userId: userId,
+          postService: widget.postService,
+          onMessageTap: widget.onMessageTap,
+        ),
       ),
     );
   }
 
   Future<void> _removeMember(Map<String, dynamic> member) async {
     final memberId = _id(member);
-
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: Colors.white,
+        backgroundColor: isDark ? Color(0xFF333333) : Colors.white,
         title: Text(textRead(context, 'Remove member?')),
         content: Text(
           textRead(context, 'Are you sure you want to remove this member?'),
@@ -109,7 +114,9 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
             onPressed: () => Navigator.pop(dialogContext, false),
             child: Text(
               textRead(context, 'Cancel'),
-              style: TextStyle(color: Colors.black),
+              style: TextStyle(
+                color: isDark ? Colors.white : Color(0xFF333333),
+              ),
             ),
           ),
           TextButton(
@@ -165,6 +172,7 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
       builder: (dialogContext) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
+            final isDark = Theme.of(context).brightness == Brightness.dark;
             Future<void> search(String value) async {
               if (value.trim().isEmpty) {
                 setDialogState(() {
@@ -240,7 +248,7 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
 
             return AlertDialog(
               title: Text(textRead(context, 'Add members')),
-              backgroundColor: Colors.white,
+              backgroundColor: isDark ? Color(0xFF333333) : Colors.white,
               content: SizedBox(
                 width: double.maxFinite,
                 height: 400,
@@ -310,15 +318,21 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
                                 vertical: 3,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: isDark
+                                    ? Color(0xFF444444)
+                                    : Colors.white,
                                 borderRadius: BorderRadius.circular(18),
                                 border: Border.all(
-                                  color: const Color(0xFFF0F0F0),
+                                  color: isDark
+                                      ? Color(0xFF444444)
+                                      : Color(0xFFF0F0F0),
                                   width: 1,
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.07),
+                                    color: isDark
+                                        ? Colors.white.withValues(alpha: 0.07)
+                                        : Colors.black.withValues(alpha: 0.07),
                                     blurRadius: 12,
                                     spreadRadius: 1,
                                     offset: const Offset(0, 4),
@@ -331,17 +345,21 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
                                   backgroundColor: const Color(0xFFFFF2C2),
                                   backgroundImage: profilePicture.isNotEmpty
                                       ? NetworkImage(profilePicture)
-                                      : const AssetImage(
-                                              'assets/default_pfp.jpg',
+                                      : AssetImage(
+                                              isDark
+                                                  ? 'assets/default_pfp_dark.png'
+                                                  : 'assets/default_pfp.jpg',
                                             )
                                             as ImageProvider,
                                 ),
 
                                 title: Text(
                                   username,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontWeight: FontWeight.w600,
-                                    color: Color(0xFF333333),
+                                    color: isDark
+                                        ? Colors.white
+                                        : Color(0xFF333333),
                                   ),
                                 ),
 
@@ -368,7 +386,9 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
                   onPressed: () => Navigator.pop(dialogContext),
                   child: Text(
                     textRead(context, 'Close'),
-                    style: TextStyle(color: Colors.black),
+                    style: TextStyle(
+                      color: isDark ? Colors.white : Color(0xFF333333),
+                    ),
                   ),
                 ),
               ],
@@ -383,12 +403,12 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
   Widget build(BuildContext context) {
     final members = _members;
     final groupName = (group?['name'] ?? 'Group').toString();
-
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: const Color(0xfff7f7f7),
+      backgroundColor: isDark ? Color(0xff333333) : const Color(0xfff7f7f7),
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: isDark ? Color(0xFF333333) : Colors.white,
+        foregroundColor: isDark ? Colors.white : Color(0xFF333333),
         elevation: 0.5,
         title: Text(
           groupName,
@@ -460,15 +480,19 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
                           vertical: 5,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: isDark ? Color(0xFF444444) : Colors.white,
                           borderRadius: BorderRadius.circular(18),
                           border: Border.all(
-                            color: const Color(0xFFF0F0F0),
+                            color: isDark
+                                ? Color(0xFF444444)
+                                : Color(0xFFF0F0F0),
                             width: 1,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.07),
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.07)
+                                  : Colors.black.withValues(alpha: 0.07),
                               blurRadius: 12,
                               spreadRadius: 1,
                               offset: const Offset(0, 4),
@@ -476,7 +500,6 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
                           ],
                         ),
                         child: ListTile(
-                          // Tap the member card to open their profile.
                           onTap: () {
                             if (memberId.isEmpty) {
                               ScaffoldMessenger.of(context).showSnackBar(
@@ -500,15 +523,19 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
                             backgroundColor: const Color(0xFFFFF2C2),
                             backgroundImage: profilePicture.isNotEmpty
                                 ? NetworkImage(profilePicture)
-                                : const AssetImage('assets/default_pfp.jpg')
+                                : AssetImage(
+                                        isDark
+                                            ? 'assets/default_pfp_dark.png'
+                                            : 'assets/default_pfp.jpg',
+                                      )
                                       as ImageProvider,
                           ),
 
                           title: Text(
                             username,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF333333),
+                              color: isDark ? Colors.white : Color(0xFF333333),
                             ),
                           ),
 

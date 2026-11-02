@@ -287,10 +287,11 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Future<void> _confirmClearConversation() async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: Colors.white,
+        backgroundColor: isDark ? Color(0xFF333333) : Colors.white,
         title: Text(textRead(context, 'Clear conversation?')),
         content: Text(
           textRead(
@@ -303,7 +304,9 @@ class _ChatPageState extends State<ChatPage> {
             onPressed: () => Navigator.pop(dialogContext, false),
             child: Text(
               textRead(context, 'Cancel'),
-              style: TextStyle(color: Colors.black),
+              style: TextStyle(
+                color: isDark ? Colors.white : Color(0xFF333333),
+              ),
             ),
           ),
           TextButton(
@@ -341,11 +344,12 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Future<bool> _showBlockUserDialog(String username) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          backgroundColor: Colors.white,
+          backgroundColor: isDark ? Color(0xFF333333) : Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
@@ -367,13 +371,15 @@ class _ChatPageState extends State<ChatPage> {
               onPressed: () => Navigator.pop(dialogContext, false),
               child: Text(
                 textRead(context, 'Cancel'),
-                style: TextStyle(color: Colors.black54),
+                style: TextStyle(
+                  color: isDark ? Colors.white : Color(0xFF333333),
+                ),
               ),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
+                foregroundColor: isDark ? Color(0xFF333333) : Colors.white,
               ),
               onPressed: () => Navigator.pop(dialogContext, true),
               child: Text(textRead(context, 'Block')),
@@ -387,9 +393,10 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Future<void> _showMessageOptions(Map<String, dynamic> message) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final choice = await showModalBottomSheet<String>(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? Color(0xFF333333) : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
       ),
@@ -432,12 +439,12 @@ class _ChatPageState extends State<ChatPage> {
     if (messageId.isEmpty) return;
 
     editMessageController.text = _messageText(message);
-
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final newContent = await showDialog<String>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          backgroundColor: Colors.white,
+          backgroundColor: isDark ? Color(0xFF333333) : Colors.white,
           title: Text(textRead(context, 'Edit message')),
           content: TextField(
             cursorColor: const Color(0xfffcc001),
@@ -461,7 +468,9 @@ class _ChatPageState extends State<ChatPage> {
               },
               child: Text(
                 textRead(context, 'Cancel'),
-                style: TextStyle(color: Colors.black),
+                style: TextStyle(
+                  color: isDark ? Colors.white : Color(0xFF333333),
+                ),
               ),
             ),
             TextButton(
@@ -521,14 +530,14 @@ class _ChatPageState extends State<ChatPage> {
 
   Future<void> _deleteMessage(Map<String, dynamic> message) async {
     final messageId = _id(message['_id'] ?? message['id']);
-
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     if (messageId.isEmpty) return;
 
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          backgroundColor: Colors.white,
+          backgroundColor: isDark ? Color(0xFF333333) : Colors.white,
           title: Text(textRead(context, 'Delete message?')),
           content: Text(
             textRead(context, 'Are you sure you want to delete this message?'),
@@ -536,7 +545,12 @@ class _ChatPageState extends State<ChatPage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, false),
-              child: Text(textRead(context, 'Cancel')),
+              child: Text(
+                textRead(context, 'Cancel'),
+                style: TextStyle(
+                  color: isDark ? Colors.white : Color(0xFF333333),
+                ),
+              ),
             ),
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, true),
@@ -635,11 +649,12 @@ class _ChatPageState extends State<ChatPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: const Color(0xfff7f7f7),
+      backgroundColor: isDark ? Color(0xFF333333) : Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: isDark ? Color(0xFF333333) : Colors.white,
+        foregroundColor: isDark ? Colors.white : Color(0xFF333333),
         elevation: 0.5,
         titleSpacing: 0,
         title: Row(
@@ -679,7 +694,7 @@ class _ChatPageState extends State<ChatPage> {
         actions: [
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert),
-            color: Colors.white,
+            color: isDark ? Color(0xFF333333) : Colors.white,
             onSelected: (value) {
               if (value == 'clear') {
                 _confirmClearConversation();
@@ -692,9 +707,9 @@ class _ChatPageState extends State<ChatPage> {
                 value: 'clear',
                 child: Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.delete_outline,
-                      color: Colors.black87,
+                      color: isDark ? Colors.white : Color(0xFF333333),
                       size: 20,
                     ),
                     const SizedBox(width: 10),
@@ -723,7 +738,7 @@ class _ChatPageState extends State<ChatPage> {
         children: [
           if (errorMessage != null)
             Material(
-              color: const Color(0xfffff0f0),
+              color: isDark ? Color(0xff333333) : Color(0xfffff0f0),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 child: Row(
@@ -801,7 +816,7 @@ class _ChatPageState extends State<ChatPage> {
     final text = _messageText(message);
     final time = _formatTime(message['createdAt'] ?? message['timestamp']);
     final senderPicture = _senderPicture(message);
-
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onLongPress: isMine ? () => _showMessageOptions(message) : null,
       child: Padding(
@@ -826,7 +841,11 @@ class _ChatPageState extends State<ChatPage> {
                   vertical: 10,
                 ),
                 decoration: BoxDecoration(
-                  color: isMine ? chatYellow : Colors.white,
+                  color: isMine
+                      ? isDark
+                            ? chatYellow
+                            : Color(0xfff5f5f5)
+                      : Color(0xff333333),
                   borderRadius: BorderRadius.only(
                     topLeft: const Radius.circular(16),
                     topRight: const Radius.circular(16),
@@ -835,7 +854,9 @@ class _ChatPageState extends State<ChatPage> {
                   ),
                   border: isMine
                       ? null
-                      : Border.all(color: const Color(0xffeeeeee)),
+                      : Border.all(
+                          color: isDark ? Colors.grey : const Color(0xffeeeeee),
+                        ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -852,7 +873,17 @@ class _ChatPageState extends State<ChatPage> {
                           ),
                         ),
                       ),
-                    Text(text, style: const TextStyle(fontSize: 15)),
+                    Text(
+                      text,
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: isMine
+                            ? isDark
+                                  ? Color(0xff333333)
+                                  : Colors.white
+                            : Colors.white,
+                      ),
+                    ),
                     if (time.isNotEmpty)
                       Padding(
                         padding: const EdgeInsets.only(top: 5),
@@ -860,9 +891,13 @@ class _ChatPageState extends State<ChatPage> {
                           alignment: Alignment.bottomRight,
                           child: Text(
                             time,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 10,
-                              color: Colors.black54,
+                              color: isMine
+                                  ? isDark
+                                        ? Colors.black54
+                                        : Colors.black54
+                                  : Colors.grey,
                             ),
                           ),
                         ),
@@ -882,10 +917,11 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Widget _buildAvatar(String imageUrl, {required double size}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     Widget fallback() {
       return ClipOval(
         child: Image.asset(
-          'assets/default_pfp.jpg',
+          isDark ? 'assets/default_pfp_dark.png' : 'assets/default_pfp.jpg',
           width: size,
           height: size,
           fit: BoxFit.cover,
@@ -909,16 +945,18 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Widget _buildComposer() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return SafeArea(
       child: Container(
         padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-        color: Colors.white,
+        color: isDark ? Color(0xff333333) : Colors.white,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Expanded(
               child: TextField(
                 controller: messageController,
+                cursorColor: const Color(0xfffcc001),
                 minLines: 1,
                 maxLines: 5,
                 maxLength: 5000,
@@ -930,14 +968,23 @@ class _ChatPageState extends State<ChatPage> {
                       '${widget.otherUserName}' +
                       "...",
                   filled: true,
-                  fillColor: const Color(0xfff5f5f5),
+                  fillColor: isDark ? Color(0xff333333) : Color(0xfff5f5f5),
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 12,
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(24),
-                    borderSide: BorderSide.none,
+                    borderSide: BorderSide(
+                      color: isDark ? Color(0xff333333) : Color(0xfff5f5f5),
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(24),
+                    borderSide: BorderSide(
+                      color: isDark ? Color(0xfffcc001) : Color(0xfffcc001),
+                      width: 2,
+                    ),
                   ),
                 ),
               ),

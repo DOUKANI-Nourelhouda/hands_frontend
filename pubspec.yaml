@@ -81,6 +81,8 @@ flutter:
      - assets/logo.png
      - assets/default_pfp.jpg
      - assets/default_grp.png
+     - assets/default_pfp_dark.png
+     - assets/default_pfp_dark.png
      - assets/
      - assets/icons/
      - assets/tarchona.svg

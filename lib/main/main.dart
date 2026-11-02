@@ -339,6 +339,7 @@ class _MainScreenState extends State<MainScreen> {
       groupService: groups,
       onOpenConversation: onOpenConversation,
       onOpenGroup: onOpenGroup,
+      onMessageTap: _openDirectChat,
     );
   }
 
@@ -484,6 +485,7 @@ class _MainScreenState extends State<MainScreen> {
           groupService: service,
           socket: connectedSocket,
           postService: widget.postService,
+          onMessageTap: _openDirectChat,
         ),
       ),
     );

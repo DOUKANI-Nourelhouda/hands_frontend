@@ -5,17 +5,21 @@ class HelpSupportPage extends StatelessWidget {
   const HelpSupportPage({super.key});
 
   static const Color accentColor = Color(0xfffcc001);
-  static const Color textColor = Color(0xff1e1f24);
+  static const Color textColor = Color(0xff333333);
 
   Widget _buildFaq({required String question, required String answer}) {
+    final isDark =
+        WidgetsBinding.instance.window.platformBrightness == Brightness.dark;
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: const Color(0xfff8f8f8),
+        color: isDark ? Color(0xFF444444) : Color(0xfff8f8f8),
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.13),
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.07)
+                : Colors.black.withValues(alpha: 0.07),
             blurRadius: 8,
             offset: const Offset(0, 3),
           ),
@@ -32,14 +36,14 @@ class HelpSupportPage extends StatelessWidget {
           side: BorderSide.none,
           borderRadius: BorderRadius.all(Radius.circular(14)),
         ),
-        iconColor: textColor,
+        iconColor: isDark ? Colors.white : Color(0xFF333333),
         collapsedIconColor: Colors.grey,
         title: Text(
           question,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: textColor,
+            color: isDark ? Colors.white : Color(0xFF333333),
           ),
         ),
         children: [
@@ -47,10 +51,10 @@ class HelpSupportPage extends StatelessWidget {
             alignment: Alignment.centerLeft,
             child: Text(
               answer,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 height: 1.6,
-                color: Colors.black87,
+                color: isDark ? Colors.white : Color(0xFF333333),
               ),
             ),
           ),
@@ -64,13 +68,17 @@ class HelpSupportPage extends StatelessWidget {
     required String title,
     required String subtitle,
   }) {
+    final isDark =
+        WidgetsBinding.instance.window.platformBrightness == Brightness.dark;
     return InkWell(
       borderRadius: BorderRadius.circular(14),
       child: Container(
         padding: const EdgeInsets.all(15),
-        margin: const EdgeInsets.only(bottom: 10),
+        margin: EdgeInsets.only(bottom: 10),
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey.shade200),
+          border: Border.all(
+            color: isDark ? Color(0xFF444444) : Colors.grey.shade200,
+          ),
           borderRadius: BorderRadius.circular(14),
         ),
         child: Row(
@@ -82,7 +90,10 @@ class HelpSupportPage extends StatelessWidget {
                 color: accentColor.withValues(alpha: 0.18),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: textColor),
+              child: Icon(
+                icon,
+                color: isDark ? Colors.white : Color(0xFF333333),
+              ),
             ),
             const SizedBox(width: 13),
             Expanded(
@@ -99,7 +110,10 @@ class HelpSupportPage extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     subtitle,
-                    style: const TextStyle(fontSize: 12, color: Colors.black54),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark ? Colors.white : Color(0xFF333333),
+                    ),
                   ),
                 ],
               ),
@@ -112,25 +126,26 @@ class HelpSupportPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: const Color(0xfffafafa),
+      backgroundColor: isDark ? Color(0xFF333333) : Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: isDark ? Color(0xFF333333) : Colors.white,
         elevation: 0,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new,
             size: 20,
-            color: Colors.black87,
+            color: isDark ? Colors.white : Color(0xFF333333),
           ),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           text(context, 'Help & Support'),
           style: TextStyle(
-            color: Colors.black87,
+            color: isDark ? Colors.white : Color(0xFF333333),
             fontSize: 18,
             fontWeight: FontWeight.w600,
           ),
@@ -145,13 +160,13 @@ class HelpSupportPage extends StatelessWidget {
               width: 66,
               height: 66,
               decoration: BoxDecoration(
-                color: const Color(0xfffff4cc),
+                color: isDark ? Color(0xFF444444) : Color(0xfffff4cc),
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.support_agent_outlined,
                 size: 34,
-                color: Color(0xff292929),
+                color: isDark ? Colors.white : Color(0xff292929),
               ),
             ),
           ),
@@ -164,7 +179,7 @@ class HelpSupportPage extends StatelessWidget {
               style: TextStyle(
                 fontSize: 21,
                 fontWeight: FontWeight.w700,
-                color: Color(0xff292929),
+                color: isDark ? Colors.white : Color(0xff292929),
               ),
             ),
           ),
@@ -181,7 +196,7 @@ class HelpSupportPage extends StatelessWidget {
             style: TextStyle(
               fontSize: 13,
               height: 1.6,
-              color: Color(0xff777777),
+              color: isDark ? Colors.white : Color(0xff777777),
             ),
           ),
 
@@ -192,7 +207,7 @@ class HelpSupportPage extends StatelessWidget {
             style: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.bold,
-              color: Color(0xff292929),
+              color: isDark ? Colors.white : Color(0xff292929),
             ),
           ),
 
@@ -298,7 +313,7 @@ class HelpSupportPage extends StatelessWidget {
             style: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.bold,
-              color: textColor,
+              color: isDark ? Colors.white : Color(0xFF333333),
             ),
           ),
 
@@ -313,7 +328,10 @@ class HelpSupportPage extends StatelessWidget {
           Center(
             child: Text(
               text(context, 'Hands - To survive in your residence.'),
-              style: TextStyle(fontSize: 14, color: Colors.black45),
+              style: TextStyle(
+                fontSize: 14,
+                color: isDark ? Colors.white : Color(0xFF333333),
+              ),
             ),
           ),
         ],

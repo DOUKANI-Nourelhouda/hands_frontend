@@ -268,19 +268,24 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }
 
   InputDecoration _decoration(String label, IconData icon) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return InputDecoration(
       labelText: label,
       prefixIcon: Icon(icon, color: yellow),
       filled: true,
-      fillColor: const Color(0xfffafafa),
+      fillColor: isDark ? Color(0xFF444444) : Color(0xfffafafa),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 17),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xffeeeeee)),
+        borderSide: BorderSide(
+          color: isDark ? Color(0xFF444444) : Color(0xffeeeeee),
+        ),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xffeeeeee)),
+        borderSide: BorderSide(
+          color: isDark ? Color(0xFF444444) : Color(0xffeeeeee),
+        ),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
@@ -291,8 +296,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? Color(0xFF333333) : Colors.white,
       body: SafeArea(
         child: Column(
           children: [
@@ -302,10 +308,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 children: [
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.arrow_back_rounded,
                       size: 27,
-                      color: Color(0xff333333),
+                      color: isDark ? Colors.white : Color(0xFF333333),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -314,7 +320,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xff333333),
+                      color: isDark ? Colors.white : Color(0xff333333),
                     ),
                   ),
                 ],
@@ -349,9 +355,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                         color: yellow,
                                       ),
                                       child: CircleAvatar(
-                                        backgroundColor: const Color(
-                                          0xfffff2c2,
-                                        ),
+                                        backgroundColor: isDark
+                                            ? Color(0xFF444444)
+                                            : const Color(0xfffff2c2),
                                         backgroundImage: _newPicture != null
                                             ? FileImage(File(_newPicture!.path))
                                             : (_profilePicture != null &&
@@ -360,8 +366,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                                       ? NetworkImage(
                                                           _profilePicture!,
                                                         )
-                                                      : const AssetImage(
-                                                          'assets/images/default_pfp.jpg',
+                                                      : AssetImage(
+                                                          isDark
+                                                              ? 'assets/default_pfp_dark.png'
+                                                              : 'assets/images/default_pfp.jpg',
                                                         ))
                                                   as ImageProvider,
                                       ),
@@ -376,13 +384,17 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                           color: yellow,
                                           shape: BoxShape.circle,
                                           border: Border.all(
-                                            color: Colors.white,
+                                            color: isDark
+                                                ? Color(0xFF333333)
+                                                : Colors.white,
                                             width: 3,
                                           ),
                                         ),
-                                        child: const Icon(
+                                        child: Icon(
                                           Icons.edit,
-                                          color: Colors.black,
+                                          color: isDark
+                                              ? Colors.white
+                                              : Color(0xFF333333),
                                           size: 19,
                                         ),
                                       ),
@@ -407,7 +419,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
                           TextField(
                             controller: _usernameController,
                             maxLength: 30,
-                            cursorColor: const Color(0xff333333),
+                            cursorColor: isDark
+                                ? Colors.white
+                                : const Color(0xff333333),
                             textCapitalization: TextCapitalization.none,
                             decoration: InputDecoration(
                               labelText: 'Username',
@@ -415,7 +429,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
                               hintText: 'Choose a username for yourself !',
                               alignLabelWithHint: true,
                               filled: true,
-                              fillColor: const Color(0xfffafafa),
+                              fillColor: isDark
+                                  ? Color(0xFF444444)
+                                  : const Color(0xfffafafa),
                               floatingLabelStyle: const TextStyle(
                                 color: Color(0xfffcc001),
                               ),
@@ -425,14 +441,18 @@ class _EditProfilePageState extends State<EditProfilePage> {
                               ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(14),
-                                borderSide: const BorderSide(
-                                  color: Color(0xffeeeeee),
+                                borderSide: BorderSide(
+                                  color: isDark
+                                      ? Color(0xFF444444)
+                                      : Color(0xffeeeeee),
                                 ),
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(14),
-                                borderSide: const BorderSide(
-                                  color: Color(0xffeeeeee),
+                                borderSide: BorderSide(
+                                  color: isDark
+                                      ? Color(0xFF444444)
+                                      : Color(0xffeeeeee),
                                 ),
                               ),
                               focusedBorder: OutlineInputBorder(
@@ -452,7 +472,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
                             maxLength: 300,
                             maxLines: 4,
                             minLines: 3,
-                            cursorColor: const Color(0xff333333),
+                            cursorColor: isDark
+                                ? Colors.white
+                                : Color(0xff333333),
                             textAlignVertical: TextAlignVertical.top,
                             decoration: InputDecoration(
                               labelText: 'Bio',
@@ -462,7 +484,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
                               ),
                               alignLabelWithHint: true,
                               filled: true,
-                              fillColor: const Color(0xfffafafa),
+                              fillColor: isDark
+                                  ? Color(0xFF444444)
+                                  : const Color(0xfffafafa),
                               contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 16,
                                 vertical: 17,
@@ -472,14 +496,18 @@ class _EditProfilePageState extends State<EditProfilePage> {
                               ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(14),
-                                borderSide: const BorderSide(
-                                  color: Color(0xffeeeeee),
+                                borderSide: BorderSide(
+                                  color: isDark
+                                      ? Color(0xFF444444)
+                                      : Color(0xffeeeeee),
                                 ),
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(14),
-                                borderSide: const BorderSide(
-                                  color: Color(0xffeeeeee),
+                                borderSide: BorderSide(
+                                  color: isDark
+                                      ? Color(0xFF444444)
+                                      : Color(0xffeeeeee),
                                 ),
                               ),
                               focusedBorder: OutlineInputBorder(
@@ -604,7 +632,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                 disabledBackgroundColor: const Color(
                                   0xffffe69a,
                                 ),
-                                foregroundColor: Colors.black,
+                                foregroundColor: isDark
+                                    ? Colors.white
+                                    : Color(0xFF333333),
                                 elevation: 0,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(14),
@@ -622,8 +652,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                   : Text(
                                       text(context, 'Save changes'),
                                       style: TextStyle(
-                                        fontSize: 16,
+                                        fontSize: 18,
                                         fontWeight: FontWeight.bold,
+                                        color: isDark
+                                            ? Color(0xFF333333)
+                                            : Colors.white,
                                       ),
                                     ),
                             ),
@@ -669,7 +702,7 @@ class _WilayaDropdownState extends State<WilayaDropdown> {
     if (renderObject is! RenderBox || !renderObject.hasSize) {
       return;
     }
-
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final renderBox = renderObject;
     final overlay = Overlay.of(context);
     final overlayObject = overlay.context.findRenderObject();
@@ -694,7 +727,7 @@ class _WilayaDropdownState extends State<WilayaDropdown> {
         menuRect,
         Offset.zero & overlayObject.size,
       ),
-      color: Colors.white,
+      color: isDark ? Color(0xFF333333) : Colors.white,
       elevation: 8,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
@@ -707,7 +740,10 @@ class _WilayaDropdownState extends State<WilayaDropdown> {
             width: renderBox.size.width - 30,
             child: Text(
               textRead(context, wilaya),
-              style: const TextStyle(fontSize: 16, color: Colors.black),
+              style: TextStyle(
+                fontSize: 16,
+                color: isDark ? Colors.white : Color(0xFF333333),
+              ),
             ),
           ),
         );
@@ -721,13 +757,14 @@ class _WilayaDropdownState extends State<WilayaDropdown> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: _openDropdown,
       child: Container(
         key: _key,
         height: 60,
         decoration: BoxDecoration(
-          color: Colors.grey.shade50,
+          color: isDark ? Color(0xFF444444) : Colors.grey.shade50,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: const Color(0xfffcc001), width: 2.5),
         ),
@@ -750,7 +787,9 @@ class _WilayaDropdownState extends State<WilayaDropdown> {
                   fontSize: 16,
                   color: widget.selectedWilaya == null
                       ? Colors.grey
-                      : Colors.black,
+                      : isDark
+                      ? Colors.white
+                      : Color(0xFF333333),
                 ),
               ),
             ),

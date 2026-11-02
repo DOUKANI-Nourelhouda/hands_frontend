@@ -10,6 +10,7 @@ class MsgsPage extends StatefulWidget {
   final String currentUserId;
   final Map<String, dynamic> currentUser;
   final GroupService groupService;
+  final Future<void> Function(String recipientId)? onMessageTap;
 
   final void Function(Map<String, dynamic> conversation) onOpenConversation;
   final void Function(Map<String, dynamic> group) onOpenGroup;
@@ -24,6 +25,7 @@ class MsgsPage extends StatefulWidget {
     required this.onOpenConversation,
     required this.onOpenGroup,
     this.onRefreshRequested,
+    this.onMessageTap,
   });
 
   @override
@@ -249,13 +251,18 @@ class _MsgsPageState extends State<MsgsPage> {
     double radius = 25,
   }) {
     final url = _imageUrl(picture);
-
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return CircleAvatar(
       radius: 23,
       backgroundColor: const Color(0xFFFFF2C2),
       backgroundImage: url.isNotEmpty
           ? NetworkImage(url)
-          : const AssetImage('assets/default_pfp.jpg') as ImageProvider,
+          : AssetImage(
+                  isDark
+                      ? 'assets/default_pfp_dark.png'
+                      : 'assets/default_pfp.jpg',
+                )
+                as ImageProvider,
     );
   }
 
@@ -271,9 +278,9 @@ class _MsgsPageState extends State<MsgsPage> {
                 Navigator.pop(context);
               }
             },
-            icon: const Icon(
+            icon: Icon(
               Icons.arrow_back_rounded,
-              color: Color(0xFF333333),
+              color: isDark ? Colors.white : Color(0xFF333333),
               size: 26,
             ),
           ),
@@ -289,9 +296,12 @@ class _MsgsPageState extends State<MsgsPage> {
     return Container(
       height: 48,
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F5F5),
+        color: isDark ? Color(0xFF444444) : Color(0xFFF5F5F5),
         borderRadius: BorderRadius.circular(25),
-        border: Border.all(color: const Color(0xFFEEEEEE), width: 1.5),
+        border: Border.all(
+          color: isDark ? Colors.grey : Color(0xFFEEEEEE),
+          width: 1.5,
+        ),
       ),
       child: TextField(
         controller: _searchController,
@@ -302,10 +312,13 @@ class _MsgsPageState extends State<MsgsPage> {
         textInputAction: TextInputAction.search,
         decoration: InputDecoration(
           hintText: text(context, 'Search people or groups'),
-          hintStyle: const TextStyle(fontSize: 14, color: Color(0xFF8E92A0)),
-          prefixIcon: const Icon(
+          hintStyle: TextStyle(
+            fontSize: 14,
+            color: isDark ? Colors.grey : Color(0xff8E92A0),
+          ),
+          prefixIcon: Icon(
             Icons.search_rounded,
-            color: Color(0xFF8E92A0),
+            color: isDark ? Colors.grey : Color(0xff8E92A0),
             size: 22,
           ),
           suffixIcon: _searchQuery.isNotEmpty
@@ -408,7 +421,11 @@ class _MsgsPageState extends State<MsgsPage> {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, size: 20, color: Colors.grey),
+            Icon(
+              Icons.chevron_right,
+              size: 20,
+              color: isDark ? Colors.white : Colors.grey,
+            ),
           ],
         ),
       ),
@@ -456,12 +473,19 @@ class _MsgsPageState extends State<MsgsPage> {
                     '${_lastGroupMessage(group)}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: Colors.grey, fontSize: 12),
+                    style: TextStyle(
+                      color: isDark ? Colors.white : Colors.grey,
+                      fontSize: 12,
+                    ),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, size: 20, color: Colors.grey),
+            Icon(
+              Icons.chevron_right,
+              size: 20,
+              color: isDark ? Colors.white : Colors.grey,
+            ),
           ],
         ),
       ),
@@ -486,7 +510,7 @@ class _MsgsPageState extends State<MsgsPage> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? Color(0xFF333333) : Colors.white,
       extendBody: false,
       resizeToAvoidBottomInset: true,
       body: SafeArea(
@@ -596,7 +620,7 @@ class _MsgsPageState extends State<MsgsPage> {
                     await _loadChats();
                   }
                 },
-                backgroundColor: Colors.white,
+                backgroundColor: isDark ? Color(0xFF333333) : Colors.white,
                 foregroundColor: Color(0xfffcc001),
                 elevation: 6,
                 shape: const CircleBorder(),

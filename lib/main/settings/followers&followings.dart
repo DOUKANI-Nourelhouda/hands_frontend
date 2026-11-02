@@ -117,7 +117,7 @@ class _FollowersFollowingPageState extends State<FollowersFollowingPage>
               ' $username ' +
               textRead(context, 'from your followers?')
         : textRead(context, 'unfollow') + ' $username ';
-
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -136,7 +136,9 @@ class _FollowersFollowingPageState extends State<FollowersFollowingPage>
             onPressed: () => Navigator.pop(dialogContext, false),
             child: Text(
               textRead(context, 'Cancel'),
-              style: TextStyle(color: _textColor),
+              style: TextStyle(
+                color: isDark ? Colors.white : Color(0xFF333333),
+              ),
             ),
           ),
           TextButton(
@@ -190,17 +192,22 @@ class _FollowersFollowingPageState extends State<FollowersFollowingPage>
     final username = _usernameOf(user);
     final bio = _bioOf(user);
     final profilePicture = _pictureOf(user);
-
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? Color(0xFF333333) : Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFF0F0F0), width: 1),
+        border: Border.all(
+          color: isDark ? Color(0xFF444444) : const Color(0xFFF0F0F0),
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.07),
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.07)
+                : Colors.black.withValues(alpha: 0.07),
             blurRadius: 12,
             spreadRadius: 1,
             offset: const Offset(0, 4),
@@ -210,18 +217,23 @@ class _FollowersFollowingPageState extends State<FollowersFollowingPage>
       child: ListTile(
         leading: CircleAvatar(
           radius: 23,
-          backgroundColor: const Color(0xFFFFF2C2),
+          backgroundColor: Color(0xFFFFF2C2),
           backgroundImage: profilePicture.isNotEmpty
               ? NetworkImage(profilePicture)
-              : const AssetImage('assets/default_pfp.jpg') as ImageProvider,
+              : AssetImage(
+                      isDark
+                          ? 'assets/default_pfp_dark.png'
+                          : 'assets/default_pfp.jpg',
+                    )
+                    as ImageProvider,
         ),
         title: Text(
           text(context, username),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
+          style: TextStyle(
             fontWeight: FontWeight.w600,
-            color: _textColor,
+            color: isDark ? Colors.white : Color(0xFF333333),
           ),
         ),
         subtitle: bio.isNotEmpty
@@ -264,6 +276,7 @@ class _FollowersFollowingPageState extends State<FollowersFollowingPage>
   }
 
   Widget _buildList(List<dynamic> users, {required bool isFollower}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator(color: _yellow));
     }
@@ -319,25 +332,26 @@ class _FollowersFollowingPageState extends State<FollowersFollowingPage>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: const Color(0xfffafafa),
+      backgroundColor: isDark ? Color(0xFF333333) : Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
+        backgroundColor: isDark ? Color(0xFF333333) : Colors.white,
+        surfaceTintColor: isDark ? Color(0xFF333333) : Colors.white,
         elevation: 0,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_rounded,
             size: 27,
-            color: Color(0xff333333),
+            color: isDark ? Colors.white : Color(0xff333333),
           ),
         ),
 
         title: Text(
           text(context, 'Followers & Following'),
           style: TextStyle(
-            color: _textColor,
+            color: isDark ? Colors.white : Color(0xFF333333),
             fontSize: 18,
             fontWeight: FontWeight.w700,
           ),
@@ -345,7 +359,7 @@ class _FollowersFollowingPageState extends State<FollowersFollowingPage>
         centerTitle: false,
         bottom: TabBar(
           controller: _tabController,
-          labelColor: _textColor,
+          labelColor: isDark ? Colors.white : Color(0xFF333333),
           unselectedLabelColor: Colors.grey,
           indicatorColor: _yellow,
           indicatorWeight: 3,

@@ -120,21 +120,21 @@ class _MediaViewerPageState extends State<MediaViewerPage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     if (widget.media.isEmpty) {
       return Scaffold(
-        backgroundColor: Colors.black,
+        backgroundColor: isDark ? Color(0xFF333333) : Colors.white,
         body: Center(
           child: Text(
             text(context, 'No media available'),
-            style: TextStyle(color: Colors.white),
+            style: TextStyle(color: isDark ? Colors.white : Color(0xFF333333)),
           ),
         ),
       );
     }
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: isDark ? Color(0xFF333333) : Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
+        backgroundColor: isDark ? Color(0xFF333333) : Colors.white,
+        foregroundColor: isDark ? Colors.white : Color(0xFF333333),
         elevation: 0,
         title: Text('${_currentIndex + 1} / ${widget.media.length}'),
       ),

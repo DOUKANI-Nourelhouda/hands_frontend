@@ -16,7 +16,7 @@ class PostCreditsPage extends StatefulWidget {
 class _PostCreditsPageState extends State<PostCreditsPage>
     with WidgetsBindingObserver {
   static const Color accent = Color(0xfffcc001);
-  static const Color background = Color(0xfff8f8f8);
+
   final PaymentService _paymentService = PaymentService();
   final String baseUrl = dotenv.env['BASE_URL']!;
 
@@ -165,16 +165,16 @@ class _PostCreditsPageState extends State<PostCreditsPage>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: background,
+      backgroundColor: isDark ? Color(0xff333333) : Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
+        backgroundColor: isDark ? Color(0xff333333) : Colors.white,
+        surfaceTintColor: isDark ? Color(0xff333333) : Colors.white,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_rounded,
-            color: Color(0xff333333),
+            color: isDark ? Colors.white : Color(0xff333333),
             size: 26,
           ),
           onPressed: () => Navigator.pop(context),
@@ -182,7 +182,7 @@ class _PostCreditsPageState extends State<PostCreditsPage>
         title: Text(
           text(context, 'Post Credits'),
           style: TextStyle(
-            color: Colors.black87,
+            color: isDark ? Colors.white : Color(0xff333333),
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -221,7 +221,7 @@ class _PostCreditsPageState extends State<PostCreditsPage>
           style: TextStyle(
             fontSize: 21,
             fontWeight: FontWeight.bold,
-            color: Colors.black87,
+            color: isDark ? Colors.white : Color(0xff333333),
           ),
         ),
         const SizedBox(height: 6),
@@ -258,7 +258,7 @@ class _PostCreditsPageState extends State<PostCreditsPage>
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: Colors.red.shade50,
+              color: isDark ? Color(0xff444444) : Colors.red.shade50,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Column(
@@ -290,9 +290,11 @@ class _PostCreditsPageState extends State<PostCreditsPage>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? Color(0xff333333) : Colors.white,
         borderRadius: BorderRadius.circular(17),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(
+          color: isDark ? Color(0xff444444) : Colors.grey.shade200,
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.025),
@@ -311,7 +313,11 @@ class _PostCreditsPageState extends State<PostCreditsPage>
               color: accent.withValues(alpha: 0.17),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: Colors.black87, size: 23),
+            child: Icon(
+              icon,
+              color: isDark ? Colors.white : Color(0xff333333),
+              size: 23,
+            ),
           ),
           const SizedBox(height: 15),
           Center(
@@ -331,7 +337,7 @@ class _PostCreditsPageState extends State<PostCreditsPage>
             style: const TextStyle(
               fontSize: 29,
               fontWeight: FontWeight.bold,
-              color: Colors.black87,
+              color: Color(0xfffcc001),
             ),
           ),
         ],
@@ -349,7 +355,7 @@ class _PostCreditsPageState extends State<PostCreditsPage>
           style: TextStyle(
             fontSize: 21,
             fontWeight: FontWeight.bold,
-            color: Colors.black87,
+            color: isDark ? Colors.white : Color(0xff333333),
           ),
         ),
         const SizedBox(height: 6),
@@ -371,9 +377,12 @@ class _PostCreditsPageState extends State<PostCreditsPage>
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? Color(0xff333333) : Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.grey.shade200, width: 1.5),
+        border: Border.all(
+          color: isDark ? Color(0xff444444) : Colors.grey.shade200,
+          width: 1.5,
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.all(15),
@@ -388,9 +397,9 @@ class _PostCreditsPageState extends State<PostCreditsPage>
                     color: accent.withValues(alpha: 0.17),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.post_add_rounded,
-                    color: Colors.black87,
+                    color: isDark ? Colors.white : Color(0xff333333),
                     size: 27,
                   ),
                 ),
@@ -451,8 +460,10 @@ class _PostCreditsPageState extends State<PostCreditsPage>
                     : () => _buyPackage(id),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: accent,
-                  foregroundColor: Colors.black,
-                  disabledBackgroundColor: Colors.grey.shade300,
+                  foregroundColor: isDark ? Colors.white : Color(0xff333333),
+                  disabledBackgroundColor: isDark
+                      ? Color(0xff444444)
+                      : Colors.grey.shade300,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -472,6 +483,7 @@ class _PostCreditsPageState extends State<PostCreditsPage>
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
+                          color: isDark ? Color(0xff333333) : Colors.white,
                         ),
                       ),
               ),
@@ -493,7 +505,11 @@ class _PostCreditsPageState extends State<PostCreditsPage>
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.info_outline_rounded, size: 21, color: Colors.black87),
+          Icon(
+            Icons.info_outline_rounded,
+            size: 21,
+            color: isDark ? Colors.white : Color(0xff333333),
+          ),
           SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -504,7 +520,7 @@ class _PostCreditsPageState extends State<PostCreditsPage>
               style: TextStyle(
                 fontSize: 12,
                 height: 1.5,
-                color: Colors.black87,
+                color: isDark ? Colors.white : Color(0xff333333),
               ),
             ),
           ),
