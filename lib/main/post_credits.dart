@@ -326,7 +326,7 @@ class _PostCreditsPageState extends State<PostCreditsPage>
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 12,
-                color: Colors.grey.shade600,
+                color: isDark ? Colors.white : Colors.grey.shade600,
                 fontWeight: FontWeight.w500,
               ),
             ),
