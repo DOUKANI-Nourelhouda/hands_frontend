@@ -317,7 +317,7 @@ class TermsPage extends StatelessWidget {
             text(context, '11. Contact Us'),
             text(context, 'If you have questions about these terms, contact ') +
                 text(context, 'the Hands team through the official support ') +
-                text(context, 'email @@@@@@@@@@@@.'),
+                text(context, 'email handsapppp@gmail.com.'),
           ),
 
           const Divider(height: 32),

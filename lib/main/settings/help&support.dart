@@ -332,7 +332,7 @@ class HelpSupportPage extends StatelessWidget {
             context: context,
             icon: Icons.email_outlined,
             title: textRead(context, 'Email support'),
-            subtitle: '@@@@@@@@@@2@@',
+            subtitle: 'handsapppp@gmail.com',
           ),
 
           Center(

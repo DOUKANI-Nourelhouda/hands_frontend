@@ -270,8 +270,8 @@ const Map<String, Map<String, String>> languages = {
         'For questions about this policy or your personal ',
     'information, contact the Hands team at the official ':
         'information, contact the Hands team at the official ',
-    'privacy email address @@@@@@@@@2@@@@@@@':
-        'privacy email address @@@@@@@@@2@@@@@@@',
+    'privacy email address handsapppp@gmail.com':
+        'privacy email address handsapppp@gmail.com',
 
     'Terms of Service': 'Terms of Service',
     'Welcome to Hands!': 'Welcome to Hands!',
@@ -861,8 +861,8 @@ const Map<String, Map<String, String>> languages = {
         'Pour toute question concernant cette politique ou vos ',
     'information, contact the Hands team at the official ':
         'informations personnelles, contactez l’équipe Hands à l’adresse e-mail officielle ',
-    'privacy email address @@@@@@@@@2@@@@@@@':
-        'dédiée à la confidentialité @@@@@@@@@2@@@@@@@',
+    'privacy email address handsapppp@gmail.com':
+        'dédiée à la confidentialité handsapppp@gmail.com',
     'Hands - To survive in your residence.':
         'Hands - Pour survivre dans ta résidence.',
 
@@ -1469,8 +1469,8 @@ const Map<String, Map<String, String>> languages = {
         'للاستفسارات حول هذه السياسة أو معلوماتك الشخصية، ',
     'information, contact the Hands team at the official ':
         'تواصل مع فريق Hands عبر عنوان البريد الإلكتروني الرسمي ',
-    'privacy email address @@@@@@@@@2@@@@@@@.':
-        'المخصّص للخصوصية والمنشور @@@@@@@@@2@@@@@@@ق.',
+    'privacy email address handsapppp@gmail.com.':
+        'المخصّص للخصوصية والمنشور handsapppp@gmail.com.',
     'Hands - To survive in your residence.': 'Hands - لي تنجو في إقامتك',
     'Terms of Service': 'شروط الاستخدام',
     'Welcome to Hands!': 'مرحبًا بك في Hands!',
