@@ -7,9 +7,12 @@ class TermsPage extends StatelessWidget {
   static const Color accentColor = Color(0xfffcc001);
   static const Color textColor = Color(0xff333333);
 
-  Widget _section(String title, String content) {
-    final isDark =
-        WidgetsBinding.instance.window.platformBrightness == Brightness.dark;
+  Widget _section(
+    String title,
+    String content, {
+    required BuildContext context,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 24),
@@ -120,6 +123,8 @@ class TermsPage extends StatelessWidget {
           const SizedBox(height: 24),
 
           _section(
+            context: context,
+
             text(context, '1. Acceptance of Terms'),
             text(context, 'By creating an account or using Hands, you agree ') +
                 text(
@@ -131,6 +136,7 @@ class TermsPage extends StatelessWidget {
           ),
 
           _section(
+            context: context,
             text(context, '2. Eligibility and Accounts'),
             text(
                   context,
@@ -149,6 +155,7 @@ class TermsPage extends StatelessWidget {
           ),
 
           _section(
+            context: context,
             text(context, '3. Posts and Services'),
             text(context, 'You are responsible for the content you publish ') +
                 text(
@@ -167,6 +174,7 @@ class TermsPage extends StatelessWidget {
           ),
 
           _section(
+            context: context,
             text(context, '4. Communication and Conduct'),
             text(
                   context,
@@ -184,6 +192,7 @@ class TermsPage extends StatelessWidget {
           ),
 
           _section(
+            context: context,
             text(context, '5. Transactions and Payments'),
             text(context, 'Users are responsible for agreeing on service ') +
                 text(
@@ -209,6 +218,7 @@ class TermsPage extends StatelessWidget {
           ),
 
           _section(
+            context: context,
             text(context, '6. Free Posts and Paid Credits'),
             text(
                   context,
@@ -231,6 +241,7 @@ class TermsPage extends StatelessWidget {
           ),
 
           _section(
+            context: context,
             text(context, '7. Privacy and Safety'),
             text(context, 'Use other students’ personal information only ') +
                 text(
@@ -253,6 +264,7 @@ class TermsPage extends StatelessWidget {
           ),
 
           _section(
+            context: context,
             text(context, '8. Reporting and Account Restrictions'),
             text(context, 'Hands may review reported content and take ') +
                 text(
@@ -270,6 +282,7 @@ class TermsPage extends StatelessWidget {
           ),
 
           _section(
+            context: context,
             text(context, '9. Service Availability'),
             text(context, 'We aim to keep Hands available and functioning ') +
                 text(context, 'properly, but uninterrupted access is not ') +
@@ -281,6 +294,7 @@ class TermsPage extends StatelessWidget {
           ),
 
           _section(
+            context: context,
             text(context, '10. Changes to These Terms'),
             text(context, 'These terms may be updated as Hands evolves. ') +
                 text(
@@ -299,6 +313,7 @@ class TermsPage extends StatelessWidget {
           ),
 
           _section(
+            context: context,
             text(context, '11. Contact Us'),
             text(context, 'If you have questions about these terms, contact ') +
                 text(context, 'the Hands team through the official support ') +

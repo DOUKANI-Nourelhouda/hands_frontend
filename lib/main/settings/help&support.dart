@@ -7,9 +7,12 @@ class HelpSupportPage extends StatelessWidget {
   static const Color accentColor = Color(0xfffcc001);
   static const Color textColor = Color(0xff333333);
 
-  Widget _buildFaq({required String question, required String answer}) {
-    final isDark =
-        WidgetsBinding.instance.window.platformBrightness == Brightness.dark;
+  Widget _buildFaq({
+    required String question,
+    required String answer,
+    required BuildContext context,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
@@ -67,9 +70,9 @@ class HelpSupportPage extends StatelessWidget {
     required IconData icon,
     required String title,
     required String subtitle,
+    required BuildContext context,
   }) {
-    final isDark =
-        WidgetsBinding.instance.window.platformBrightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return InkWell(
       borderRadius: BorderRadius.circular(14),
       child: Container(
@@ -215,6 +218,7 @@ class HelpSupportPage extends StatelessWidget {
 
           // Keep your existing FAQ items and support content here.
           _buildFaq(
+            context: context,
             question: text(context, 'What is Hands?'),
             answer:
                 text(
@@ -237,6 +241,7 @@ class HelpSupportPage extends StatelessWidget {
           ),
 
           _buildFaq(
+            context: context,
             question: text(context, 'Why can I only see certain posts?'),
             answer:
                 text(
@@ -251,6 +256,7 @@ class HelpSupportPage extends StatelessWidget {
           ),
 
           _buildFaq(
+            context: context,
             question: text(context, 'How can I publish a post?'),
             answer:
                 text(
@@ -269,6 +275,7 @@ class HelpSupportPage extends StatelessWidget {
           ),
 
           _buildFaq(
+            context: context,
             question: text(context, 'Why can’t I publish another post?'),
             answer:
                 text(
@@ -283,6 +290,7 @@ class HelpSupportPage extends StatelessWidget {
           ),
 
           _buildFaq(
+            context: context,
             question: text(context, 'How do I block or report someone?'),
             answer:
                 text(
@@ -298,6 +306,7 @@ class HelpSupportPage extends StatelessWidget {
           ),
 
           _buildFaq(
+            context: context,
             question: text(context, 'How can I edit my profile?'),
             answer:
                 text(
@@ -320,6 +329,7 @@ class HelpSupportPage extends StatelessWidget {
           const SizedBox(height: 14),
 
           _buildContactTile(
+            context: context,
             icon: Icons.email_outlined,
             title: textRead(context, 'Email support'),
             subtitle: '@@@@@@@@@@2@@',

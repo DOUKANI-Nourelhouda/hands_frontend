@@ -195,6 +195,38 @@ class GroupService {
     return Map<String, dynamic>.from(data['group'] as Map);
   }
 
+  Future<Map<String, dynamic>> editGroupMessage({
+    required String groupId,
+    required String messageId,
+    required String content,
+  }) async {
+    final response = await http.put(
+      _uri('/group/$groupId/messages/$messageId'),
+      headers: _headers,
+      body: jsonEncode({'text': content}),
+    );
+
+    final data = _decode(response);
+
+    if (data is! Map || data['updatedMessage'] is! Map) {
+      throw Exception('Updated message was not returned by the server.');
+    }
+
+    return Map<String, dynamic>.from(data['updatedMessage']);
+  }
+
+  Future<void> deleteGroupMessage({
+    required String groupId,
+    required String messageId,
+  }) async {
+    final response = await http.delete(
+      _uri('/group/$groupId/messages/$messageId'),
+      headers: _headers,
+    );
+
+    _decode(response);
+  }
+
   Future<void> leaveGroup(String groupId) async {
     final response = await http.delete(
       Uri.parse('$baseUrl/group/$groupId/leave'),

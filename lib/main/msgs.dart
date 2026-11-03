@@ -447,7 +447,9 @@ class _MsgsPageState extends State<MsgsPage> {
               backgroundColor: accent.withValues(alpha: 0.22),
               child: ClipOval(
                 child: Image.asset(
-                  'assets/default_grp.png',
+                  isDark
+                      ? 'assets/default_grp_dark.png'
+                      : 'assets/default_grp.png',
                   width: 50,
                   height: 50,
                   fit: BoxFit.cover,

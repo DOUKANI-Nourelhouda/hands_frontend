@@ -596,9 +596,9 @@ class _SearchPageState extends State<SearchPage> {
                           : FontWeight.w400,
                       color: isSelected
                           ? isDark
-                                ? Colors.white
-                                : textColor
-                          : Colors.white,
+                                ? textColor
+                                : Colors.white
+                          : textColor,
                     ),
                   ),
                 ],
@@ -619,9 +619,9 @@ class _SearchPageState extends State<SearchPage> {
       colorFilter: ColorFilter.mode(
         isSelected
             ? isDark
-                  ? Colors.white
-                  : textColor
-            : Colors.white,
+                  ? textColor
+                  : Colors.white
+            : textColor,
         BlendMode.srcIn,
       ),
     );
@@ -984,7 +984,9 @@ class _SearchPageState extends State<SearchPage> {
                 backgroundColor: accent.withValues(alpha: 0.22),
                 child: ClipOval(
                   child: Image.asset(
-                    'assets/default_grp.png',
+                    isDark
+                        ? 'assets/default_grp_dark.png'
+                        : 'assets/default_grp.png',
                     width: 50,
                     height: 50,
                     fit: BoxFit.cover,

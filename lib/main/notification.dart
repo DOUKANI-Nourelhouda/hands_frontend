@@ -11,7 +11,6 @@ class NotificationsPage extends StatefulWidget {
 
 class _NotificationsPageState extends State<NotificationsPage> {
   static const Color accent = Color(0xfffcc001);
-  static const Color background = Color(0xfff8f8f8);
 
   final NotificationService _service = NotificationService();
   final ScrollController _scrollController = ScrollController();
@@ -272,6 +271,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
       context: context,
 
       builder: (dialogContext) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xff333333) : Colors.white,
         title: Text(textRead(context, 'Delete all notifications?')),
         content: Text(
           textRead(
@@ -284,7 +284,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
             onPressed: () => Navigator.pop(dialogContext, false),
             child: Text(
               textRead(context, 'Cancel'),
-              style: TextStyle(color: Color(0xff333333)),
+              style: TextStyle(
+                color: isDark ? Colors.white : const Color(0xff333333),
+              ),
             ),
           ),
           TextButton(
@@ -408,15 +410,15 @@ class _NotificationsPageState extends State<NotificationsPage> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: background,
+      backgroundColor: isDark ? Color(0xff333333) : Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
+        backgroundColor: isDark ? const Color(0xff333333) : Colors.white,
+        surfaceTintColor: isDark ? const Color(0xff333333) : Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_rounded,
-            color: Color(0xff333333),
+            color: isDark ? Colors.white : Color(0xff333333),
             size: 26,
           ),
           onPressed: () => Navigator.maybePop(context),
@@ -428,7 +430,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
               style: TextStyle(
                 fontWeight: FontWeight.w700,
                 fontSize: 20,
-                color: Colors.black,
+                color: isDark ? Colors.white : Colors.black,
               ),
             ),
             if (_unreadCount > 0) ...[
@@ -441,8 +443,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
                 ),
                 child: Text(
                   '$_unreadCount',
-                  style: const TextStyle(
-                    color: Colors.black,
+                  style: TextStyle(
+                    color: isDark ? Colors.white : Color(0xff333333),
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
                   ),
@@ -455,7 +457,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
           if (_notifications.isNotEmpty)
             PopupMenuButton<String>(
               icon: const Icon(Icons.more_vert, color: Color(0xff333333)),
-              color: Colors.white,
+              color: isDark ? const Color(0xff333333) : Colors.white,
 
               onSelected: (value) {
                 if (value == 'read') _markAllAsRead();
@@ -514,7 +516,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
                 onPressed: () => _loadNotifications(),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: accent,
-                  foregroundColor: Colors.black,
+                  foregroundColor: isDark
+                      ? Colors.white
+                      : const Color(0xff333333),
                 ),
                 child: const Text('Try again'),
               ),
@@ -535,7 +539,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
             Icon(
               Icons.notifications_none_rounded,
               size: 76,
-              color: Colors.black26,
+              color: isDark ? Colors.white24 : Colors.black26,
             ),
             SizedBox(height: 16),
             Center(
@@ -548,7 +552,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
             Center(
               child: Text(
                 text(context, 'Your notifications will appear here.'),
-                style: TextStyle(color: Colors.black54),
+                style: TextStyle(
+                  color: isDark ? Colors.white54 : Colors.black54,
+                ),
               ),
             ),
           ],
@@ -590,9 +596,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
                 color: Colors.red,
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.delete_outline,
-                color: Colors.white,
+                color: isDark ? Color(0xff333333) : Colors.white,
                 size: 26,
               ),
             ),
@@ -600,6 +606,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
               return await showDialog<bool>(
                     context: context,
                     builder: (dialogContext) => AlertDialog(
+                      backgroundColor: isDark
+                          ? const Color(0xff333333)
+                          : Colors.white,
                       title: Text(textRead(context, 'Delete notification?')),
                       content: Text(
                         textRead(
@@ -612,7 +621,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
                           onPressed: () => Navigator.pop(dialogContext, false),
                           child: Text(
                             textRead(context, 'Cancel'),
-                            style: TextStyle(color: Color(0xff333333)),
+                            style: TextStyle(
+                              color: isDark ? Colors.white : Color(0xff333333),
+                            ),
                           ),
                         ),
                         TextButton(
@@ -629,7 +640,11 @@ class _NotificationsPageState extends State<NotificationsPage> {
             },
             onDismissed: (_) => _deleteNotification(index),
             child: Material(
-              color: isRead ? Colors.white : const Color(0xfffff8dc),
+              color: isRead
+                  ? isDark
+                        ? Colors.white
+                        : Color(0xff444444)
+                  : const Color(0xfffff8dc),
               borderRadius: BorderRadius.circular(16),
               child: InkWell(
                 borderRadius: BorderRadius.circular(16),
@@ -640,7 +655,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: isRead
-                          ? Colors.black.withValues(alpha: 0.05)
+                          ? isDark
+                                ? Colors.white.withValues(alpha: 0.05)
+                                : Colors.black.withValues(alpha: 0.05)
                           : accent.withValues(alpha: 0.65),
                     ),
                   ),
@@ -651,7 +668,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
                         children: [
                           CircleAvatar(
                             radius: 25,
-                            backgroundColor: const Color(0xFFFFF2C2),
+                            backgroundColor: isDark
+                                ? const Color(0xFF444444)
+                                : const Color(0xFFFFF2C2),
                             backgroundImage: profilePicture.isNotEmpty
                                 ? NetworkImage(profilePicture)
                                 : AssetImage(
@@ -671,14 +690,18 @@ class _NotificationsPageState extends State<NotificationsPage> {
                                 color: accent,
                                 shape: BoxShape.circle,
                                 border: Border.all(
-                                  color: Colors.white,
+                                  color: isDark
+                                      ? const Color(0xff333333)
+                                      : Colors.white,
                                   width: 2,
                                 ),
                               ),
                               child: Icon(
                                 _notificationIcon(notification),
                                 size: 12,
-                                color: Colors.black,
+                                color: isDark
+                                    ? Colors.white
+                                    : Color(0xff333333),
                               ),
                             ),
                           ),
@@ -692,7 +715,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                             Text(
                               text(context, _message(notification)),
                               style: TextStyle(
-                                color: Colors.black87,
+                                color: isDark ? Colors.white : Colors.black87,
                                 fontSize: 14,
                                 height: 1.4,
                                 fontWeight: isRead
@@ -706,9 +729,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
                                 context,
                                 _timeAgo(notification['createdAt']),
                               ),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
-                                color: Colors.black54,
+                                color: isDark ? Colors.white54 : Colors.black54,
                               ),
                             ),
                           ],
@@ -729,10 +752,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
                         tooltip: textRead(context, 'Delete notification'),
                         visualDensity: VisualDensity.compact,
                         onPressed: () => _deleteNotification(index),
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.close_rounded,
                           size: 20,
-                          color: Colors.black45,
+                          color: isDark ? Colors.white54 : Colors.black45,
                         ),
                       ),
                     ],

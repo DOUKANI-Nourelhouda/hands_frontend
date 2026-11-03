@@ -7,12 +7,12 @@ class PrivacyPolicyPage extends StatelessWidget {
   static const Color _yellow = Color(0xfffcc001);
 
   Widget _buildSection({
+    required BuildContext context,
     required IconData icon,
     required String title,
     required String content,
   }) {
-    final isDark =
-        WidgetsBinding.instance.window.platformBrightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 14),
@@ -128,6 +128,7 @@ class PrivacyPolicyPage extends StatelessWidget {
           const SizedBox(height: 24),
 
           _buildSection(
+            context: context,
             icon: Icons.person_outline,
             title: text(context, '1. Information we collect'),
             content:
@@ -151,6 +152,7 @@ class PrivacyPolicyPage extends StatelessWidget {
           ),
 
           _buildSection(
+            context: context,
             icon: Icons.home_outlined,
             title: text(context, '2. Residence-based access'),
             content:
@@ -174,6 +176,7 @@ class PrivacyPolicyPage extends StatelessWidget {
           ),
 
           _buildSection(
+            context: context,
             icon: Icons.chat_bubble_outline,
             title: text(context, '3. Messages and communication'),
             content:
@@ -197,6 +200,7 @@ class PrivacyPolicyPage extends StatelessWidget {
           ),
 
           _buildSection(
+            context: context,
             icon: Icons.photo_outlined,
             title: text(context, '4. Posts and profile information'),
             content:
@@ -216,6 +220,7 @@ class PrivacyPolicyPage extends StatelessWidget {
           ),
 
           _buildSection(
+            context: context,
             icon: Icons.block_outlined,
             title: text(context, '5. Blocking and reporting'),
             content:
@@ -242,6 +247,7 @@ class PrivacyPolicyPage extends StatelessWidget {
           ),
 
           _buildSection(
+            context: context,
             icon: Icons.security_outlined,
             title: text(context, '6. Data security'),
             content:
@@ -261,6 +267,7 @@ class PrivacyPolicyPage extends StatelessWidget {
           ),
 
           _buildSection(
+            context: context,
             icon: Icons.cloud_outlined,
             title: text(context, '7. Storage and service providers'),
             content:
@@ -284,6 +291,7 @@ class PrivacyPolicyPage extends StatelessWidget {
           ),
 
           _buildSection(
+            context: context,
             icon: Icons.delete_outline,
             title: text(context, '8. Your choices and your data'),
             content:
@@ -314,6 +322,7 @@ class PrivacyPolicyPage extends StatelessWidget {
           ),
 
           _buildSection(
+            context: context,
             icon: Icons.child_care_outlined,
             title: text(context, '9. Age requirements'),
             content:
@@ -333,6 +342,7 @@ class PrivacyPolicyPage extends StatelessWidget {
           ),
 
           _buildSection(
+            context: context,
             icon: Icons.update_outlined,
             title: text(context, '10. Changes to this policy'),
             content:
@@ -348,6 +358,7 @@ class PrivacyPolicyPage extends StatelessWidget {
           ),
 
           _buildSection(
+            context: context,
             icon: Icons.mail_outline,
             title: text(context, '11. Contact us'),
             content:

@@ -651,7 +651,7 @@ class _ChatPageState extends State<ChatPage> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: isDark ? Color(0xFF333333) : Colors.white,
+      backgroundColor: isDark ? Color(0xFF333333) : Color(0xfff7f7f7),
       appBar: AppBar(
         backgroundColor: isDark ? Color(0xFF333333) : Colors.white,
         foregroundColor: isDark ? Colors.white : Color(0xFF333333),
@@ -844,8 +844,8 @@ class _ChatPageState extends State<ChatPage> {
                   color: isMine
                       ? isDark
                             ? chatYellow
-                            : Color(0xfff5f5f5)
-                      : Color(0xff333333),
+                            : chatYellow
+                      : Color.fromARGB(255, 231, 231, 231),
                   borderRadius: BorderRadius.only(
                     topLeft: const Radius.circular(16),
                     topRight: const Radius.circular(16),
@@ -881,7 +881,7 @@ class _ChatPageState extends State<ChatPage> {
                             ? isDark
                                   ? Color(0xff333333)
                                   : Colors.white
-                            : Colors.white,
+                            : Color(0xff333333),
                       ),
                     ),
                     if (time.isNotEmpty)
@@ -976,7 +976,7 @@ class _ChatPageState extends State<ChatPage> {
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(24),
                     borderSide: BorderSide(
-                      color: isDark ? Color(0xff333333) : Color(0xfff5f5f5),
+                      color: isDark ? Color(0xff333333) : Color(0xfffcc001),
                     ),
                   ),
                   focusedBorder: OutlineInputBorder(
