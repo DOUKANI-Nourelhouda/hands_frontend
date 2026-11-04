@@ -814,10 +814,10 @@ class _GroupChatPageState extends State<GroupChatPage> {
                       style: TextStyle(
                         fontSize: 15,
                         color: isMine
-                            ? isDark
-                                  ? Color(0xff333333)
-                                  : Colors.white
-                            : Color(0xff333333),
+                            ? Color(0xfffcc001)
+                            : isDark
+                            ? Color(0xff444444)
+                            : Color(0xfff5f5f5),
                       ),
                     ),
                     if (time.isNotEmpty)
