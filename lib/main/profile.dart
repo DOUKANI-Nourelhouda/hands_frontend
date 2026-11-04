@@ -138,7 +138,7 @@ class _ProfilePageState extends State<ProfilePage> {
       final result = await _profileService.getProfilePosts(
         userId: _isOwnProfile ? null : profileId,
         page: 1,
-        limit: 30,
+        limit: 50,
       );
 
       final rawPosts = result['posts'];

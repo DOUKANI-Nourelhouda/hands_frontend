@@ -598,6 +598,8 @@ class _SearchPageState extends State<SearchPage> {
                           ? isDark
                                 ? textColor
                                 : Colors.white
+                          : isDark
+                          ? Colors.white
                           : textColor,
                     ),
                   ),
@@ -621,6 +623,8 @@ class _SearchPageState extends State<SearchPage> {
             ? isDark
                   ? textColor
                   : Colors.white
+            : isDark
+            ? Colors.white
             : textColor,
         BlendMode.srcIn,
       ),

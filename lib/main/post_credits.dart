@@ -515,7 +515,7 @@ class _PostCreditsPageState extends State<PostCreditsPage>
             child: Text(
               text(
                 context,
-                'Your 3 free posts are used first. Purchased credits are available after your free posts have been used.',
+                'Your 300 free posts are used first. Purchased credits are available after your free posts have been used.',
               ),
               style: TextStyle(
                 fontSize: 12,

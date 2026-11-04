@@ -842,20 +842,23 @@ class _ChatPageState extends State<ChatPage> {
                 ),
                 decoration: BoxDecoration(
                   color: isMine
-                      ? isDark
-                            ? chatYellow
-                            : chatYellow
-                      : Color.fromARGB(255, 231, 231, 231),
+                      ? chatYellow
+                      : isDark
+                      ? Color(0xff444444)
+                      : Color(0xfff5f5f5),
+
                   borderRadius: BorderRadius.only(
                     topLeft: const Radius.circular(16),
                     topRight: const Radius.circular(16),
                     bottomLeft: Radius.circular(isMine ? 16 : 4),
                     bottomRight: Radius.circular(isMine ? 4 : 16),
                   ),
+
                   border: isMine
                       ? null
                       : Border.all(
                           color: isDark ? Colors.grey : const Color(0xffeeeeee),
+                          width: 2,
                         ),
                 ),
                 child: Column(

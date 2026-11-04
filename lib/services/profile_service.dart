@@ -69,7 +69,7 @@ class ProfileService {
   Future<Map<String, dynamic>> getProfilePosts({
     String? userId,
     int page = 1,
-    int limit = 30,
+    int limit = 50,
   }) async {
     final path = userId == null || userId.isEmpty
         ? 'posts/user/me'

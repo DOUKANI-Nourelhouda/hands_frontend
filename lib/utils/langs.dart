@@ -116,8 +116,8 @@ const Map<String, Map<String, String>> languages = {
     'For who wants to do more.': 'For who wants to do more.',
     'For who never stop creating.': 'For who never stop creating.',
     ' has been blocked.': ' has been blocked.',
-    'Your 3 free posts are used first. Purchased credits are available after your free posts have been used.':
-        'Your 3 free posts are used first. Purchased credits are available after your free posts have been used.',
+    'Your 300 free posts are used first. Purchased credits are available after your free posts have been used.':
+        'Your 300 free posts are used first. Purchased credits are available after your free posts have been used.',
     'Edit profile': 'Edit profile',
     'Personal information': 'Personal information',
     'Username': 'Username',
@@ -337,8 +337,8 @@ const Map<String, Map<String, String>> languages = {
     'the prices and conditions displayed at purchase.':
         'the prices and conditions displayed at purchase.',
     '6. Free Posts and Paid Credits': '6. Free Posts and Paid Credits',
-    'Hands may provide a limited number of free posts (3) ':
-        'Hands may provide a limited number of free posts (3) ',
+    'Hands may provide a limited number of free posts (300) ':
+        'Hands may provide a limited number of free posts (300) ',
     'and offer additional posting credits for purchase. ':
         'and offer additional posting credits for purchase. ',
     'Available allowances, prices, and applicable ':
@@ -702,8 +702,8 @@ const Map<String, Map<String, String>> languages = {
         'Leurs publications n’apparaîtront plus dans votre fil d’actualité.',
 
     'Mode': 'Mode',
-    'Your 3 free posts are used first. Purchased credits are available after your free posts have been used.':
-        'Vos 3 publications gratuites sont utilisées en priorité ; les crédits achetés deviennent disponibles une fois vos publications gratuites épuisées.',
+    'Your 300 free posts are used first. Purchased credits are available after your free posts have been used.':
+        'Vos 300 publications gratuites sont utilisées en priorité ; les crédits achetés deviennent disponibles une fois vos publications gratuites épuisées.',
     'Edit profile': 'Modifier le profil',
     'Personal information': 'Informations personnelles',
     'Username': 'Nom d’utilisateur',
@@ -940,8 +940,8 @@ const Map<String, Map<String, String>> languages = {
 
     '6. Free Posts and Paid Credits':
         '6. Publications gratuites et crédits payants',
-    'Hands may provide a limited number of free posts (3) ':
-        'Hands peut proposer un nombre limité de publications gratuites (3) ',
+    'Hands may provide a limited number of free posts (300) ':
+        'Hands peut proposer un nombre limité de publications gratuites (300) ',
     'and offer additional posting credits for purchase. ':
         'et permettre l’achat de crédits de publication supplémentaires. ',
     'Available allowances, prices, and applicable ':
@@ -1324,8 +1324,8 @@ const Map<String, Map<String, String>> languages = {
     'For who never stop creating.': 'لمن لا يتوقفون عن الإبداع',
     '170 DA': '170 دج',
     'Profile options': 'خيارات الملف الشخصي',
-    'Your 3 free posts are used first. Purchased credits are available after your free posts have been used.':
-        'تُستخدم منشوراتك المجانية الثلاثة أولًا، ويصبح رصيد المنشورات الذي اشتريته متاحًا بعد نفاد المنشورات المجانية.',
+    'Your 300 free posts are used first. Purchased credits are available after your free posts have been used.':
+        'تُستخدم منشوراتك المجانية الثلاثمائة أولًا، ويصبح رصيد المنشورات الذي اشتريته متاحًا بعد نفاد المنشورات المجانية.',
     'Edit profile': 'تعديل الملف الشخصي',
     'Personal information': 'المعلومات الشخصية',
     'Username': 'اسم المستخدم',
@@ -1537,8 +1537,8 @@ const Map<String, Map<String, String>> languages = {
     'the prices and conditions displayed at purchase.':
         'الأسعار والشروط المعروضة عند الشراء.',
     '6. Free Posts and Paid Credits': '6. المنشورات المجانية والأرصدة المدفوعة',
-    'Hands may provide a limited number of free posts (3) ':
-        'قد يوفّر Hands عددًا محدودًا من المنشورات المجانية (3) ',
+    'Hands may provide a limited number of free posts (300) ':
+        'قد يوفّر Hands عددًا محدودًا من المنشورات المجانية (300) ',
     'and offer additional posting credits for purchase. ':
         'ويتيح شراء أرصدة إضافية للنشر. ',
     'Available allowances, prices, and applicable ':

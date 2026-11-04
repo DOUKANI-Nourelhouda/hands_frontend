@@ -126,7 +126,7 @@ class GroupService {
     final uri = _uri('/user/search', {
       'q': trimmedQuery,
       'page': '1',
-      'limit': '30',
+      'limit': '50',
     });
 
     final response = await http.get(uri, headers: _headers);

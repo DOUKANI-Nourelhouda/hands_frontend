@@ -222,7 +222,7 @@ class TermsPage extends StatelessWidget {
             text(context, '6. Free Posts and Paid Credits'),
             text(
                   context,
-                  'Hands may provide a limited number of free posts (3) ',
+                  'Hands may provide a limited number of free posts (300) ',
                 ) +
                 text(
                   context,

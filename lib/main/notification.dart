@@ -456,7 +456,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
         actions: [
           if (_notifications.isNotEmpty)
             PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert, color: Color(0xff333333)),
+              icon: Icon(
+                Icons.more_vert,
+                color: isDark ? Colors.white : Color(0xff333333),
+              ),
               color: isDark ? const Color(0xff333333) : Colors.white,
 
               onSelected: (value) {
@@ -642,8 +645,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
             child: Material(
               color: isRead
                   ? isDark
-                        ? Colors.white
-                        : Color(0xff444444)
+                        ? Color(0xff444444)
+                        : Colors.white
+                  : isDark
+                  ? Color(0xFF8A6800)
                   : const Color(0xfffff8dc),
               borderRadius: BorderRadius.circular(16),
               child: InkWell(
@@ -656,8 +661,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
                     border: Border.all(
                       color: isRead
                           ? isDark
-                                ? Colors.white.withValues(alpha: 0.05)
-                                : Colors.black.withValues(alpha: 0.05)
+                                ? Colors.white.withValues(alpha: 0.09)
+                                : Colors.black.withValues(alpha: 0.09)
                           : accent.withValues(alpha: 0.65),
                     ),
                   ),
