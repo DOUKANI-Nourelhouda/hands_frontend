@@ -637,6 +637,12 @@ class _MainScreenState extends State<MainScreen> {
 
     if (!mounted || result == null) return;
 
+    // Reset category to All
+    homePageKey.currentState?.setState(() {
+      homePageKey.currentState?.selectedCategory = 'All';
+    });
+
+    // Refresh the feed
     await homePageKey.currentState?.refresh();
   }
 

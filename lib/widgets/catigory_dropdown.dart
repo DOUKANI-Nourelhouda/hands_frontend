@@ -96,10 +96,8 @@ class _CategoryDropdownState extends State<CategoryDropdown> {
                 style: TextStyle(
                   fontSize: 16,
                   color: widget.selectedCategory == null
-                      ? isDark
-                            ? Colors.grey
-                            : Colors.grey
-                      : Colors.white,
+                      ? (isDark ? Colors.grey : Colors.grey)
+                      : (isDark ? Colors.white : Color(0xff333333)),
                 ),
               ),
             ),
