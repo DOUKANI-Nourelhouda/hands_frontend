@@ -263,9 +263,13 @@ class _FollowersFollowingPageState extends State<FollowersFollowingPage>
               builder: (_) => ProfilePage(
                 userId: selectedUserId,
                 postService: widget.postService,
+
                 onMessageTap: (recipientId) async {
                   Navigator.pop(context);
                   await widget.onMessageTap?.call(recipientId);
+                },
+                onBackToHome: () {
+                  Navigator.pop(context);
                 },
               ),
             ),

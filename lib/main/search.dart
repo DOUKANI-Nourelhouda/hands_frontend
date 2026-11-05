@@ -16,11 +16,13 @@ class SearchPage extends StatefulWidget {
   final PostService postService;
   final IO.Socket socket;
   final Future<void> Function(String recipientId)? onMessageTap;
+  final VoidCallback onBackToHome;
   const SearchPage({
     super.key,
     required this.postService,
     required this.socket,
     this.onMessageTap,
+    required this.onBackToHome,
   });
 
   @override
@@ -478,14 +480,10 @@ class _SearchPageState extends State<SearchPage> {
         children: [
           // Back arrow
           IconButton(
-            onPressed: () {
-              if (Navigator.canPop(context)) {
-                Navigator.pop(context);
-              }
-            },
+            onPressed: widget.onBackToHome,
             icon: Icon(
               Icons.arrow_back_rounded,
-              color: isDark ? Colors.white : textColor,
+              color: isDark ? Colors.white : Color(0xff333333),
               size: 26,
             ),
           ),
@@ -796,104 +794,120 @@ class _SearchPageState extends State<SearchPage> {
 
     // Keep your existing user-card ListView.builder here.
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: users.length,
-      itemBuilder: (context, index) {
-        final user = users[index];
-        final username = user['username']?.toString() ?? 'Student';
-        final bio = user['bio']?.toString() ?? '';
-        final profilePicture = user['profilePicture']?.toString() ?? '';
+    return RefreshIndicator(
+      color: const Color(0xfffcc001),
+      onRefresh: () async {
+        if (searchQuery.trim().isEmpty) {
+          await _loadFollowing();
+        } else {
+          final requestId = ++_searchRequestId;
+          await _searchUsers(searchQuery, requestId);
+        }
+      },
+      child: ListView.builder(
+        shrinkWrap: false,
+        physics: const AlwaysScrollableScrollPhysics(),
+        itemCount: users.length,
+        itemBuilder: (context, index) {
+          final user = users[index];
+          final username = user['username']?.toString() ?? 'Student';
+          final bio = user['bio']?.toString() ?? '';
+          final profilePicture = user['profilePicture']?.toString() ?? '';
 
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
-          decoration: BoxDecoration(
-            color: isDark ? Color(0xFF444444) : Colors.white,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: isDark ? Color(0xFF444444) : Color(0xFFF0F0F0),
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.07)
-                    : const Color(0xFF000000).withValues(alpha: 0.07),
-                blurRadius: 12,
-                spreadRadius: 1,
-                offset: const Offset(0, 4),
+          return Container(
+            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+            decoration: BoxDecoration(
+              color: isDark ? Color(0xFF444444) : Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: isDark ? Color(0xFF444444) : Color(0xFFF0F0F0),
+                width: 1,
               ),
-            ],
-          ),
-          child: ListTile(
-            leading: CircleAvatar(
-              radius: 23,
-              backgroundColor: const Color(0xFFFFF2C2),
-              backgroundImage: profilePicture.isNotEmpty
-                  ? NetworkImage(profilePicture)
-                  : AssetImage(
-                          isDark
-                              ? 'assets/default_pfp_dark.png'
-                              : 'assets/default_pfp.jpg',
-                        )
-                        as ImageProvider,
+              boxShadow: [
+                BoxShadow(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.07)
+                      : const Color(0xFF000000).withValues(alpha: 0.07),
+                  blurRadius: 12,
+                  spreadRadius: 1,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-            title: _highlightSearchText(
-              context,
-              username,
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white : Color(0xFF333333),
+            child: ListTile(
+              leading: CircleAvatar(
+                radius: 23,
+                backgroundColor: const Color(0xFFFFF2C2),
+                backgroundImage: profilePicture.isNotEmpty
+                    ? NetworkImage(profilePicture)
+                    : AssetImage(
+                            isDark
+                                ? 'assets/default_pfp_dark.png'
+                                : 'assets/default_pfp.jpg',
+                          )
+                          as ImageProvider,
               ),
-            ),
-            subtitle: bio.isNotEmpty
-                ? _highlightSearchText(
-                    context,
-                    bio,
-                    style: TextStyle(
-                      color: isDark ? Colors.white : Color(0xFF333333),
+              title: _highlightSearchText(
+                context,
+                username,
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white : Color(0xFF333333),
+                ),
+              ),
+              subtitle: bio.isNotEmpty
+                  ? _highlightSearchText(
+                      context,
+                      bio,
+                      style: TextStyle(
+                        color: isDark ? Colors.white : Color(0xFF333333),
+                      ),
+                      maxLines: 2,
+                    )
+                  : null,
+
+              onTap: () {
+                final selectedUserId = (user['_id'] ?? user['id'] ?? '')
+                    .toString();
+
+                if (selectedUserId.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        text(context, 'Could not open this profile.'),
+                      ),
                     ),
-                    maxLines: 2,
-                  )
-                : null,
+                  );
+                  return;
+                }
 
-            onTap: () {
-              final selectedUserId = (user['_id'] ?? user['id'] ?? '')
-                  .toString();
+                debugPrint('[SEARCH] Opening profile: $selectedUserId');
 
-              if (selectedUserId.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      text(context, 'Could not open this profile.'),
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ProfilePage(
+                      userId: selectedUserId,
+                      postService: widget.postService,
+                      onMessageTap: (recipientId) async {
+                        debugPrint(
+                          '[SEARCH] Opening direct chat: $recipientId',
+                        );
+
+                        await widget.onMessageTap?.call(recipientId);
+                      },
+                      onBackToHome: () {
+                        Navigator.pop(context);
+                      },
                     ),
                   ),
                 );
-                return;
-              }
-
-              debugPrint('[SEARCH] Opening profile: $selectedUserId');
-
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => ProfilePage(
-                    userId: selectedUserId,
-                    postService: widget.postService,
-                    onMessageTap: (recipientId) async {
-                      debugPrint('[SEARCH] Opening direct chat: $recipientId');
-
-                      await widget.onMessageTap?.call(recipientId);
-                    },
-                  ),
-                ),
-              );
-            },
-          ),
-        );
-      },
+              },
+            ),
+          );
+        },
+      ),
     );
   }
 

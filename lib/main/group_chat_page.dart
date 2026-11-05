@@ -580,11 +580,10 @@ class _GroupChatPageState extends State<GroupChatPage> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: isDark ? Color(0xff333333) : Colors.white,
-
+      backgroundColor: isDark ? Color(0xFF333333) : Color(0xfff7f7f7),
       appBar: AppBar(
-        backgroundColor: isDark ? const Color(0xff333333) : Colors.white,
-        foregroundColor: isDark ? Colors.white : Color(0xff333333),
+        backgroundColor: isDark ? Color(0xFF333333) : Colors.white,
+        foregroundColor: isDark ? Colors.white : Color(0xFF333333),
         elevation: 0.5,
         titleSpacing: 0,
         title: InkWell(
@@ -778,10 +777,10 @@ class _GroupChatPageState extends State<GroupChatPage> {
                 ),
                 decoration: BoxDecoration(
                   color: isMine
-                      ? isDark
-                            ? Color(0xfffcc001)
-                            : Color(0xfffcc001)
-                      : Color.fromARGB(255, 231, 231, 231),
+                      ? Color(0xfffcc001)
+                      : isDark
+                      ? Color(0xff444444)
+                      : Color(0xfff5f5f5),
                   borderRadius: BorderRadius.only(
                     topLeft: const Radius.circular(16),
                     topRight: const Radius.circular(16),
@@ -792,6 +791,7 @@ class _GroupChatPageState extends State<GroupChatPage> {
                       ? null
                       : Border.all(
                           color: isDark ? Colors.grey : const Color(0xffeeeeee),
+                          width: 1.5,
                         ),
                 ),
                 child: Column(
@@ -814,10 +814,8 @@ class _GroupChatPageState extends State<GroupChatPage> {
                       style: TextStyle(
                         fontSize: 15,
                         color: isMine
-                            ? Color(0xfffcc001)
-                            : isDark
-                            ? Color(0xff444444)
-                            : Color(0xfff5f5f5),
+                            ? (isDark ? const Color(0xff333333) : Colors.white)
+                            : (isDark ? Colors.white : const Color(0xff333333)),
                       ),
                     ),
                     if (time.isNotEmpty)

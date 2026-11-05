@@ -370,7 +370,7 @@ class PrivacyPolicyPage extends StatelessWidget {
                   context,
                   'information, contact the Hands team at the official ',
                 ) +
-                text(context, 'privacy email address handsapppp@gmail.com.'),
+                text(context, 'privacy email address handsappppp@gmail.com.'),
           ),
 
           const SizedBox(height: 8),

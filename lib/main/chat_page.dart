@@ -672,6 +672,9 @@ class _ChatPageState extends State<ChatPage> {
                       builder: (_) => ProfilePage(
                         userId: widget.otherUserId,
                         postService: widget.postService,
+                        onBackToHome: () {
+                          Navigator.pop(context);
+                        },
                       ),
                     ),
                   );
@@ -858,7 +861,7 @@ class _ChatPageState extends State<ChatPage> {
                       ? null
                       : Border.all(
                           color: isDark ? Colors.grey : const Color(0xffeeeeee),
-                          width: 2,
+                          width: 1.5,
                         ),
                 ),
                 child: Column(
@@ -881,10 +884,8 @@ class _ChatPageState extends State<ChatPage> {
                       style: TextStyle(
                         fontSize: 15,
                         color: isMine
-                            ? isDark
-                                  ? Color(0xff333333)
-                                  : Colors.white
-                            : Color(0xff333333),
+                            ? (isDark ? const Color(0xff333333) : Colors.white)
+                            : (isDark ? Colors.white : const Color(0xff333333)),
                       ),
                     ),
                     if (time.isNotEmpty)

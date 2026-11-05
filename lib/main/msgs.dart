@@ -11,6 +11,7 @@ class MsgsPage extends StatefulWidget {
   final Map<String, dynamic> currentUser;
   final GroupService groupService;
   final Future<void> Function(String recipientId)? onMessageTap;
+  final VoidCallback onBackToHome;
 
   final void Function(Map<String, dynamic> conversation) onOpenConversation;
   final void Function(Map<String, dynamic> group) onOpenGroup;
@@ -24,6 +25,7 @@ class MsgsPage extends StatefulWidget {
     required this.groupService,
     required this.onOpenConversation,
     required this.onOpenGroup,
+    required this.onBackToHome,
     this.onRefreshRequested,
     this.onMessageTap,
   });
@@ -273,14 +275,10 @@ class _MsgsPageState extends State<MsgsPage> {
       child: Row(
         children: [
           IconButton(
-            onPressed: () {
-              if (Navigator.canPop(context)) {
-                Navigator.pop(context);
-              }
-            },
+            onPressed: widget.onBackToHome,
             icon: Icon(
               Icons.arrow_back_rounded,
-              color: isDark ? Colors.white : Color(0xFF333333),
+              color: isDark ? Colors.white : Color(0xff333333),
               size: 26,
             ),
           ),

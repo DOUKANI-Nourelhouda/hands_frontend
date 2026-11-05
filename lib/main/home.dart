@@ -6,14 +6,23 @@ import 'package:hands/widgets/postwidget.dart';
 import 'package:hands/services/post_service.dart';
 import 'package:hands/utils/langs.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 class HomePage extends StatefulWidget {
   final PostService postService;
   final Future<void> Function(String recipientId) onMessageTap;
+  final Future<void> Function(String postId)? onPostTap;
+  final void Function(String userId)? onProfileTap;
+  final Future<void> Function(Map<String, dynamic> conversation)?
+  onConversationTap;
+
   const HomePage({
     super.key,
     required this.postService,
     required this.onMessageTap,
+    this.onPostTap,
+    this.onProfileTap,
+    this.onConversationTap,
   });
 
   @override
@@ -26,7 +35,10 @@ class HomePageState extends State<HomePage> {
   String? errorMessage;
   String? selectedCategory;
   bool isLoadingPosts = false;
+  final ItemScrollController _itemScrollController = ItemScrollController();
 
+  final ItemPositionsListener _itemPositionsListener =
+      ItemPositionsListener.create();
   @override
   void initState() {
     super.initState();
@@ -35,6 +47,42 @@ class HomePageState extends State<HomePage> {
   }
 
   final AuthService _authService = AuthService();
+  Future<void> openPostById(String postId) async {
+    debugPrint('\n========== OPEN POST BY ID ==========');
+    debugPrint('[HOME POST] Requested post ID: $postId');
+
+    // Find the post in the currently loaded feed.
+    final index = posts.indexWhere((post) {
+      final id = (post['_id'] ?? post['id'] ?? '').toString();
+      return id == postId;
+    });
+
+    debugPrint('[HOME POST] Matching index: $index');
+
+    if (index == -1) {
+      debugPrint('[HOME POST] ERROR: Post not found in feed.');
+      return;
+    }
+
+    // Wait until the updated feed has been rendered.
+    await WidgetsBinding.instance.endOfFrame;
+
+    if (!_itemScrollController.isAttached) {
+      debugPrint('[HOME POST] ERROR: Scroll controller is not attached.');
+      return;
+    }
+
+    debugPrint('[HOME POST] Scrolling to index $index...');
+
+    await _itemScrollController.scrollTo(
+      index: index,
+      duration: const Duration(milliseconds: 600),
+      curve: Curves.easeInOut,
+      alignment: 0.1,
+    );
+
+    debugPrint('[HOME POST] Successfully scrolled to post.');
+  }
 
   PostService? _postService;
   String _currentUserId = '';
@@ -156,6 +204,11 @@ class HomePageState extends State<HomePage> {
   }
 
   @override
+  void dispose() {
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
@@ -164,7 +217,11 @@ class HomePageState extends State<HomePage> {
         child: Column(
           children: [
             // Fixed header
-            const HomeHeader(),
+            HomeHeader(
+              onPostTap: widget.onPostTap,
+              onProfileTap: widget.onProfileTap,
+              onConversationTap: widget.onConversationTap,
+            ),
 
             const SizedBox(height: 5),
 
@@ -272,20 +329,26 @@ class HomePageState extends State<HomePage> {
       );
     }
 
-    return ListView.builder(
+    return ScrollablePositionedList.builder(
+      itemScrollController: _itemScrollController,
+      itemPositionsListener: _itemPositionsListener,
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
       itemCount: posts.length,
+
       itemBuilder: (context, index) {
+        final post = posts[index];
+
         return PostWidget(
-          key: ValueKey(posts[index]['_id']),
-          post: posts[index],
+          post: post,
           postService: widget.postService,
+
           onPostReported: (postId) {
             setState(() {
               posts.removeWhere((post) => post['_id']?.toString() == postId);
             });
           },
+
           onPostUpdated: (updatedPost) {
             setState(() {
               final index = posts.indexWhere(
@@ -297,7 +360,9 @@ class HomePageState extends State<HomePage> {
               }
             });
           },
+
           currentUserId: _currentUserId,
+
           onOpenChat: (post) async {
             debugPrint('[POST CHAT] Post: $post');
             debugPrint('[POST CHAT] Current user: $_currentUserId');

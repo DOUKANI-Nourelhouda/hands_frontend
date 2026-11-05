@@ -27,7 +27,7 @@ class ProfilePage extends StatefulWidget {
   final VoidCallback? onCreditsTap;
   final PostService postService;
   final Future<void> Function(String recipientId)? onMessageTap;
-
+  final VoidCallback onBackToHome;
   const ProfilePage({
     super.key,
     this.userId,
@@ -35,6 +35,7 @@ class ProfilePage extends StatefulWidget {
     this.onCreditsTap,
     this.onMessageTap,
     required this.postService,
+    required this.onBackToHome,
   });
 
   @override
@@ -1454,9 +1455,7 @@ class _ProfilePageState extends State<ProfilePage> {
           child: Row(
             children: [
               IconButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
+                onPressed: widget.onBackToHome,
                 icon: Icon(
                   Icons.arrow_back_rounded,
                   color: isDark ? Colors.white : Color(0xff333333),

@@ -41,6 +41,11 @@ class _MainScreenState extends State<MainScreen> {
       key: homePageKey,
       postService: widget.postService,
       onMessageTap: _openDirectChat,
+      onPostTap: _openNotificationPost,
+      onProfileTap: (userId) {
+        _openNotificationProfile(userId);
+      },
+      onConversationTap: _openNotificationConversation,
     ),
 
     if (groupService != null && socket != null)
@@ -48,18 +53,29 @@ class _MainScreenState extends State<MainScreen> {
         postService: widget.postService,
         socket: socket!,
         onMessageTap: _openDirectChat,
+        onBackToHome: goToHome,
       )
     else
       const Center(child: CircularProgressIndicator(color: Color(0xfffcc001))),
 
     _buildMessagesPage(),
 
-    ProfilePage(postService: widget.postService, onMessageTap: _openDirectChat),
+    ProfilePage(
+      postService: widget.postService,
+      onMessageTap: _openDirectChat,
+      onBackToHome: goToHome,
+    ),
   ];
   @override
   void dispose() {
     socket?.dispose();
     super.dispose();
+  }
+
+  void goToHome() {
+    setState(() {
+      currentIndex = 0;
+    });
   }
 
   void _initializeSocket(String token) {
@@ -228,6 +244,117 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
+  Future<void> _openNotificationPost(String postId) async {
+    debugPrint('\n========== OPEN NOTIFICATION POST ==========');
+    debugPrint('[OPEN POST] Received post ID: $postId');
+    debugPrint('[OPEN POST] Current tab: $currentIndex');
+
+    if (postId.trim().isEmpty) {
+      debugPrint('[OPEN POST] ERROR: Empty post ID');
+      return;
+    }
+
+    if (currentIndex != 0) {
+      debugPrint('[OPEN POST] Switching to Home tab');
+
+      setState(() {
+        currentIndex = 0;
+      });
+    }
+
+    await Future.delayed(const Duration(milliseconds: 300));
+
+    if (!mounted) {
+      debugPrint('[OPEN POST] ERROR: MainScreen is no longer mounted');
+      return;
+    }
+
+    final homeState = homePageKey.currentState;
+
+    debugPrint('[OPEN POST] HomePage state exists: ${homeState != null}');
+
+    if (homeState == null) {
+      debugPrint('[OPEN POST] ERROR: HomePage state is null');
+      return;
+    }
+
+    debugPrint('[OPEN POST] Calling HomePage.openPostById...');
+    await homeState.openPostById(postId);
+
+    debugPrint('[OPEN POST] HomePage callback completed');
+    debugPrint('========== END OPEN POST ==========\n');
+  }
+
+  Future<void> _openNotificationProfile(String userId) async {
+    if (userId.trim().isEmpty) return;
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ProfilePage(
+          userId: userId,
+          postService: widget.postService,
+          onMessageTap: _openDirectChat,
+          onBackToHome: goToHome,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openNotificationConversation(
+    Map<String, dynamic> conversation,
+  ) async {
+    debugPrint('\n========== OPEN NOTIFICATION MESSAGE ==========');
+    debugPrint('[OPEN MESSAGE] Conversation: $conversation');
+
+    // First, try the sender attached by NotificationsPage.
+    final sender =
+        conversation['sender'] ??
+        conversation['user'] ??
+        conversation['otherUser'];
+
+    String senderId = '';
+
+    if (sender is Map) {
+      senderId = (sender['_id'] ?? sender['id'] ?? '').toString();
+    } else if (sender != null) {
+      senderId = sender.toString();
+    }
+
+    debugPrint('[OPEN MESSAGE] Extracted sender ID: $senderId');
+
+    // The sender is the other person in this direct conversation.
+    if (senderId.isNotEmpty) {
+      debugPrint('[OPEN MESSAGE] Opening direct chat with sender...');
+      await _openDirectChat(senderId);
+      debugPrint('[OPEN MESSAGE] Direct chat opening completed.');
+      return;
+    }
+
+    // Fallback: handle populated participant objects.
+    final participants = conversation['participants'];
+
+    if (participants is List && participants.isNotEmpty) {
+      final hasPopulatedParticipants = participants.any(
+        (participant) => participant is Map,
+      );
+
+      if (hasPopulatedParticipants) {
+        debugPrint('[OPEN MESSAGE] Using populated conversation.');
+        await onOpenConversation(conversation);
+        return;
+      }
+    }
+
+    debugPrint('[OPEN MESSAGE] ERROR: No usable sender or participants.');
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Could not open this conversation.')),
+    );
+  }
+
   Future<void> _initializeMessages() async {
     try {
       final token = await _authService.getSavedToken();
@@ -340,6 +467,7 @@ class _MainScreenState extends State<MainScreen> {
       onOpenConversation: onOpenConversation,
       onOpenGroup: onOpenGroup,
       onMessageTap: _openDirectChat,
+      onBackToHome: goToHome,
     );
   }
 

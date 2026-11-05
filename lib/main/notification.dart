@@ -3,7 +3,17 @@ import 'package:hands/services/notification_service.dart';
 import 'package:hands/utils/langs.dart';
 
 class NotificationsPage extends StatefulWidget {
-  const NotificationsPage({super.key});
+  final Future<void> Function(String postId)? onPostTap;
+  final void Function(String userId)? onProfileTap;
+  final Future<void> Function(Map<String, dynamic> conversation)?
+  onConversationTap;
+
+  const NotificationsPage({
+    super.key,
+    this.onPostTap,
+    this.onProfileTap,
+    this.onConversationTap,
+  });
 
   @override
   State<NotificationsPage> createState() => _NotificationsPageState();
@@ -184,6 +194,124 @@ class _NotificationsPageState extends State<NotificationsPage> {
     }
   }
 
+  Future<void> _handleNotificationTap(int index) async {
+    if (index < 0 || index >= _notifications.length) {
+      debugPrint('[NOTIFICATION TAP] Invalid index: $index');
+      return;
+    }
+
+    final notification = _notifications[index];
+    final type = notification['type']?.toString().toLowerCase();
+
+    debugPrint('\n========== NOTIFICATION TAPPED ==========');
+    debugPrint('[NOTIFICATION] Index: $index');
+    debugPrint('[NOTIFICATION] Type: $type');
+    debugPrint('[NOTIFICATION] Full data: $notification');
+    debugPrint('[NOTIFICATION] ID: ${notification['_id']}');
+    debugPrint('[NOTIFICATION] Post: ${notification['post']}');
+    debugPrint('[NOTIFICATION] Sender: ${notification['sender']}');
+    debugPrint('[NOTIFICATION] Conversation: ${notification['conversation']}');
+
+    await _markAsRead(index);
+
+    if (!mounted) return;
+
+    switch (type) {
+      case 'like':
+      case 'comment':
+        debugPrint('\n[NOTIFICATION POST] Processing $type notification');
+
+        final post = _asMap(notification['post']);
+
+        final postId =
+            (post?['_id'] ??
+                    post?['id'] ??
+                    notification['postId'] ??
+                    notification['post'] ??
+                    '')
+                .toString();
+
+        debugPrint('[NOTIFICATION POST] Post object: $post');
+        debugPrint('[NOTIFICATION POST] Extracted post ID: $postId');
+        debugPrint(
+          '[NOTIFICATION POST] Callback available: ${widget.onPostTap != null}',
+        );
+
+        if (postId.isEmpty) {
+          debugPrint('[NOTIFICATION POST] ERROR: Post ID is empty');
+          return;
+        }
+
+        if (widget.onPostTap == null) {
+          debugPrint('[NOTIFICATION POST] ERROR: onPostTap callback is null');
+          return;
+        }
+
+        debugPrint('[NOTIFICATION POST] Calling onPostTap...');
+        await widget.onPostTap!(postId);
+        debugPrint('[NOTIFICATION POST] Callback completed.');
+        break;
+
+      case 'follow':
+        debugPrint('\n[NOTIFICATION FOLLOW] Processing follow notification');
+
+        final sender = _asMap(notification['sender']);
+        final userId = (sender?['_id'] ?? sender?['id'] ?? '').toString();
+
+        debugPrint('[NOTIFICATION FOLLOW] Sender: $sender');
+        debugPrint('[NOTIFICATION FOLLOW] User ID: $userId');
+        debugPrint(
+          '[NOTIFICATION FOLLOW] Callback available: ${widget.onProfileTap != null}',
+        );
+
+        if (userId.isNotEmpty && widget.onProfileTap != null) {
+          debugPrint('[NOTIFICATION FOLLOW] Calling onProfileTap...');
+          widget.onProfileTap!(userId);
+        } else {
+          debugPrint(
+            '[NOTIFICATION FOLLOW] ERROR: Missing user ID or callback',
+          );
+        }
+        break;
+
+      case 'message':
+        final conversation = _asMap(notification['conversation']);
+        final sender = _asMap(notification['sender']);
+
+        debugPrint('[NOTIFICATION MESSAGE] Conversation: $conversation');
+        debugPrint('[NOTIFICATION MESSAGE] Sender: $sender');
+
+        if (conversation != null && widget.onConversationTap != null) {
+          // Copy the conversation and attach the sender information.
+          final conversationWithSender = Map<String, dynamic>.from(
+            conversation,
+          );
+
+          if (sender != null) {
+            conversationWithSender['sender'] = sender;
+          }
+
+          debugPrint(
+            '[NOTIFICATION MESSAGE] Opening conversation with sender: '
+            '${sender?['_id']}',
+          );
+
+          await widget.onConversationTap!(conversationWithSender);
+        } else {
+          debugPrint(
+            '[NOTIFICATION MESSAGE] Cannot open: '
+            'conversation or callback is null.',
+          );
+        }
+        break;
+
+      default:
+        debugPrint('[NOTIFICATION] Unknown notification type: $type');
+    }
+
+    debugPrint('========== END NOTIFICATION TAP ==========\n');
+  }
+
   Future<void> _markAllAsRead() async {
     if (_unreadCount == 0 || _isMarkingAll) return;
 
@@ -337,39 +465,38 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   String _username(Map<String, dynamic> notification) {
     final sender = _asMap(notification['sender']);
-    return sender?['username']?.toString() ?? 'Someone';
+
+    if (sender == null) {
+      return 'Someone';
+    }
+
+    final username = sender['username']?.toString();
+
+    if (username == null || username.isEmpty) {
+      return 'Someone';
+    }
+
+    return username;
   }
 
   String _message(Map<String, dynamic> notification) {
-    final explicitMessage = notification['message']?.toString();
-    if (explicitMessage != null && explicitMessage.trim().isNotEmpty) {
-      return explicitMessage;
-    }
+    final username = _username(notification);
 
-    final sender = _username(notification);
-    final type = (notification['type'] ?? '').toString().toLowerCase();
-
-    switch (type) {
+    switch (notification['type']?.toString()) {
       case 'like':
-      case 'post_like':
-      case 'liked':
-        return '$sender ' + textRead(context, 'liked your post.');
+        return '$username liked your post.';
+
       case 'comment':
-      case 'post_comment':
-        return '$sender ' + textRead(context, 'commented on your post.');
-      case 'reply':
-      case 'comment_reply':
-        return '$sender ' + textRead(context, 'replied to your comment.');
+        return '$username commented on your post.';
+
       case 'follow':
-      case 'new_follower':
-        return '$sender ' + textRead(context, 'started following you.');
+        return '$username started following you.';
+
       case 'message':
-      case 'new_message':
-        return '$sender ' + textRead(context, 'sent you a message.');
-      case 'mention':
-        return '$sender ' + textRead(context, 'mentioned you.');
+        return '$username sent you a message.';
+
       default:
-        return '$sender ' + textRead(context, 'sent you a notification.');
+        return 'You received a notification.';
     }
   }
 
@@ -653,7 +780,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
               borderRadius: BorderRadius.circular(16),
               child: InkWell(
                 borderRadius: BorderRadius.circular(16),
-                onTap: () => _markAsRead(index),
+                onTap: () => _handleNotificationTap(index),
                 child: Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(

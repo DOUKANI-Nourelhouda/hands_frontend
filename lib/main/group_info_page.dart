@@ -93,6 +93,9 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
           userId: userId,
           postService: widget.postService,
           onMessageTap: widget.onMessageTap,
+          onBackToHome: () {
+            Navigator.pop(context);
+          },
         ),
       ),
     );
